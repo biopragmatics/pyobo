@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import inspect
-import json
 from collections.abc import Callable, Iterable, Mapping
 from typing import TYPE_CHECKING, ParamSpec, TypeVar
 
@@ -22,7 +21,7 @@ from .utils import (
 from ..constants import GetOntologyKwargs
 
 if TYPE_CHECKING:
-    from curies import Reference
+    import curies
 
 __all__ = [
     "lookup",
@@ -87,23 +86,40 @@ def xrefs(target: str, *, prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> N
 
 @lookup_annotate
 @prefix_argument
-@click.option("-t", "--target")
+@click.option("-t", "--target", help="A prefix for filtering the object of mappings")
 def mappings(target: str | None, prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> None:
     """Page through mappings for the given namespace."""
     import bioregistry
+    from curies.dataframe import filter_df_by_prefixes
 
     from ..api import get_mappings_df
 
     mappings_df = get_mappings_df(prefix, **kwargs)
     if target:
-        target_norm = bioregistry.normalize_prefix(target)
-        if target_norm is None:
-            raise ValueError
-        idx = mappings_df["object_id"].map(
-            lambda x: bioregistry.normalize_prefix(x.split(":")[0]) == target_norm
-        )
-        mappings_df = mappings_df[idx]
+        target = bioregistry.normalize_prefix(target, strict=True)
+        mappings_df = filter_df_by_prefixes(mappings_df, column="object_id", prefixes=target)
     echo_df(mappings_df)
+
+
+@lookup_annotate
+@prefix_argument
+@click.option("--output", "-o")
+def sssom(prefix: str, output: str, **kwargs: Unpack[GetOntologyKwargs]) -> None:
+    """Get SSSOM for the given resource."""
+    import sys
+
+    import sssom_pydantic
+
+    from ..api.xrefs import _get_sssom_getter
+
+    mapping_pack = _get_sssom_getter(prefix, **kwargs)()
+
+    sssom_pydantic.write(
+        mapping_pack.mappings,
+        path=output or sys.stdout,
+        converter=mapping_pack.converter,
+        metadata=mapping_pack.mapping_set,
+    )
 
 
 @lookup_annotate
@@ -113,7 +129,7 @@ def metadata(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> None:
     from ..api import get_metadata
 
     metadata = get_metadata(prefix, **kwargs)
-    click.echo(json.dumps(metadata, indent=2))
+    click.echo(metadata.model_dump_json(indent=2))
 
 
 @lookup_annotate
@@ -290,7 +306,7 @@ def descendants(curie: str, **kwargs: Unpack[GetOntologyKwargs]) -> None:
 
 
 def _list_curies(
-    references: Iterable[Reference] | None, **kwargs: Unpack[GetOntologyKwargs]
+    references: Iterable[curies.Reference] | None, **kwargs: Unpack[GetOntologyKwargs]
 ) -> None:
     if not references:
         return

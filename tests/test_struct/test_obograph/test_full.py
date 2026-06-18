@@ -57,6 +57,7 @@ class TestFull(unittest.TestCase):
         td = TypeDef(
             reference=Reference(prefix="sssom", identifier="confidence"),
             range=Reference.from_reference(xsd_float),
+            predicate_type="object",
         )
         ontology = build_ontology(
             prefix="test",

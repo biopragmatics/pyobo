@@ -272,11 +272,11 @@ class TestParseObonet(unittest.TestCase):
 
         self.assertIsNotNone(target)
         self.assertIsInstance(target, Reference)
-        self.assertEqual(("chebi", "29228"), target.pair)
+        self.assertEqual(ReferenceTuple("chebi", "29228"), target.pair)
 
         self.assertIsNotNone(typedef)
         self.assertIsInstance(typedef, Reference)
-        self.assertEqual(("obo", "chebi#is_conjugate_base_of"), typedef.pair)
+        self.assertEqual(ReferenceTuple("obo", "chebi#is_conjugate_base_of"), typedef.pair)
 
 
 class TestGet(unittest.TestCase):
@@ -299,6 +299,7 @@ class TestGet(unittest.TestCase):
             alt_id: CHEBI:14384
         """
         id_alts_mapping = self.ontology.get_id_alts_mapping()
+        self.assertNotEqual({}, id_alts_mapping, msg="alternate ID dictionary unexpectedly empty")
         self.assertNotIn("C00462", id_alts_mapping)
         self.assertIn("16042", id_alts_mapping, msg="halide anion alt_id fields not parsed")
         self.assertEqual({"5605", "14384"}, set(id_alts_mapping["16042"]))
@@ -308,4 +309,4 @@ class TestGet(unittest.TestCase):
         xx = default_reference("chebi", "has_major_microspecies_at_pH_7_3")
         td = self.ontology._index_typedefs()
         self.assertIn(xx.pair, td)
-        self.assertIn(ReferenceTuple("ro", "0018033"), td)
+        self.assertIn(ReferenceTuple("ro", "0018033"), set(td))

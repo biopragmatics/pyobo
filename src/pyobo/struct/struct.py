@@ -28,13 +28,12 @@ import sssom_pydantic
 from curies import Converter, ReferenceTuple
 from curies import vocabulary as _cv
 from more_click import force_option, verbose_option
-from pystow.utils import safe_open
+from pystow.utils import safe_open, write_pydantic_json
 from tqdm.auto import tqdm
 
 from . import vocabulary as v
 from .reference import (
     OBOLiteral,
-    Reference,
     Referenced,
     _reference_list_tag,
     comma_separate_references,
@@ -61,7 +60,6 @@ from .struct_utils import (
     _tag_property_targets,
 )
 from .utils import _boolean_tag, obo_escape_slim
-from ..api.utils import get_version
 from ..constants import (
     BUILD_SUBDIRECTORY_NAME,
     DATE_FORMAT,
@@ -71,8 +69,10 @@ from ..constants import (
     RELATION_PREFIX,
     TARGET_ID,
     TARGET_PREFIX,
+    TypeDefType,
     get_semantic_mapping_metadata,
 )
+from ..identifier_utils import Reference
 from ..utils.cache import write_gzipped_graph
 from ..utils.io import multidict, write_iterable_tsv
 from ..utils.path import (
@@ -81,6 +81,7 @@ from ..utils.path import (
     get_relation_cache_path,
     prefix_directory_join,
 )
+from ..utils.ver import VersionMetadata, get_version
 from ..version import get_version as get_pyobo_version
 
 __all__ = [
@@ -94,6 +95,7 @@ __all__ = [
     "abbreviation",
     "acronym",
     "build_ontology",
+    "get_iris",
     "make_ad_hoc_ontology",
 ]
 
@@ -375,6 +377,60 @@ class Term(Stanza):
         self.annotate_object(v.exact_match, reference, annotations=axioms)
         return self
 
+    def append_broad_match(
+        self,
+        reference: ReferenceHint,
+        *,
+        mapping_justification: Reference | None = None,
+        confidence: float | None = None,
+        contributor: Reference | None = None,
+    ) -> Self:
+        """Append a broad match, also adding an xref."""
+        reference = _ensure_ref(reference)
+        axioms = self._prepare_mapping_annotations(
+            mapping_justification=mapping_justification,
+            confidence=confidence,
+            contributor=contributor,
+        )
+        self.annotate_object(v.broad_match, reference, annotations=axioms)
+        return self
+
+    def append_narrow_match(
+        self,
+        reference: ReferenceHint,
+        *,
+        mapping_justification: Reference | None = None,
+        confidence: float | None = None,
+        contributor: Reference | None = None,
+    ) -> Self:
+        """Append a narrow match, also adding an xref."""
+        reference = _ensure_ref(reference)
+        axioms = self._prepare_mapping_annotations(
+            mapping_justification=mapping_justification,
+            confidence=confidence,
+            contributor=contributor,
+        )
+        self.annotate_object(v.narrow_match, reference, annotations=axioms)
+        return self
+
+    def append_related_match(
+        self,
+        reference: ReferenceHint,
+        *,
+        mapping_justification: Reference | None = None,
+        confidence: float | None = None,
+        contributor: Reference | None = None,
+    ) -> Self:
+        """Append a related match, also adding an xref."""
+        reference = _ensure_ref(reference)
+        axioms = self._prepare_mapping_annotations(
+            mapping_justification=mapping_justification,
+            confidence=confidence,
+            contributor=contributor,
+        )
+        self.annotate_object(v.related_match, reference, annotations=axioms)
+        return self
+
     def set_species(self, identifier: str, name: str | None = None) -> Self:
         """Append the from_species relation."""
         if name is None:
@@ -410,7 +466,7 @@ class Term(Stanza):
             if species.prefix == prefix:
                 return species
         if strict:
-            raise ValueError
+            raise ValueError(f"no species found with prefix {prefix}")
         return None
 
     def extend_relationship(self, typedef: ReferenceHint, references: Iterable[Reference]) -> None:
@@ -594,7 +650,7 @@ class Obo:
 
     bioversions_key: ClassVar[str | None] = None
 
-    #: Root terms to use for the ontology
+    #: Root terms to use for the ontology, which get annotated with IAO:0000700
     root_terms: ClassVar[list[Reference] | None] = None
 
     #: The date the ontology was generated
@@ -744,6 +800,23 @@ class Obo:
                 logger.warning(f"[{self.bioversions_key}] error while looking up version")
         return None
 
+    @classmethod
+    def get_hierarchical_predicates(cls) -> list[Reference] | None:
+        """Get hierarchical predicates annotated on the class.
+
+        :returns: A list of hierarchical predicates. If none has been annotated, or the
+            list is explicitly just "is a", then ``None`` is returned.
+        """
+        if cls.property_values is None:
+            return None
+        rv = []
+        for p in cls.property_values:
+            if p.predicate == v.has_ontology_hierarchy_predicate and isinstance(p.value, Reference):
+                rv.append(p.value)
+        if not rv or rv == [v.is_a]:
+            return None
+        return rv
+
     @property
     def _version_or_raise(self) -> str:
         if not self.data_version:
@@ -766,6 +839,14 @@ class Obo:
         from . import obograph
 
         obograph.write_obograph(self, path, converter=converter)
+
+    def write_skos(
+        self, path: str | Path, *, converter: Converter | None = None, format: str | None = None
+    ) -> None:
+        """Write SKOS."""
+        from .skos import write_skos
+
+        write_skos(self, path, converter=converter, format=format)
 
     @classmethod
     def cli(cls, *args: Any) -> Any:
@@ -791,6 +872,7 @@ class Obo:
         @click.option("--obo", is_flag=True, help="Write OBO")
         @click.option("--ofn", is_flag=True, help="Write Functional OWL (OFN)")
         @click.option("--ttl", is_flag=True, help="Write turtle RDF via OFN")
+        @click.option("--skos-ttl", is_flag=True, help="Write turtle RDF via SKOS")
         @click.option("--cache/--no-cache", is_flag=True, help="Write the cache", default=True)
         @click.option(
             "--version", help="Specify data version to get. Use this if bioversions is acting up."
@@ -801,6 +883,7 @@ class Obo:
             owl: bool,
             ofn: bool,
             ttl: bool,
+            skos_ttl: bool,
             version: str | None,
             rewrite: bool,
             cache: bool,
@@ -816,6 +899,7 @@ class Obo:
                 write_owl=owl,
                 write_ofn=ofn,
                 write_ttl=ttl,
+                write_skos_ttl=skos_ttl,
                 write_nodes=True,
                 force=force or rewrite,
                 use_tqdm=True,
@@ -1176,7 +1260,7 @@ class Obo:
 
     @property
     def _root_metadata_path(self) -> Path:
-        return prefix_directory_join(self.ontology, name="metadata.json")
+        return prefix_directory_join(self.ontology, name=CacheArtifact.metadata.value)
 
     @property
     def _obo_path(self) -> Path:
@@ -1201,6 +1285,10 @@ class Obo:
     @property
     def _ttl_path(self) -> Path:
         return self._path(BUILD_SUBDIRECTORY_NAME, name=f"{self.ontology}.ttl")
+
+    @property
+    def _skos_ttl_path(self) -> Path:
+        return self._path(BUILD_SUBDIRECTORY_NAME, name=f"{self.ontology}.skos.ttl")
 
     def _get_cache_config(
         self,
@@ -1242,8 +1330,7 @@ class Obo:
         metadata = self.get_metadata()
         for path in (self._root_metadata_path, self._get_cache_path(CacheArtifact.metadata)):
             logger.debug("[%s] caching metadata to %s", self._prefix_version, path)
-            with safe_open(path, operation="write") as file:
-                json.dump(metadata, file, indent=2)
+            write_pydantic_json(metadata, path, indent=2)
 
     def write_prefix_map(self) -> None:
         """Write a prefix map file that includes all prefixes used in this ontology."""
@@ -1319,6 +1406,7 @@ class Obo:
         write_owl: bool = False,
         write_ofn: bool = False,
         write_ttl: bool = False,
+        write_skos_ttl: bool = False,
         write_nodes: bool = False,
         obograph_use_internal: bool = False,
         write_cache: bool = True,
@@ -1331,7 +1419,9 @@ class Obo:
         if write_obo and (not self._obo_path.is_file() or force):
             logger.info(f"[{self._prefix_version}] writing OBO to {self._obo_path}")
             self.write_obo(self._obo_path, use_tqdm=use_tqdm)
-        if (write_ofn or write_owl or write_obograph) and (not self._ofn_path.is_file() or force):
+        if (write_ofn or write_owl or (write_obograph and not obograph_use_internal)) and (
+            not self._ofn_path.is_file() or force
+        ):
             logger.info(f"[{self._prefix_version}] writing OFN to {self._ofn_path}")
             self.write_ofn(self._ofn_path)
         if write_obograph and (not self._obograph_path.is_file() or force):
@@ -1355,8 +1445,11 @@ class Obo:
                 self._ofn_path, self._owl_path, debug=True, merge=False, reason=False
             )
         if write_ttl and (not self._ttl_path.is_file() or force):
-            logger.info(f"[{self._prefix_version}] writing Turtle to {self._ttl_path}")
+            logger.info(f"[{self._prefix_version}] writing OFN Turtle to {self._ttl_path}")
             self.write_rdf(self._ttl_path)
+        if write_skos_ttl and (not self._skos_ttl_path.is_file() or force):
+            logger.info(f"[{self._prefix_version}] writing SKOS Turtle to {self._skos_ttl_path}")
+            self.write_skos(self._skos_ttl_path)
         if write_obonet and (not self._obonet_gz_path.is_file() or force):
             logger.info(f"[{self._prefix_version}] writing obonet to {self._obonet_gz_path}")
             self.write_obonet_gz(self._obonet_gz_path)
@@ -1495,12 +1588,9 @@ class Obo:
         )
         return rv
 
-    def get_metadata(self) -> dict[str, Any]:
+    def get_metadata(self) -> VersionMetadata:
         """Get metadata."""
-        return {
-            "version": self.data_version,
-            "date": self.date and self.date.isoformat(),
-        }
+        return VersionMetadata(version=self.data_version, date=self.date)
 
     def iterate_references(self, *, use_tqdm: bool = False) -> Iterable[Reference]:
         """Iterate over identifiers."""
@@ -2057,6 +2147,23 @@ class Obo:
         """Get a literal mappings dataframe."""
         return ssslm.literal_mappings_to_df(self.get_literal_mappings())
 
+    @staticmethod
+    def _get_stanza_type(stanza: Stanza) -> curies.Reference | None:
+        if isinstance(stanza, TypeDef):
+            if stanza.predicate_type is None or stanza.predicate_type == "object":
+                return _cv.owl_object_property
+            elif stanza.predicate_type == "annotation":
+                return _cv.owl_annotation_property
+            elif stanza.predicate_type == "data":
+                return _cv.owl_data_property
+            else:
+                raise ValueError
+        elif stanza.type == "Term":
+            return _cv.owl_class
+        elif stanza.type == "Instance":
+            return _cv.owl_named_individual
+        return None
+
     def get_semantic_mappings(
         self, *, progress: bool = False
     ) -> Iterable[sssom_pydantic.SemanticMapping]:
@@ -2064,12 +2171,14 @@ class Obo:
         license_url = bioregistry.get_license_url(self.ontology)
         source = _get_download_source(self.ontology)
         for stanza in self._iter_stanzas(use_tqdm=progress):
+            subject_type = self._get_stanza_type(stanza)
             for predicate, obj_ref, context in stanza.get_mappings(
                 include_xrefs=True, add_context=True
             ):
                 # TODO update object reference with label?
                 yield sssom_pydantic.SemanticMapping(
                     subject=stanza.reference,
+                    subject_type=subject_type,
                     predicate=predicate,
                     object=obj_ref,
                     confidence=context.confidence,
@@ -2203,7 +2312,7 @@ class TypeDef(Stanza):
     #: that is useful to track, but does not impact the definition of the object or how it should
     #: be treated by a reasoner. Metadata tags might be used to record special term synonyms or
     #: structured notes about a term, for example.
-    is_metadata_tag: Annotated[bool | None, 40, "typedef-only"] = None
+    predicate_type: Annotated[TypeDefType | None, 40, "typedef-only"] = None
     is_class_level: Annotated[bool | None, 41] = None
 
     type: StanzaType = "TypeDef"
@@ -2398,7 +2507,8 @@ class TypeDef(Stanza):
         # 38 TODO expand_assertion_to
         # 39 TODO expand_expression_to
         # 40
-        yield from _boolean_tag("is_metadata_tag", self.is_metadata_tag)
+        if self.predicate_type == "annotation":
+            yield from _boolean_tag("is_metadata_tag", True)
         # 41
         yield from _boolean_tag("is_class_level", self.is_class_level)
 
@@ -2409,12 +2519,12 @@ class TypeDef(Stanza):
 
     @classmethod
     def default(
-        cls, prefix: str, identifier: str, *, name: str | None = None, is_metadata_tag: bool
+        cls, prefix: str, identifier: str, *, name: str | None = None, predicate_type: TypeDefType
     ) -> Self:
         """Construct a default type definition from within the OBO namespace."""
         return cls(
             reference=default_reference(prefix, identifier, name=name),
-            is_metadata_tag=is_metadata_tag,
+            predicate_type=predicate_type,
         )
 
 
@@ -2605,3 +2715,26 @@ def cleanup_terms(
 
     rv = terms | {aux_term} | set(prefix_to_parent_term.values()) | set(undefined.values())
     return rv
+
+
+BIOPRAGMATICS_IRI_BASE = "https://w3id.org/biopragmatics/resources"
+
+
+def get_iris(
+    obo_ontology: Obo, *, extension: str, iri: str | None = None, version_iri: str | None = None
+) -> tuple[str, str | None]:
+    """Get IRIs."""
+    extension = extension.lstrip(".")
+    prefix = obo_ontology.ontology
+    base = f"{BIOPRAGMATICS_IRI_BASE}/{prefix}"
+    if iri is None:
+        if obo_ontology.ontology_iri:
+            iri = obo_ontology.ontology_iri
+        else:
+            iri = f"{base}/{prefix}.{extension}"
+    if version_iri is None:
+        if obo_ontology.ontology_version_iri:
+            version_iri = obo_ontology.ontology_version_iri
+        elif obo_ontology.data_version:
+            version_iri = f"{base}/{obo_ontology.data_version}/{prefix}.{extension}"
+    return iri, version_iri

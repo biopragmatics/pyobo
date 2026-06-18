@@ -6,6 +6,7 @@ from textwrap import dedent
 
 import bioregistry
 from curies import ReferenceTuple
+from curies import vocabulary as cv
 from sssom_pydantic import SemanticMapping
 from sssom_pydantic.testing import assert_semantic_mapping_equal
 
@@ -76,33 +77,6 @@ class TestStruct(unittest.TestCase):
         """Test raising an error when an invalid prefix is used."""
         with self.assertRaises(BioregistryError):
             Nope()
-
-    def test_reference_validation(self) -> None:
-        """Test validation of prefix."""
-        with self.assertRaises(ValueError):
-            Reference(prefix="nope", identifier="also_nope")
-
-        # For when we want to do regex checking
-        # with self.assertRaises(ValueError):
-        #     Reference(prefix="go", identifier="nope")
-        # with self.assertRaises(ValueError):
-        #     Reference(prefix="go", identifier="12345")
-
-        r1 = Reference(prefix="go", identifier="1234567")
-        self.assertEqual("go", r1.prefix)
-        self.assertEqual("1234567", r1.identifier)
-
-        r2 = Reference(prefix="GO", identifier="1234567")
-        self.assertEqual("go", r2.prefix)
-        self.assertEqual("1234567", r2.identifier)
-
-        r3 = Reference(prefix="go", identifier="GO:1234567")
-        self.assertEqual("go", r3.prefix)
-        self.assertEqual("1234567", r3.identifier)
-
-        r4 = Reference(prefix="GO", identifier="GO:1234567")
-        self.assertEqual("go", r4.prefix)
-        self.assertEqual("1234567", r4.identifier)
 
     def test_synonym_typedef(self) -> None:
         """Test synonym type definition serialization."""
@@ -566,6 +540,7 @@ class TestTerm(unittest.TestCase):
             self,
             SemanticMapping(
                 subject=LYSINE_DEHYDROGENASE_ACT,
+                subject_type=cv.owl_class,
                 object=Reference.from_curie("EC:1.4.1.15"),
                 predicate=Reference.from_curie(
                     "oboInOwl:hasDbXref", name="has database cross-reference"
@@ -610,6 +585,7 @@ class TestTerm(unittest.TestCase):
             self,
             SemanticMapping(
                 subject=LYSINE_DEHYDROGENASE_ACT,
+                subject_type=cv.owl_class,
                 object=target,
                 predicate=Reference.from_curie(
                     "oboInOwl:hasDbXref", name="has database cross-reference"
@@ -1042,6 +1018,7 @@ class TestTerm(unittest.TestCase):
             self,
             SemanticMapping(
                 subject=LYSINE_DEHYDROGENASE_ACT,
+                subject_type=cv.owl_class,
                 object=target,
                 predicate=Reference.from_curie("skos:exactMatch", name="exact match"),
                 justification=Reference.from_curie("semapv:UnspecifiedMatching"),
@@ -1172,6 +1149,7 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
             self,
             SemanticMapping(
                 subject=LYSINE_DEHYDROGENASE_ACT,
+                subject_type=cv.owl_class,
                 object=target,
                 predicate=Reference.from_curie("skos:exactMatch", name="exact match"),
                 justification=Reference.from_curie("semapv:UnspecifiedMatching"),

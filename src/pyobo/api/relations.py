@@ -22,8 +22,7 @@ from ..constants import (
     check_should_use_tqdm,
 )
 from ..getters import get_ontology
-from ..identifier_utils import wrap_norm_prefix
-from ..struct.reference import Reference
+from ..identifier_utils import Reference, wrap_norm_prefix
 from ..struct.struct_utils import ReferenceHint, _ensure_ref
 from ..utils.cache import cached_df
 from ..utils.path import CacheArtifact, get_cache_path, get_relation_cache_path

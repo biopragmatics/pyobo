@@ -14,7 +14,6 @@ from typing import Any, TypeAlias
 
 import bioregistry
 import networkx as nx
-from bioregistry import NormalizedNamableReference as Reference
 from curies import ReferenceTuple
 from curies.preprocessing import BlocklistError
 from curies.vocabulary import SynonymScope
@@ -45,6 +44,7 @@ from ...constants import DATE_FORMAT, PROVENANCE_PREFIXES
 from ...identifier_utils import (
     NotCURIEError,
     ParseError,
+    Reference,
     UnparsableIRIError,
     _is_valid_identifier,
     _parse_str_or_curie_or_uri_helper,
@@ -112,6 +112,7 @@ def _read_obo(
     return obonet.read_obo(
         tqdm(lines, disable=not use_tqdm, **tqdm_kwargs),
         ignore_obsolete=ignore_obsolete,
+        # TODO add include_clauses=True to get trailing modifiers
     )
 
 
@@ -900,7 +901,7 @@ def iterate_typedefs(
         typedef = TypeDef(
             reference=reference,
             namespace=data.get("namespace"),
-            is_metadata_tag=_get_boolean(data, "is_metadata_tag"),
+            predicate_type="annotation" if _get_boolean(data, "is_metadata_tag") else None,
             is_class_level=_get_boolean(data, "is_class_level"),
             builtin=_get_boolean(data, "builtin"),
             is_obsolete=_get_boolean(data, "is_obsolete"),

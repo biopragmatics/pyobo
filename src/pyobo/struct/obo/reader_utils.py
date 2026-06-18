@@ -8,10 +8,10 @@ from collections import Counter
 from collections.abc import Mapping, Sequence
 
 import click
-from bioregistry import NormalizedNamableReference as Reference
 from curies import ReferenceTuple
 from curies import vocabulary as v
 
+from pyobo.identifier_utils import Reference
 from pyobo.struct.reference import (
     OBOLiteral,
     _obo_parse_identifier,

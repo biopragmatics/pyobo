@@ -16,9 +16,9 @@ __all__ = [
 cvx_url = "https://www2a.cdc.gov/vaccines/iis/iisstandards/downloads/cvx.txt"
 PREFIX = "cvx"
 STATUS = TypeDef(
-    reference=default_reference(PREFIX, "status", name="has status"), is_metadata_tag=True
+    reference=default_reference(PREFIX, "status", name="has status"), predicate_type="annotation"
 )
-NONVACCINE = TypeDef(reference=default_reference(PREFIX, "nonvaccine"), is_metadata_tag=True)
+NONVACCINE = TypeDef(reference=default_reference(PREFIX, "nonvaccine"), predicate_type="annotation")
 
 ACRONYM_RE = re.compile("^[A-Z]+$")
 

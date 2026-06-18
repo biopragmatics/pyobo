@@ -5,7 +5,7 @@ from collections.abc import Sequence
 import curies
 from curies import vocabulary as _v
 
-from .reference import Reference
+from ..identifier_utils import Reference
 
 __all__ = [
     "equivalent_class",
@@ -88,6 +88,7 @@ has_smiles = Reference(prefix="chemrof", identifier="smiles_string")
 has_canonical_smiles = Reference(prefix="chemrof", identifier="canonical_smiles_string")
 has_isomeric_smiles = Reference(prefix="chemrof", identifier="isomeric_smiles_string")
 
+document = Reference.from_curie("IAO:0000310", name="document")
 is_mentioned_by = Reference(prefix="mito", identifier="isMentionedBy", name="is mentioned by")
 mentions = Reference(prefix="mito", identifier="mentions", name="mentions")
 

@@ -23,13 +23,16 @@ PREFIX = "rhea"
 RHEA_RDF_GZ_URL = "ftp://ftp.expasy.org/databases/rhea/rdf/rhea.rdf.gz"
 
 has_left_to_right_reaction = TypeDef.default(
-    PREFIX, "hasLeftToRightReaction", name="has left to right reaction", is_metadata_tag=True
+    PREFIX, "hasLeftToRightReaction", name="has left to right reaction", predicate_type="annotation"
 ).append_xref(v.has_left_to_right_reaction)
 has_right_to_left_reaction = TypeDef.default(
-    PREFIX, "hasRightToLeftReaction", name="has right to left reaction", is_metadata_tag=True
+    PREFIX, "hasRightToLeftReaction", name="has right to left reaction", predicate_type="annotation"
 ).append_xref(v.has_right_to_left_reaction)
 has_bidirectional_reaction = TypeDef.default(
-    PREFIX, "hasBidirectionalReaction", name="has bidirectional reaction", is_metadata_tag=True
+    PREFIX,
+    "hasBidirectionalReaction",
+    name="has bidirectional reaction",
+    predicate_type="annotation",
 ).append_xref(v.has_bidirectional_reaction)
 
 

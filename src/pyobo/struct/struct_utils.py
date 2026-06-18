@@ -5,7 +5,6 @@ from __future__ import annotations
 import datetime
 import itertools as itt
 import logging
-import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
@@ -21,7 +20,6 @@ from ssslm import LiteralMapping
 from . import vocabulary as v
 from .reference import (
     OBOLiteral,
-    Reference,
     Referenced,
     comma_separate_references,
     default_reference,
@@ -35,6 +33,7 @@ from .utils import obo_escape_slim
 from ..identifier_utils import (
     NotCURIEError,
     ParseError,
+    Reference,
     _is_valid_identifier,
     _parse_str_or_curie_or_uri_helper,
 )
@@ -649,6 +648,19 @@ class Stanza(Referenced, HasReferencesMixin):
         """Iterate over references or values."""
         return sorted(self.properties.get(_ensure_ref(typedef), []))
 
+    def remove_property_object(self, prop: ReferenceHint, obj: ReferenceHint) -> None:
+        """Remove a property object, if it exists."""
+        prop = _ensure_ref(prop)
+        obj = _ensure_ref(obj)
+        if prop not in self.properties:
+            return
+        self.properties[prop] = [p for p in self.properties[prop] if p != obj]
+
+        # delete any axioms associated with the predicate/object
+        xx = _property_resolve(prop, obj)
+        if xx in self._axioms:
+            del self._axioms[xx]
+
     def get_property_objects(self, prop: ReferenceHint) -> list[Reference]:
         """Get properties from the given key."""
         return sorted(
@@ -881,16 +893,6 @@ class Stanza(Referenced, HasReferencesMixin):
             Annotation(v.has_dbxref, _ensure_ref(reference)),
         )
         return self
-
-    def append_provenance(
-        self,
-        reference: Reference,
-        *,
-        annotations: Iterable[Annotation] | None = None,
-    ) -> Self:
-        """Append a creative work that mentions this term."""
-        warnings.warn("use append_mentioned_by instead", DeprecationWarning, stacklevel=2)
-        return self.append_mentioned_by(reference, annotations=annotations)
 
     def append_mentioned_by(
         self,

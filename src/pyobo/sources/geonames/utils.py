@@ -33,7 +33,8 @@ FEATURE_TERM = Term(reference=FEATURE)
 
 # Type definitions
 CODE_TYPEDEF = TypeDef(
-    reference=default_reference(PREFIX, "code", name="GeoNames code"), is_metadata_tag=True
+    reference=default_reference(PREFIX, "code", name="GeoNames code"),
+    predicate_type="annotation",
 )
 
 SYNONYMS_DF_COLUMNS = [

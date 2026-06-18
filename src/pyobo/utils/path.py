@@ -8,8 +8,8 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+import curies
 import pandas as pd
-from curies import Reference
 from pystow import VersionHint
 from pystow.utils.download import DownloadKwargs
 from typing_extensions import Unpack
@@ -166,7 +166,7 @@ def get_cache_path(
 
 def get_relation_cache_path(
     ontology: str,
-    reference: Reference,
+    reference: curies.Reference,
     *,
     version: str | None = None,
 ) -> Path:

@@ -52,7 +52,7 @@ PARAMS = {
     "query": QUERY,
     "fields": FIELDS,
 }
-IS_REVIEWED = TypeDef(reference=default_reference(PREFIX, "reviewed"), is_metadata_tag=True)
+IS_REVIEWED = TypeDef(reference=default_reference(PREFIX, "reviewed"), predicate_type="annotation")
 
 
 class UniProtGetter(Obo):

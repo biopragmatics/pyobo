@@ -58,5 +58,5 @@ def ground(
         #  can be type annotated with the right reference
         return Reference.from_reference(match.reference)
     if strict_match:
-        raise ValueError
+        raise ValueError(f"no match found for query: {query} against prefixes: {prefix}")
     return None

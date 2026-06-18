@@ -26,7 +26,7 @@ __all__ = [
 
 def echo_df(df: pd.DataFrame) -> None:
     """Echo a dataframe via the pager."""
-    click.echo_via_pager("\n".join("\t".join(row) for row in df.values))
+    click.echo_via_pager("\n".join("\t".join(map(str, row)) for row in df.values))
 
 
 def get_default_directory() -> pathlib.Path:

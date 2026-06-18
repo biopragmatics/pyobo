@@ -1,7 +1,6 @@
 """CLI for PyOBO Database Generation."""
 
 import logging
-import warnings
 from collections.abc import Callable, Iterable
 from pathlib import Path
 from typing import ParamSpec, TypeVar
@@ -153,10 +152,16 @@ def metadata(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) ->
     def _iter_metadata_internal(
         **kwargs: Unpack[IterHelperHelperDict],
     ) -> Iterable[tuple[str, str, str, bool]]:
-        for prefix, data in iter_helper_helper(get_metadata, **kwargs):
-            version = data["version"]
-            logger.debug(f"[{prefix}] using version {version}")
-            yield prefix, version, data["date"], bioregistry.is_deprecated(prefix)
+        for prefix, metadata in iter_helper_helper(get_metadata, **kwargs):
+            if metadata.version is None and metadata.date is None:
+                continue
+            logger.debug(f"[{prefix}] using version {metadata.version}")
+            yield (
+                prefix,
+                metadata.version or "",
+                metadata.date.isoformat() if metadata.date else "",
+                bioregistry.is_deprecated(prefix),
+            )
 
     it = _iter_metadata_internal(**kwargs)
     db_output_helper(
@@ -384,29 +389,6 @@ def properties(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) 
 
 
 @database_annotate
-def xrefs(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) -> None:
-    """Make the prefix-identifier-xref dump."""
-    from .database_utils import _iter_xrefs
-    from ..getters import db_output_helper
-
-    warnings.warn("Use pyobo.database.mappings instead", DeprecationWarning, stacklevel=2)
-    with logging_redirect_tqdm():
-        it = _iter_xrefs(**kwargs)
-        paths = db_output_helper(
-            it,
-            "xrefs",
-            ("prefix", "identifier", "xref_prefix", "xref_identifier", "provenance"),
-            summary_detailed=(0, 2),  # second column corresponds to xref prefix
-            directory=directory,
-        )
-    if zenodo:
-        from zenodo_client import update_zenodo
-
-        # see https://zenodo.org/record/4021477
-        update_zenodo(JAVERT_RECORD, paths)
-
-
-@database_annotate
 def mappings(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) -> None:
     """Make the SSSOM dump."""
     from .database_utils import _iter_mappings
@@ -421,14 +403,18 @@ def mappings(zenodo: bool, directory: Path, **kwargs: Unpack[DatabaseKwargs]) ->
     ]
     with logging_redirect_tqdm():
         it = _iter_mappings(**kwargs)
-        db_output_helper(
+        paths = db_output_helper(
             it,
             "mappings",
             columns,
             directory=directory,
         )
     if zenodo:
-        raise NotImplementedError("need to do initial manual upload of SSSOM build")
+        from zenodo_client import update_zenodo
+
+        # TODO might not work because file paths for old xrefs were different
+        # see https://zenodo.org/record/4021477
+        update_zenodo(JAVERT_RECORD, paths)
 
 
 if __name__ == "__main__":

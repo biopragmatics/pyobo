@@ -11,7 +11,7 @@ from typing_extensions import Unpack
 from .utils import _get_pi, get_version_from_kwargs
 from ..constants import GetOntologyKwargs, check_should_cache, check_should_force
 from ..getters import get_ontology
-from ..identifier_utils import wrap_norm_prefix
+from ..identifier_utils import Reference, wrap_norm_prefix
 from ..utils.cache import cached_multidict
 from ..utils.path import CacheArtifact, get_cache_path
 
@@ -67,7 +67,7 @@ def get_primary_reference(
     identifier: str | None = None,
     /,
     **kwargs: Unpack[GetOntologyKwargs],
-) -> curies.ReferenceTuple | None:
+) -> Reference | None:
     """Get the primary reference for an entity."""
     reference = _get_pi(prefix, identifier)
     try:
@@ -77,7 +77,7 @@ def get_primary_reference(
             raise
         # this happens on invalid prefix. maybe revise?
         return None
-    return curies.ReferenceTuple(reference.prefix, primary_identifier)
+    return Reference(prefix=reference.prefix, identifier=primary_identifier)
 
 
 def get_primary_curie(

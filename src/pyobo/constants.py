@@ -13,6 +13,7 @@ from typing_extensions import TypedDict
 
 if TYPE_CHECKING:
     import sssom_pydantic
+    from bioregistry.schema import AnnotatedURL
 
 __all__ = [
     "DATABASE_DIRECTORY",
@@ -27,6 +28,7 @@ __all__ = [
     "OntologyFormat",
     "OntologyPathPack",
     "SlimGetOntologyKwargs",
+    "TypeDefType",
     "check_should_cache",
     "check_should_force",
     "check_should_use_tqdm",
@@ -218,7 +220,13 @@ class IterHelperHelperDict(SlimGetOntologyKwargs):
 
 
 #: The ontology format
-OntologyFormat: TypeAlias = Literal["obo", "owl", "json", "rdf"]
+OntologyFormat: TypeAlias = Literal[
+    "obo",
+    "owl",
+    "json",
+    "rdf",
+    "skos",
+]
 
 #: from table 2 of the Functional OWL syntax definition
 #: at https://www.w3.org/TR/owl2-syntax/#IRIs
@@ -237,6 +245,8 @@ class OntologyPathPack(NamedTuple):
     format: OntologyFormat
     #: The path to the ontology file
     path: Path
+    #: The RDF format
+    rdf_format: str | None
 
 
 def _get_obo_download(prefix: str) -> str | None:
@@ -263,13 +273,20 @@ def _get_rdf_download(prefix: str) -> str | None:
     return bioregistry.get_rdf_download(prefix, get_format=False)
 
 
+def _get_skos_download(prefix: str) -> str | AnnotatedURL | None:
+    import bioregistry
+
+    return bioregistry.get_skos_download(prefix, get_format=True)
+
+
 #: Functions that get ontology files. Order matters in this list,
 #: since order implicitly defines priority
-ONTOLOGY_GETTERS: list[tuple[OntologyFormat, Callable[[str], str | None]]] = [
+ONTOLOGY_GETTERS: list[tuple[OntologyFormat, Callable[[str], str | AnnotatedURL | None]]] = [
     ("obo", _get_obo_download),
     ("owl", _get_owl_download),
     ("json", _get_json_download),
     ("rdf", _get_rdf_download),
+    ("skos", _get_skos_download),
 ]
 
 
@@ -303,3 +320,7 @@ def get_semantic_mapping_metadata(
         confidence=confidence,
         version=version,
     )
+
+
+#: The type of a typedef.
+TypeDefType = Literal["object", "annotation", "data"]

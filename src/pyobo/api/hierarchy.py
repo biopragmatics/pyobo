@@ -17,8 +17,8 @@ from .names import get_name, get_references
 from .properties import get_literal_properties
 from .utils import _get_pi
 from ..constants import GetOntologyKwargs
+from ..identifier_utils import Reference
 from ..struct import has_member, has_part, is_a, member_of, part_of
-from ..struct.reference import Reference
 from ..struct.struct_utils import ReferenceHint, _ensure_ref
 
 __all__ = [

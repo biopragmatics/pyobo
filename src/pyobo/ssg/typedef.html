@@ -5,10 +5,8 @@
 {% block content -%}
     <div class="card">
         <h5 class="card-header">
-            {% if typedef.is_metadata_tag %}
-                <span class="badge badge-info">Property</span>
-            {% else %}
-                <span class="badge badge-info">Relation</span>
+            {% if typedef.predicate_type %}
+                <span class="badge badge-info">{{ typedef.predicate_type.capitalize() }}Property</span>
             {% endif %}
             {{ typedef.name or typedef.identifier }}
             {% if typedef.is_obsolete %}

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import datetime
-import json
 import logging
 import pathlib
 import subprocess
@@ -21,6 +20,9 @@ import bioregistry
 import click
 import pystow.utils
 import requests.exceptions
+from bioregistry.schema import AnnotatedURL, RDFFormat
+from pydantic import BaseModel
+from pystow.utils import write_pydantic_json
 from tabulate import tabulate
 from tqdm.auto import tqdm
 from typing_extensions import Unpack
@@ -31,6 +33,7 @@ from .constants import (
     ONTOLOGY_GETTERS,
     GetOntologyKwargs,
     IterHelperHelperDict,
+    OntologyFormat,
     OntologyPathPack,
     SlimGetOntologyKwargs,
 )
@@ -177,7 +180,7 @@ def get_ontology(
     path_pack = _ensure_ontology_path(prefix, force=force, version=version)
     if path_pack is None:
         raise NoBuildError(prefix)
-    ontology_format, path = path_pack
+    ontology_format, path, rdf_format = path_pack
     if ontology_format == "obo":
         pass  # all gucci
     elif ontology_format in {"owl", "rdf"}:
@@ -188,6 +191,13 @@ def get_ontology(
         obo = read_obograph(prefix=prefix, path=path)
         if cache:
             obo.write_default(force=force_process)
+        return obo
+    elif ontology_format == "skos":
+        from .struct.skos import read_skos
+
+        obo = read_skos(prefix=prefix, path=path, rdf_format=rdf_format)
+        if cache:
+            obo.write_default(force=force)
         return obo
     else:
         raise UnhandledFormatError(f"[{prefix}] unhandled ontology file format: {path.suffix}")
@@ -206,21 +216,56 @@ def get_ontology(
     return obo
 
 
+ONTOLOGY_FORMAT_TO_SUFFIX: dict[OntologyFormat, str] = {
+    "skos": ".ttl",
+}
+
+XX_TO_SUFFIX: dict[str, str] = {
+    "rdf/xml": ".xml",
+    "xml": ".xml",
+}
+
+
+def _name_from_url(
+    url: str, ontology_format: OntologyFormat, *, rdf_format: str | None = None
+) -> str:
+    name = pystow.utils.name_from_url(url)
+    if "." not in name:
+        if rdf_format is None:
+            raise ValueError(f"need to curate a RDF format for {url}")
+        name = name + XX_TO_SUFFIX[rdf_format]
+        # TODO add unit test that checks all downloads with no extension have a (RDF) format
+    return name
+
+
 def _ensure_ontology_path(
     prefix: str, *, force: bool, version: str | None
 ) -> OntologyPathPack | None:
+    rdf_format: RDFFormat | None
     for ontology_format, getter in ONTOLOGY_GETTERS:
-        url = getter(prefix)
-        if url is None:
-            continue
+        match getter(prefix):
+            case None:
+                continue
+            case AnnotatedURL() as a:
+                url = a.url
+                rdf_format = a.rdf_format
+            case str() as url:
+                rdf_format = None
+            case _:
+                raise TypeError
+
+        name = _name_from_url(url, ontology_format, rdf_format=rdf_format)
+
         try:
-            path = ensure_path(prefix, url=url, force=force, version=version, backend="requests")
+            path = ensure_path(
+                prefix, url=url, force=force, version=version, name=name, backend="requests"
+            )
         except (urllib.error.HTTPError, pystow.utils.DownloadError):
             continue
         except pystow.utils.UnexpectedDirectoryError:
             continue  # TODO report more info about the URL and the name it tried to make
         else:
-            return OntologyPathPack(ontology_format, path)
+            return OntologyPathPack(ontology_format, path, rdf_format)
     return None
 
 
@@ -507,17 +552,13 @@ def db_output_helper(
             detailed_summary_writer.writerows((*keys, v) for keys, v in c_detailed.most_common())
         rv.append(("Summary (Detailed)", db_summary_detailed_path))
 
-    with open(db_metadata_path, "w") as file:
-        json.dump(
-            {
-                "version": get_version(),
-                "git_hash": get_git_hash(),
-                "date": datetime.datetime.now().strftime("%Y-%m-%d-%H-%M"),
-                "count": sum(c.values()),
-            },
-            file,
-            indent=2,
-        )
+    database_metadata = DatabaseMetadata(
+        version=get_version(),
+        git_hash=get_git_hash(),
+        date=datetime.datetime.now(),
+        count=sum(c.values()),
+    )
+    write_pydantic_json(database_metadata, db_metadata_path, indent=2)
 
     elapsed = time.time() - start
     click.secho(f"\nWrote the following files in {elapsed:.1f} seconds\n", fg="green")
@@ -528,3 +569,12 @@ def db_output_helper(
     click.echo()
 
     return [path for _, path in rv]
+
+
+class DatabaseMetadata(BaseModel):
+    """A model for database metadata."""
+
+    version: str  # PyOBO version
+    git_hash: str  # PyOBO git hash
+    date: datetime.datetime
+    count: int

@@ -16,8 +16,8 @@ from sssom_pydantic import SemanticMapping
 from sssom_pydantic.testing import assert_semantic_mapping_equal
 
 import pyobo
-from pyobo import Reference as PyOBOReference
 from pyobo import (
+    Reference,
     default_reference,
     get_name,
     get_name_by_curie,
@@ -93,38 +93,44 @@ class TestAltIds(unittest.TestCase):
     @mock_id_names_mapping
     def test_get_primary(self, _: Any, __: Any) -> None:
         """Test upgrading an obsolete identifier."""
-        primary_id = get_primary_identifier("go", "0001071")
+        primary_id = get_primary_identifier("go:0001071")
         self.assertIsNotNone(primary_id)
         self.assertEqual("0003700", primary_id)
         self.assertIsNone(get_name(ReferenceTuple("go", "0001071"), upgrade_identifier=False))
-        name = get_name(ReferenceTuple("go", "0001071"), upgrade_identifier=True)
-        self.assertIsNotNone(name)
-        self.assertEqual("DNA-binding transcription factor activity", name)
+        self.assertEqual(
+            "DNA-binding transcription factor activity",
+            get_name(ReferenceTuple("go", "0001071"), upgrade_identifier=True),
+        )
 
     @mock_id_alts_mapping
     @mock_id_names_mapping
     def test_get_primary_by_curie(self, _: Any, __: Any) -> None:
         """Test upgrading an obsolete CURIE."""
-        primary_curie = get_primary_curie("go:0001071")
+        secondary_curie = "go:0001071"
+        expected_primary_curie = "go:0003700"
+
+        primary_curie = get_primary_curie(secondary_curie)
         self.assertIsNotNone(primary_curie)
-        self.assertEqual("go:0003700", primary_curie)
+        self.assertEqual(expected_primary_curie, primary_curie)
 
-        primary_reference = get_primary_reference("go:0001071")
+        primary_reference = get_primary_reference(secondary_curie)
         self.assertIsNotNone(primary_reference)
-        self.assertEqual(ReferenceTuple("go", "0003700"), primary_reference)
+        self.assertEqual(Reference.from_curie(expected_primary_curie), primary_reference)
 
-        self.assertIsNone(get_name_by_curie("go:0001071", upgrade_identifier=False))
+        self.assertIsNone(get_name_by_curie(secondary_curie, upgrade_identifier=False))
 
         # if set explicitly to true, then it will do it eagerly
-        name = get_name_by_curie("go:0001071", upgrade_identifier=True)
-        self.assertIsNotNone(name)
-        self.assertEqual("DNA-binding transcription factor activity", name)
+        self.assertEqual(
+            "DNA-binding transcription factor activity",
+            get_name_by_curie(secondary_curie, upgrade_identifier=True),
+        )
 
         # if not set, or left as default, then it will do it only if there's no
         # original name
-        name = get_name_by_curie("go:0001071", upgrade_identifier=None)
-        self.assertIsNotNone(name)
-        self.assertEqual("DNA-binding transcription factor activity", name)
+        self.assertEqual(
+            "DNA-binding transcription factor activity",
+            get_name_by_curie(secondary_curie, upgrade_identifier=None),
+        )
 
     @mock_id_alts_mapping
     @mock_id_names_mapping
@@ -134,15 +140,12 @@ class TestAltIds(unittest.TestCase):
         self.assertIsNotNone(primary_id)
         self.assertEqual("0003700", primary_id)
         name = get_name(ReferenceTuple("go", "0003700"))
-        self.assertIsNotNone(name)
         self.assertEqual("DNA-binding transcription factor activity", name)
 
         name = get_name(ReferenceTuple("go", "0003700"))
-        self.assertIsNotNone(name)
         self.assertEqual("DNA-binding transcription factor activity", name)
 
         name = get_name(curies.Reference(prefix="go", identifier="0003700"))
-        self.assertIsNotNone(name)
         self.assertEqual("DNA-binding transcription factor activity", name)
 
     @mock_id_alts_mapping
@@ -157,12 +160,11 @@ class TestAltIds(unittest.TestCase):
     @mock_id_names_mapping
     def test_already_primary_by_curie(self, _: Any, __: Any) -> None:
         """Test when you give a primary CURIE."""
-        primary_curie = get_primary_curie("go:0003700")
-        self.assertIsNotNone(primary_curie)
-        self.assertEqual("go:0003700", primary_curie)
-        name = get_name_by_curie("go:0003700")
-        self.assertIsNotNone(name)
-        self.assertEqual("DNA-binding transcription factor activity", name)
+        for curie in ["go:0003700", "GO:0003700"]:
+            primary_reference = get_primary_reference(curie)
+            self.assertEqual(Reference.from_curie(curie), primary_reference)
+            name = get_name_by_curie(curie)
+            self.assertEqual("DNA-binding transcription factor activity", name)
 
     @mock_id_alts_mapping
     @mock_id_names_mapping
@@ -183,11 +185,11 @@ class TestEverything(unittest.TestCase):
         """
         tr1 = default_reference(TEST_P1, "r1")
         td1 = TypeDef(reference=tr1)
-        r1 = PyOBOReference(prefix=TEST_P1, identifier="1", name="test name")
-        r2 = PyOBOReference(prefix=TEST_P1, identifier="2")
-        r3 = PyOBOReference(prefix=TEST_P1, identifier="3")
-        r2_1 = PyOBOReference(prefix=TEST_P2, identifier="X")
-        r2_2 = PyOBOReference(prefix=TEST_P2, identifier="Y")
+        r1 = Reference(prefix=TEST_P1, identifier="1", name="test name")
+        r2 = Reference(prefix=TEST_P1, identifier="2")
+        r3 = Reference(prefix=TEST_P1, identifier="3")
+        r2_1 = Reference(prefix=TEST_P2, identifier="X")
+        r2_2 = Reference(prefix=TEST_P2, identifier="Y")
         syn1 = "ttt1"
         t1 = Term(reference=r1).append_alt(r2).append_synonym(syn1).append_xref(r2_1)
         t1.append_comment("test comment")
@@ -261,11 +263,12 @@ class TestEverything(unittest.TestCase):
                 )
             )
             self.assertEqual(3, len(semantic_mappings))
-            subject_source = PyOBOReference(prefix="bioregistry", identifier=r1.prefix)
+            subject_source = Reference(prefix="bioregistry", identifier=r1.prefix)
             expected_semantic_mappings = [
                 SemanticMapping(
                     subject=r1,
-                    predicate=PyOBOReference.from_reference(_v.alternative_term),
+                    subject_type=_v.owl_class,
+                    predicate=Reference.from_reference(_v.alternative_term),
                     object=r2,
                     justification=_v.unspecified_matching_process.without_name(),
                     source=subject_source,
@@ -273,7 +276,8 @@ class TestEverything(unittest.TestCase):
                 ),
                 SemanticMapping(
                     subject=r1,
-                    predicate=PyOBOReference.from_reference(_v.has_dbxref),
+                    subject_type=_v.owl_class,
+                    predicate=Reference.from_reference(_v.has_dbxref),
                     object=r2_1,
                     justification=_v.unspecified_matching_process.without_name(),
                     source=subject_source,
@@ -281,7 +285,8 @@ class TestEverything(unittest.TestCase):
                 ),
                 SemanticMapping(
                     subject=r3,
-                    predicate=PyOBOReference.from_reference(_v.exact_match),
+                    subject_type=_v.owl_class,
+                    predicate=Reference.from_reference(_v.exact_match),
                     object=r2_2,
                     justification=_v.unspecified_matching_process.without_name(),
                     source=subject_source,
@@ -297,13 +302,13 @@ class TestEverything(unittest.TestCase):
                 LiteralMapping(
                     text="ttt1",
                     reference=r1,
-                    predicate=PyOBOReference.from_reference(_v.has_related_synonym),
+                    predicate=Reference.from_reference(_v.has_related_synonym),
                     source=TEST_P1,
                 ),
                 LiteralMapping(
                     text="test name",
                     reference=r1,
-                    predicate=PyOBOReference.from_reference(_v.has_label),
+                    predicate=Reference.from_reference(_v.has_label),
                     source=TEST_P1,
                 ),
             ]
@@ -353,7 +358,19 @@ class TestEverything(unittest.TestCase):
             self.assertTrue(pyobo.has_ancestor(r3.curie, r1.curie, cache=False, use_tqdm=False))
             self.assertFalse(pyobo.has_ancestor(r1, r3, cache=False, use_tqdm=False))
             self.assertFalse(pyobo.has_ancestor(r1.curie, r3.curie, cache=False, use_tqdm=False))
-            self.assertTrue(pyobo.is_descendent(r3.curie, r1.curie, cache=False, use_tqdm=False))
-            self.assertTrue(pyobo.is_descendent(r3, r1, cache=False, use_tqdm=False))
-            self.assertFalse(pyobo.is_descendent(r1, r3, cache=False, use_tqdm=False))
-            self.assertFalse(pyobo.is_descendent(r1.curie, r3.curie, cache=False, use_tqdm=False))
+            self.assertTrue(
+                pyobo.has_ancestor(
+                    r3.curie, r1.curie, cache=False, use_tqdm=False, direction="down"
+                )
+            )
+            self.assertTrue(
+                pyobo.has_ancestor(r3, r1, cache=False, use_tqdm=False, direction="down")
+            )
+            self.assertFalse(
+                pyobo.has_ancestor(r1, r3, cache=False, use_tqdm=False, direction="down")
+            )
+            self.assertFalse(
+                pyobo.has_ancestor(
+                    r1.curie, r3.curie, cache=False, use_tqdm=False, direction="down"
+                )
+            )

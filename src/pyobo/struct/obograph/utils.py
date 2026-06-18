@@ -3,8 +3,11 @@
 import unittest
 from typing import cast
 
-from curies import Reference
+import obographs as og
 from obographs import StandardizedGraph, StandardizedMeta
+
+from pyobo.constants import TypeDefType
+from pyobo.identifier_utils import Reference
 
 __all__ = [
     "assert_graph_equal",
@@ -45,3 +48,13 @@ def assert_graph_equal(
             exclude_none=True, exclude_unset=True, exclude_defaults=True, exclude=excludes
         ),
     )
+
+
+PROPERTY_TYPE_MAP: dict[TypeDefType, og.PropertyType] = {
+    "annotation": "ANNOTATION",
+    "data": "DATA",
+    "object": "OBJECT",
+}
+INVERSE_PROPERTY_TYPE_MAP: dict[og.PropertyType, TypeDefType] = {
+    v: k for k, v in PROPERTY_TYPE_MAP.items()
+}

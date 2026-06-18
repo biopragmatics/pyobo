@@ -14,13 +14,15 @@ from functional_owl import macros as m
 from rdflib import XSD
 
 from . import vocabulary as pv
-from .reference import OBOLiteral, Reference, _parse_datetime
-from .struct_utils import Stanza
+from .reference import OBOLiteral, _parse_datetime
+from .struct import get_iris
+from ..identifier_utils import Reference
 
 if TYPE_CHECKING:
     from .reference import Referenced
     from .struct import Obo, Term, TypeDef
     from .struct_utils import Annotation as OBOAnnotation
+    from .struct_utils import Stanza
 
 __all__ = [
     "get_ofn_from_obo",
@@ -30,25 +32,13 @@ __all__ = [
     "get_typedef_axioms",
 ]
 
-_BASE = "https://w3id.org/biopragmatics/resources"
-
 
 def get_ofn_from_obo(
     obo_ontology: Obo, *, iri: str | None = None, version_iri: str | None = None
 ) -> Document:
     """Convert an ontology."""
-    prefix = obo_ontology.ontology
-    base = f"{_BASE}/{prefix}"
-    if iri is None:
-        if obo_ontology.ontology_iri:
-            iri = obo_ontology.ontology_iri
-        else:
-            iri = f"{base}/{prefix}.ofn"
-    if version_iri is None:
-        if obo_ontology.ontology_version_iri:
-            version_iri = obo_ontology.ontology_version_iri
-        elif obo_ontology.data_version:
-            version_iri = f"{base}/{obo_ontology.data_version}/{prefix}.ofn"
+    iri, version_iri = get_iris(obo_ontology, iri=iri, version_iri=version_iri, extension="ofn")
+
     ofn_ontology = Ontology(
         iri=iri,
         version_iri=version_iri,
@@ -231,10 +221,14 @@ def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
     """Iterate over functional OWL axioms for a typedef."""
     r = f.IdentifierBox(typedef.reference)
     # 40
-    if typedef.is_metadata_tag:
-        yield f.Declaration(r, type="AnnotationProperty")
-    else:
+    if typedef.predicate_type is None or typedef.predicate_type == "object":
         yield f.Declaration(r, type="ObjectProperty")
+    elif typedef.predicate_type == "annotation":
+        yield f.Declaration(r, type="AnnotationProperty")
+    elif typedef.predicate_type == "data":
+        yield f.Declaration(r, type="DataProperty")
+    else:
+        raise ValueError
     # 2
     if typedef.is_anonymous is not None:
         yield m.IsAnonymousMacro(r, typedef.is_anonymous)
@@ -264,16 +258,24 @@ def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
     yield from _yield_properties(typedef, r)
     # 12
     if typedef.domain:
-        if typedef.is_metadata_tag:
-            yield f.AnnotationPropertyDomain(r, typedef.domain)
-        else:
+        if typedef.predicate_type is None or typedef.predicate_type == "object":
             yield f.ObjectPropertyDomain(r, typedef.domain)
+        elif typedef.predicate_type == "annotation":
+            yield f.AnnotationPropertyDomain(r, typedef.domain)
+        elif typedef.predicate_type == "data":
+            yield f.DataPropertyDomain(r, typedef.domain)
+        else:
+            raise ValueError
     # 13
     if typedef.range:
-        if typedef.is_metadata_tag:
-            yield f.AnnotationPropertyRange(r, typedef.range)
-        else:
+        if typedef.predicate_type is None or typedef.predicate_type == "object":
             yield f.ObjectPropertyRange(r, typedef.range)
+        elif typedef.predicate_type == "annotation":
+            yield f.AnnotationPropertyRange(r, typedef.range)
+        elif typedef.predicate_type == "data":
+            yield f.DataPropertyRange(r, typedef.range)
+        else:
+            raise ValueError
     # 14
     if typedef.builtin is not None:
         yield m.IsOBOBuiltinMacro(r, typedef.builtin)
@@ -303,10 +305,14 @@ def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
         yield f.InverseFunctionalObjectProperty(r)
     # 23
     for parent in typedef.parents:
-        if typedef.is_metadata_tag:
-            yield f.SubAnnotationPropertyOf(r, parent)
-        else:
+        if typedef.predicate_type is None or typedef.predicate_type == "object":
             yield f.SubObjectPropertyOf(r, parent)
+        elif typedef.predicate_type == "annotation":
+            yield f.SubAnnotationPropertyOf(r, parent)
+        elif typedef.predicate_type == "data":
+            yield f.SubDataPropertyOf(r, parent)
+        else:
+            raise ValueError
     # 24 TODO intersection_of, ROBOT does not create any output
     # 25 TODO union_of, ROBOT does not create any output
     # 26
@@ -317,7 +323,14 @@ def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
         yield f.DisjointObjectProperties([x, r])
     # 28
     if typedef.inverse:
-        yield f.InverseObjectProperties(r, typedef.inverse)
+        if typedef.predicate_type == "annotation":
+            pass  # not sure what to do
+        elif typedef.predicate_type == "object":
+            yield f.InverseObjectProperties(r, typedef.inverse)
+        elif typedef.predicate_type == "data":
+            pass
+        else:
+            raise ValueError
     # 29
     for to in typedef.transitive_over:
         yield m.TransitiveOver(r, to)
