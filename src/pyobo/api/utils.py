@@ -1,6 +1,5 @@
 """Utilities for high-level API."""
 
-
 import curies
 from curies import ReferenceTuple
 
