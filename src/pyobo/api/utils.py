@@ -26,8 +26,10 @@ def _get_pi(
 ) -> Reference:
     if _unused is not None:
         raise ValueError("unexpected non-none value passed as second positional argument")
+    if isinstance(reference, Reference):
+        return reference
     if isinstance(reference, ReferenceTuple | curies.Reference):
         return Reference.from_reference(reference)
-    if isinstance(reference, str) and _unused is None:
+    if isinstance(reference, str):
         return Reference.from_curie(reference)
     raise TypeError(f"unexpected type {type(reference)}")
