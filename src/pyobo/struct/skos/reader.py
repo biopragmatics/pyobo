@@ -11,8 +11,8 @@ from rdflib import DCTERMS, RDF, RDFS, SKOS, VANN, Graph, Node, URIRef
 from tqdm import tqdm
 
 from pyobo import Annotation
-from pyobo.identifier_utils import get_converter
-from pyobo.struct import Obo, Reference, Term, build_ontology
+from pyobo.identifier_utils import Reference, get_converter
+from pyobo.struct import Obo, Term, build_ontology
 from pyobo.struct.vocabulary import has_source
 
 __all__ = [

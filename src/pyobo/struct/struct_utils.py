@@ -20,7 +20,6 @@ from ssslm import LiteralMapping
 from . import vocabulary as v
 from .reference import (
     OBOLiteral,
-    Reference,
     Referenced,
     comma_separate_references,
     default_reference,
@@ -34,6 +33,7 @@ from .utils import obo_escape_slim
 from ..identifier_utils import (
     NotCURIEError,
     ParseError,
+    Reference,
     _is_valid_identifier,
     _parse_str_or_curie_or_uri_helper,
 )

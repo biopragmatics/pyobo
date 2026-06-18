@@ -7,8 +7,9 @@ from collections.abc import Sequence
 from curies import ReferenceTuple
 
 from . import vocabulary as v
-from .reference import Reference, default_reference
+from .reference import default_reference
 from .struct import TypeDef
+from ..identifier_utils import Reference
 from ..resources.ro import load_ro
 
 __all__ = [

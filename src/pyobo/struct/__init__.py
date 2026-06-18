@@ -1,12 +1,6 @@
 """Data structures for OBO."""
 
-from .reference import (
-    OBOLiteral,
-    Reference,
-    Referenced,
-    _parse_str_or_curie_or_uri,
-    default_reference,
-)
+from .reference import OBOLiteral, Referenced, _parse_str_or_curie_or_uri, default_reference
 from .struct import (
     CHARLIE_TERM,
     HUMAN_TERM,
@@ -41,6 +35,7 @@ from .typedef import (
     transcribes_to,
     translates_to,
 )
+from ..identifier_utils import Reference
 
 __all__ = [
     "CHARLIE_TERM",
@@ -49,6 +44,7 @@ __all__ = [
     "Annotation",
     "OBOLiteral",
     "Obo",
+    "Reference",
     "Reference",
     "Referenced",
     "Stanza",

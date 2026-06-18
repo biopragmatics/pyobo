@@ -11,9 +11,9 @@ import click
 from curies import ReferenceTuple
 from curies import vocabulary as v
 
+from pyobo.identifier_utils import Reference
 from pyobo.struct.reference import (
     OBOLiteral,
-    Reference,
     _obo_parse_identifier,
     _parse_reference_or_uri_literal,
 )

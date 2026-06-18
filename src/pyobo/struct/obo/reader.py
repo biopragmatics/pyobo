@@ -32,7 +32,6 @@ from .. import vocabulary as v
 from ..reference import OBOLiteral, _obo_parse_identifier, default_reference
 from ..struct import (
     Obo,
-    Reference,
     Synonym,
     SynonymTypeDef,
     Term,
@@ -45,6 +44,7 @@ from ...constants import DATE_FORMAT, PROVENANCE_PREFIXES
 from ...identifier_utils import (
     NotCURIEError,
     ParseError,
+    Reference,
     UnparsableIRIError,
     _is_valid_identifier,
     _parse_str_or_curie_or_uri_helper,
