@@ -97,9 +97,10 @@ class TestAltIds(unittest.TestCase):
         self.assertIsNotNone(primary_id)
         self.assertEqual("0003700", primary_id)
         self.assertIsNone(get_name(ReferenceTuple("go", "0001071"), upgrade_identifier=False))
-        name = get_name(ReferenceTuple("go", "0001071"), upgrade_identifier=True)
-        self.assertIsNotNone(name)
-        self.assertEqual("DNA-binding transcription factor activity", name)
+        self.assertEqual(
+            "DNA-binding transcription factor activity",
+            get_name(ReferenceTuple("go", "0001071"), upgrade_identifier=True),
+        )
 
     @mock_id_alts_mapping
     @mock_id_names_mapping

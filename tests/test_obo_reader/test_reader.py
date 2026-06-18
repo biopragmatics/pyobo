@@ -1416,8 +1416,5 @@ class TestReaderTerm(unittest.TestCase):
         """)
         r1 = Reference(prefix="CHEBI", identifier="16236", name="ethanol")
         grounder = ontology.get_grounder()
-        match = grounder.get_best_match("Ethanol")
-        self.assertIsNotNone(match)
-        if match is None:
-            raise ValueError
+        match = grounder.get_best_match("Ethanol", strict=True)
         self.assertEqual(r1, match.reference)
