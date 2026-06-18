@@ -30,8 +30,4 @@ def _get_pi(
         return Reference.from_reference(prefix)
     if isinstance(prefix, str) and identifier is None:
         return Reference.from_curie(prefix)
-    if identifier is None:
-        raise ValueError(
-            "prefix was given as a string, so an identifier was expected to be passed as a string as well"
-        )
     raise NotImplementedError
