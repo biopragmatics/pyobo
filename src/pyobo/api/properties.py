@@ -7,7 +7,7 @@ import pandas as pd
 from tqdm import tqdm
 from typing_extensions import Unpack
 
-from .utils import get_version_from_kwargs
+from .utils import SimpleReferenceHint, _get_pi, get_version_from_kwargs
 from ..constants import (
     GetOntologyKwargs,
     check_should_cache,
@@ -155,44 +155,44 @@ def get_filtered_properties_multimapping(
 
 
 def get_property(
-    prefix: str, identifier: str, prop: ReferenceHint, **kwargs: Unpack[GetOntologyKwargs]
+    reference: SimpleReferenceHint, /, prop: ReferenceHint, **kwargs: Unpack[GetOntologyKwargs]
 ) -> str | None:
     """Extract a single property for the given entity.
 
-    :param prefix: the resource to load
-    :param identifier: the identifier withing the resource
+    :param reference: the reference to load
     :param prop: the property to extract
 
     :returns: The single value for the property. If multiple are expected, use
         :func:`get_properties`
 
     >>> import pyobo
-    >>> pyobo.get_property("chebi", "132964", "http://purl.obolibrary.org/obo/chebi/smiles")
+    >>> pyobo.get_property("chebi:132964", "http://purl.obolibrary.org/obo/chebi/smiles")
     "C1(=CC=C(N=C1)OC2=CC=C(C=C2)O[C@@H](C(OCCCC)=O)C)C(F)(F)F"
     """
-    filtered_properties_mapping = get_filtered_properties_mapping(prefix, prop=prop, **kwargs)
-    return filtered_properties_mapping.get(identifier)
+    reference = _get_pi(reference)
+    filtered_properties_mapping = get_filtered_properties_mapping(
+        reference.prefix, prop=prop, **kwargs
+    )
+    return filtered_properties_mapping.get(reference.identifier)
 
 
 def get_properties(
-    prefix: str,
-    identifier: str,
-    prop: ReferenceHint,
-    **kwargs: Unpack[GetOntologyKwargs],
+    reference: SimpleReferenceHint, /, prop: ReferenceHint, **kwargs: Unpack[GetOntologyKwargs]
 ) -> list[str] | None:
     """Extract a set of properties for the given entity.
 
-    :param prefix: the resource to load
+    :param reference: the reference to load
     :param identifier: the identifier withing the resource
     :param prop: the property to extract
 
     :returns: Multiple values for the property. If only one is expected, use
         :func:`get_property`
     """
+    reference = _get_pi(reference)
     filtered_properties_multimapping = get_filtered_properties_multimapping(
-        prefix, prop=prop, **kwargs
+        reference.prefix, prop=prop, **kwargs
     )
-    return filtered_properties_multimapping.get(identifier)
+    return filtered_properties_multimapping.get(reference.identifier)
 
 
 @wrap_norm_prefix

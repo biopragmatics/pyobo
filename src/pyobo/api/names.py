@@ -16,7 +16,7 @@ from ssslm import LiteralMapping
 from typing_extensions import Unpack
 
 from .alts import get_primary_identifier
-from .utils import _get_pi, get_version_from_kwargs
+from .utils import SimpleReferenceHint, _get_pi, get_version_from_kwargs
 from ..constants import (
     GetOntologyKwargs,
     check_should_cache,
@@ -67,12 +67,14 @@ NO_BUILD_PREFIXES: set[str] = set()
 
 def _help_get(
     f: Callable[[str, Unpack[GetOntologyKwargs]], Mapping[str, X]],
-    reference: Reference,
+    reference: SimpleReferenceHint,
     *,
     upgrade_identifier: bool | None = None,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> X | None:
     """Get the result for an entity based on a mapping maker function ``f``."""
+    reference = _get_pi(reference)
+
     try:
         mapping = f(reference.prefix, **kwargs)
     except NoBuildError:
@@ -108,15 +110,13 @@ def _help_get(
 
 
 def get_name(
-    prefix: str | curies.Reference | curies.ReferenceTuple,
-    identifier: str | None = None,
+    reference: str | curies.Reference | curies.ReferenceTuple,
     /,
     *,
     upgrade_identifier: bool | None = None,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> str | None:
     """Get the name for an entity."""
-    reference = _get_pi(prefix, identifier)
     return _help_get(
         get_id_name_mapping, reference, upgrade_identifier=upgrade_identifier, **kwargs
     )
@@ -246,13 +246,11 @@ def get_name_id_mapping(
 
 
 def get_definition(
-    prefix: str | curies.Reference | curies.ReferenceTuple,
-    identifier: str | None = None,
+    reference: str | curies.Reference | curies.ReferenceTuple,
     /,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> str | None:
     """Get the definition for an entity."""
-    reference = _get_pi(prefix, identifier)
     return _help_get(get_id_definition_mapping, reference, **kwargs)
 
 
@@ -308,13 +306,11 @@ def get_obsolete_references(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) ->
 
 
 def get_synonyms(
-    prefix: str | curies.Reference | curies.ReferenceTuple,
-    identifier: str | None = None,
+    reference: str | curies.Reference | curies.ReferenceTuple,
     /,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> list[str] | None:
     """Get the synonyms for an entity."""
-    reference = _get_pi(prefix, identifier)
     return _help_get(get_id_synonyms_mapping, reference, **kwargs)
 
 

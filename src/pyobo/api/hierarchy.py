@@ -9,13 +9,12 @@ from functools import lru_cache
 from typing import Literal, NotRequired, cast
 
 import networkx as nx
-from curies import ReferenceTuple
 from typing_extensions import Unpack
 
 from .edges import get_edges
 from .names import get_name, get_references
 from .properties import get_literal_properties
-from .utils import _get_pi
+from .utils import SimpleReferenceHint, _get_pi
 from ..constants import GetOntologyKwargs
 from ..identifier_utils import Reference
 from ..struct import has_member, has_part, is_a, member_of, part_of
@@ -92,7 +91,7 @@ def _get_hierarchy_helper(
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> nx.DiGraph:
     predicates, reverse_predicates = _get_predicate_sets(
-        extra_relations, include_part_of, include_has_member
+        extra_relations, include_part_of=include_part_of, include_has_member=include_has_member
     )
 
     rv = nx.DiGraph()
@@ -113,7 +112,7 @@ def _get_hierarchy_helper(
 
 
 def _get_predicate_sets(
-    extra_relations: Iterable[Reference], include_part_of: bool, include_has_member: bool
+    extra_relations: Iterable[Reference], *, include_part_of: bool, include_has_member: bool
 ) -> tuple[set[Reference], set[Reference]]:
     predicates: set[Reference] = {is_a.reference, *extra_relations}
     reverse_predicates: set[Reference] = set()
@@ -127,8 +126,8 @@ def _get_predicate_sets(
 
 
 def is_descendent(
-    reference: str | Reference,
-    ancestor: str | Reference,
+    reference: SimpleReferenceHint,
+    ancestor: SimpleReferenceHint,
     /,
     **kwargs: Unpack[HierarchyKwargs],
 ) -> bool:
@@ -139,37 +138,31 @@ def is_descendent(
 
 @lru_cache
 def get_descendants(
-    prefix: str | Reference | ReferenceTuple,
-    identifier: str | None = None,
-    /,
-    **kwargs: Unpack[HierarchyKwargs],
+    reference: SimpleReferenceHint, /, **kwargs: Unpack[HierarchyKwargs]
 ) -> set[Reference] | None:
     """Get all the descendants (children) of the term as CURIEs."""
-    t = _get_pi(prefix, identifier)
-    hierarchy = get_hierarchy(prefix=t.prefix, **kwargs)
-    if t not in hierarchy:
+    reference = _get_pi(reference)
+    hierarchy = get_hierarchy(prefix=reference.prefix, **kwargs)
+    if reference not in hierarchy:
         return None
-    return cast(set[Reference], nx.ancestors(hierarchy, t))  # note this is backwards
+    return cast(set[Reference], nx.ancestors(hierarchy, reference))  # note this is backwards
 
 
 @lru_cache
 def get_children(
-    prefix: str | Reference | ReferenceTuple,
-    identifier: str | None = None,
-    /,
-    **kwargs: Unpack[HierarchyKwargs],
+    reference: SimpleReferenceHint, /, **kwargs: Unpack[HierarchyKwargs]
 ) -> set[Reference] | None:
     """Get all the descendants (children) of the term as CURIEs."""
-    t = _get_pi(prefix, identifier)
-    hierarchy = get_hierarchy(prefix=t.prefix, **kwargs)
-    if t not in hierarchy:
+    reference = _get_pi(reference)
+    hierarchy = get_hierarchy(prefix=reference.prefix, **kwargs)
+    if reference not in hierarchy:
         return None
-    return set(hierarchy.predecessors(t))
+    return set(hierarchy.predecessors(reference))
 
 
 def has_ancestor(
-    reference: str | Reference,
-    ancestor: str | Reference,
+    reference: SimpleReferenceHint,
+    ancestor: SimpleReferenceHint,
     /,
     direction: Literal["up", "down"] = "up",
     **kwargs: Unpack[HierarchyKwargs],
@@ -198,7 +191,8 @@ def has_ancestor(
     >>> apoptosis = Reference.from_curie("GO:0006915", name="apoptotic process")
     >>> assert has_ancestor(nk_apoptosis, apoptosis)
     """
-    reference, ancestor = _get_double_reference(reference, ancestor)
+    reference = _get_pi(reference)
+    ancestor = _get_pi(ancestor)
     if direction == "up":
         ancestors = get_ancestors(reference, **kwargs)
         return ancestors is not None and ancestor in ancestors
@@ -207,42 +201,23 @@ def has_ancestor(
         return descendants is not None and reference in descendants
 
 
-def _get_double_reference(
-    a: str | Reference, b: str | Reference, c: str | None = None, d: str | None = None
-) -> tuple[Reference, Reference]:
-    if c is not None or d is not None:
-        raise NotImplementedError("passing strings is no longer supported")
-    if isinstance(a, str):
-        a = Reference.from_curie(a)
-    if isinstance(b, str):
-        b = Reference.from_curie(b)
-    return a, b
-
-
 @lru_cache
 def get_ancestors(
-    prefix: str | Reference | ReferenceTuple,
-    identifier: str | None = None,
-    /,
-    **kwargs: Unpack[HierarchyKwargs],
+    reference: SimpleReferenceHint, /, **kwargs: Unpack[HierarchyKwargs]
 ) -> set[Reference] | None:
     """Get all the ancestors (parents) of the term as CURIEs."""
-    t = _get_pi(prefix, identifier)
-    hierarchy = get_hierarchy(prefix=t.prefix, **kwargs)
-    if t not in hierarchy:
+    reference = _get_pi(reference)
+    hierarchy = get_hierarchy(prefix=reference.prefix, **kwargs)
+    if reference not in hierarchy:
         return None
-
-    return cast(set[Reference], nx.descendants(hierarchy, t))  # note this is backwards
+    return cast(set[Reference], nx.descendants(hierarchy, reference))  # note this is backwards
 
 
 def get_subhierarchy(
-    prefix: str | Reference | ReferenceTuple,
-    identifier: str | None = None,
-    /,
-    **kwargs: Unpack[HierarchyKwargs],
+    reference: SimpleReferenceHint, /, **kwargs: Unpack[HierarchyKwargs]
 ) -> nx.DiGraph:
     """Get the subhierarchy for a given node."""
-    t = _get_pi(prefix, identifier)
+    t = _get_pi(reference)
     hierarchy = get_hierarchy(prefix=t.prefix, **kwargs)
     logger.info("getting descendants of %s ! %s", t.curie, get_name(t))
     descendants = set(nx.ancestors(hierarchy, t)) | {t}  # note this is backwards

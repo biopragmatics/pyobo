@@ -4,11 +4,10 @@ import logging
 from collections.abc import Mapping
 from functools import lru_cache
 
-import curies
 from pydantic import ValidationError
 from typing_extensions import Unpack
 
-from .utils import _get_pi, get_version_from_kwargs
+from .utils import SimpleReferenceHint, _get_pi, get_version_from_kwargs
 from ..constants import GetOntologyKwargs, check_should_cache, check_should_force
 from ..getters import get_ontology
 from ..identifier_utils import Reference, wrap_norm_prefix
@@ -63,54 +62,44 @@ def get_alts_to_id(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> Mapping[
 
 
 def get_primary_reference(
-    prefix: str | curies.Reference | curies.ReferenceTuple,
-    identifier: str | None = None,
-    /,
-    **kwargs: Unpack[GetOntologyKwargs],
+    reference: SimpleReferenceHint, /, **kwargs: Unpack[GetOntologyKwargs]
 ) -> Reference | None:
     """Get the primary reference for an entity."""
-    reference = _get_pi(prefix, identifier)
+    primary_reference = _get_pi(reference)
     try:
-        primary_identifier = get_primary_identifier(reference, **kwargs)
+        primary_identifier = get_primary_identifier(primary_reference, **kwargs)
     except (ValueError, ValidationError):
         if kwargs.get("strict"):
             raise
         # this happens on invalid prefix. maybe revise?
         return None
-    return Reference(prefix=reference.prefix, identifier=primary_identifier)
+    return Reference(prefix=primary_reference.prefix, identifier=primary_identifier)
 
 
 def get_primary_curie(
-    prefix: str | curies.Reference | curies.ReferenceTuple,
-    identifier: str | None = None,
-    /,
-    **kwargs: Unpack[GetOntologyKwargs],
+    reference: SimpleReferenceHint, /, **kwargs: Unpack[GetOntologyKwargs]
 ) -> str | None:
     """Get the primary curie for an entity."""
-    reference = get_primary_reference(prefix, identifier, **kwargs)
-    if reference is None:
+    primary_reference = get_primary_reference(reference, **kwargs)
+    if primary_reference is None:
         return None
-    return reference.curie
+    return primary_reference.curie
 
 
 def get_primary_identifier(
-    prefix: str | curies.Reference | curies.ReferenceTuple,
-    identifier: str | None = None,
-    /,
-    **kwargs: Unpack[GetOntologyKwargs],
+    reference: SimpleReferenceHint, /, **kwargs: Unpack[GetOntologyKwargs]
 ) -> str:
     """Get the primary identifier for an entity.
 
-    :param prefix: The name of the resource
-    :param identifier: The identifier to look up
+    :param reference: The name of the resource
 
     :returns: the canonical identifier based on alt id lookup
 
     Returns the original identifier if there are no alts available or if there's no
     mapping.
     """
-    t = _get_pi(prefix, identifier)
-    if t.prefix in NO_ALTS:  # TODO later expand list to other namespaces with no alts
-        return t.identifier
-    alts_to_id = get_alts_to_id(t.prefix, **kwargs)
-    return alts_to_id.get(t.identifier, t.identifier)
+    reference = _get_pi(reference)
+    if reference.prefix in NO_ALTS:  # TODO later expand list to other namespaces with no alts
+        return reference.identifier
+    alts_to_id = get_alts_to_id(reference.prefix, **kwargs)
+    return alts_to_id.get(reference.identifier, reference.identifier)
