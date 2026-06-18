@@ -57,19 +57,8 @@ def get_version(prefix: str, *, strict: bool = False) -> str | None:
     if version := get_version_pins().get(prefix):
         return version
 
-    try:
-        version = bioversions.get_version(prefix)
-    except (KeyError, ValueError):
-        pass  # this prefix isn't available from bioversions, or an error occurred during parsing
-    except Exception as e:
-        msg = f"[{prefix}] could not get version from bioversions"
-        if strict:
-            raise ValueError(msg) from e
-        logger.warning(msg)
-        raise
-    else:
-        if version:
-            return version
+    if version := bioversions.get_version(prefix, strict=False):
+        return version
 
     metadata_path = prefix_directory_join(
         prefix, name=CacheArtifact.metadata.value, ensure_exists=False
@@ -80,7 +69,9 @@ def get_version(prefix: str, *, strict: bool = False) -> str | None:
             return metadata.version
 
     if strict:
-        raise ValueError
+        raise ValueError(
+            f"[{prefix}] could not get version from bioversions nor lookup version cache"
+        )
 
     return None
 
