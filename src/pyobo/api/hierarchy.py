@@ -139,32 +139,28 @@ def is_descendent(
 
 @lru_cache
 def get_descendants(
-    prefix: str | Reference | ReferenceTuple,
-    identifier: str | None = None,
+    reference: str | Reference | ReferenceTuple,
     /,
     **kwargs: Unpack[HierarchyKwargs],
 ) -> set[Reference] | None:
     """Get all the descendants (children) of the term as CURIEs."""
-    t = _get_pi(prefix, identifier)
-    hierarchy = get_hierarchy(prefix=t.prefix, **kwargs)
-    if t not in hierarchy:
+    reference = _get_pi(reference)
+    hierarchy = get_hierarchy(prefix=reference.prefix, **kwargs)
+    if reference not in hierarchy:
         return None
-    return cast(set[Reference], nx.ancestors(hierarchy, t))  # note this is backwards
+    return cast(set[Reference], nx.ancestors(hierarchy, reference))  # note this is backwards
 
 
 @lru_cache
 def get_children(
-    prefix: str | Reference | ReferenceTuple,
-    identifier: str | None = None,
-    /,
-    **kwargs: Unpack[HierarchyKwargs],
+    reference: str | Reference | ReferenceTuple, /, **kwargs: Unpack[HierarchyKwargs]
 ) -> set[Reference] | None:
     """Get all the descendants (children) of the term as CURIEs."""
-    t = _get_pi(prefix, identifier)
-    hierarchy = get_hierarchy(prefix=t.prefix, **kwargs)
-    if t not in hierarchy:
+    reference = _get_pi(reference)
+    hierarchy = get_hierarchy(prefix=reference.prefix, **kwargs)
+    if reference not in hierarchy:
         return None
-    return set(hierarchy.predecessors(t))
+    return set(hierarchy.predecessors(reference))
 
 
 def has_ancestor(
@@ -221,28 +217,21 @@ def _get_double_reference(
 
 @lru_cache
 def get_ancestors(
-    prefix: str | Reference | ReferenceTuple,
-    identifier: str | None = None,
-    /,
-    **kwargs: Unpack[HierarchyKwargs],
+    reference: str | Reference | ReferenceTuple, /, **kwargs: Unpack[HierarchyKwargs]
 ) -> set[Reference] | None:
     """Get all the ancestors (parents) of the term as CURIEs."""
-    t = _get_pi(prefix, identifier)
-    hierarchy = get_hierarchy(prefix=t.prefix, **kwargs)
-    if t not in hierarchy:
+    reference = _get_pi(reference)
+    hierarchy = get_hierarchy(prefix=reference.prefix, **kwargs)
+    if reference not in hierarchy:
         return None
-
-    return cast(set[Reference], nx.descendants(hierarchy, t))  # note this is backwards
+    return cast(set[Reference], nx.descendants(hierarchy, reference))  # note this is backwards
 
 
 def get_subhierarchy(
-    prefix: str | Reference | ReferenceTuple,
-    identifier: str | None = None,
-    /,
-    **kwargs: Unpack[HierarchyKwargs],
+    reference: str | Reference | ReferenceTuple, /, **kwargs: Unpack[HierarchyKwargs]
 ) -> nx.DiGraph:
     """Get the subhierarchy for a given node."""
-    t = _get_pi(prefix, identifier)
+    t = _get_pi(reference)
     hierarchy = get_hierarchy(prefix=t.prefix, **kwargs)
     logger.info("getting descendants of %s ! %s", t.curie, get_name(t))
     descendants = set(nx.ancestors(hierarchy, t)) | {t}  # note this is backwards

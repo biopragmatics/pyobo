@@ -54,7 +54,7 @@ chebi_id_to_name = pyobo.get_id_name_mapping("chebi")
 assert "fluazifop-P-butyl" == chebi_id_to_name["132964"]
 
 # or more directly
-assert "fluazifop-P-butyl" == pyobo.get_name("chebi", "132964")
+assert "fluazifop-P-butyl" == pyobo.get_name("chebi:132964")
 ```
 
 Get reverse mapping of ChEBI names to identifiers:
@@ -111,7 +111,7 @@ Or, you don't have time for two lines:
 import pyobo
 
 # Apoptosis (Homo sapiens)
-taxonomy_id = pyobo.get_species("wikipathways", "WP254")
+taxonomy_id = pyobo.get_species("wikipathways:WP254")
 assert taxonomy_id == "9606"
 ```
 
@@ -240,11 +240,11 @@ import pyobo
 from pyobo import Reference
 
 # check that go:0008219 ! cell death is an ancestor of go:0006915 ! apoptotic process
-assert Reference.from_curie("go:0008219") in pyobo.get_ancestors("go", "0006915")
+assert Reference.from_curie("go:0008219") in pyobo.get_ancestors("go:0006915")
 
 # check that go:0070246 ! natural killer cell apoptotic process is a
 # descendant of go:0006915 ! apoptotic process
-apopototic_process_descendants = pyobo.get_descendants("go", "0006915")
+apopototic_process_descendants = pyobo.get_descendants("go:0006915")
 assert Reference.from_curie("go:0070246") in apopototic_process_descendants
 ```
 
@@ -255,7 +255,7 @@ import pyobo
 from pyobo import Reference
 
 # get the descendant graph of go:0006915 ! apoptotic process
-apopototic_process_subhierarchy = pyobo.get_subhierarchy("go", "0006915")
+apopototic_process_subhierarchy = pyobo.get_subhierarchy("go:0006915")
 
 # check that go:0070246 ! natural killer cell apoptotic process is a
 # descendant of go:0006915 ! apoptotic process through the subhierarchy
@@ -282,21 +282,20 @@ Get all orthologies (`ro:HOM0000017`) between HGNC and MGI (note: this is one
 way)
 
 ```python
->>> import pyobo
->>> human_mapt_hgnc_id = "6893"
->>> mouse_mapt_mgi_id = "97180"
->>> hgnc_mgi_orthology_mapping = pyobo.get_relation_mapping("hgnc", "ro:HOM0000017", "mgi")
->>> assert mouse_mapt_mgi_id == hgnc_mgi_orthology_mapping[human_mapt_hgnc_id]
+import pyobo
+human_mapt_hgnc_id = "6893"
+mouse_mapt_mgi_id = "97180"
+hgnc_mgi_orthology_mapping = pyobo.get_relation_mapping("hgnc", "ro:HOM0000017", "mgi")
+assert mouse_mapt_mgi_id == hgnc_mgi_orthology_mapping[human_mapt_hgnc_id]
 ```
 
 If you want to do it in one line, use:
 
 ```python
-
->>> import pyobo
->>> human_mapt_hgnc_id = "6893"
->>> mouse_mapt_mgi_id = "97180"
->>> assert mouse_mapt_mgi_id == pyobo.get_relation("hgnc", "ro:HOM0000017", "mgi", human_mapt_hgnc_id)
+import pyobo
+human_mapt_hgnc_id = "6893"
+mouse_mapt_mgi_id = "97180"
+assert mouse_mapt_mgi_id == pyobo.get_relation("hgnc", "ro:HOM0000017", "mgi", human_mapt_hgnc_id)
 ```
 
 ### Writings Tests that Use PyOBO
@@ -321,7 +320,7 @@ class MyTestCase(unittest.TestCase):
   def my_test(self):
       with mock_id_name_mapping:
           # use functions directly, or use your functions that wrap them
-          pyobo.get_name("chebi", "1234")
+          pyobo.get_name("chebi:1234")
 ```
 
 ## Troubleshooting

@@ -21,11 +21,7 @@ __all__ = [
 ]
 
 
-def _get_pi(
-    reference: str | curies.Reference | ReferenceTuple, _unused: str | None = None, /
-) -> Reference:
-    if _unused is not None:
-        raise ValueError("unexpected non-none value passed as second positional argument")
+def _get_pi(reference: str | curies.Reference | ReferenceTuple, /) -> Reference:
     if isinstance(reference, Reference):
         return reference
     if isinstance(reference, ReferenceTuple | curies.Reference):

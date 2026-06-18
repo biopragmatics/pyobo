@@ -24,13 +24,12 @@ logger = logging.getLogger(__name__)
 
 
 def get_species(
-    prefix: str | curies.Reference | curies.ReferenceTuple,
-    identifier: str | None = None,
+    reference: str | curies.Reference | curies.ReferenceTuple,
     /,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> str | None:
     """Get the species."""
-    t = _get_pi(prefix, identifier)
+    t = _get_pi(reference)
 
     if t.prefix == "uniprot":
         raise NotImplementedError
