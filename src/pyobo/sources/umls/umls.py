@@ -9,20 +9,18 @@ from collections import defaultdict
 from collections.abc import Iterable, Mapping
 
 import bioregistry
-import pandas as pd
 from tqdm.auto import tqdm
 from umls_downloader import (
     open_mrconso_dict_reader,
     open_umls_semantic_types,
 )
 
-from pyobo import Obo, Reference, Synonym, SynonymTypeDef, Term
+from pyobo import Obo, Reference, SynonymTypeDef, Term
 from pyobo.sources.umls.get_synonym_types import get_umls_typedefs
 
 __all__ = [
     "UMLSGetter",
 ]
-
 
 PREFIX = "umls"
 SOURCE_VOCAB_URL = "https://www.nlm.nih.gov/research/umls/sourcereleasedocs/index.html"
@@ -81,41 +79,33 @@ def iter_terms(version: str) -> Iterable[Term]:
 
             term = Term.from_triple(prefix=PREFIX, identifier=cui, name=preferred_line["STR"])
 
-            sdf = df[
-                [
-                    "SAB - source name",
-                    "CODE",
-                    "TTY - Term Type in Source",
-                    "STR",
-                ]
-            ]
-
-            for source, identifier, synonym_type, synonym in sdf.values:
-                norm_source = bioregistry.normalize_prefix(source)
-                if not norm_source or not identifier or "," in identifier:
+            #
+            for row in cui_lines:
+                xref_prefix = bioregistry.normalize_prefix(row["SAB - source name"])
+                xref_identifier = row["CODE"]
+                if not xref_prefix or not xref_identifier:
                     provenance = []
+                elif "," in xref_identifier:
+                    provenance = []  # TODO handle this?
                 else:
                     try:
-                        ref = Reference(prefix=norm_source, identifier=identifier)
+                        ref = Reference(prefix=xref_prefix, identifier=xref_identifier)
                     except ValueError:
                         continue
                     else:
                         provenance = [ref]
-                        xrefs.add(ref)
-                synonyms.append(
-                    Synonym(
-                        name=synonym,
-                        provenance=provenance,
-                        type=UMLS_TYPEDEFS[synonym_type].reference,
-                    )
+                        term.append_xref(ref)
+                term.append_synonym(
+                    row["STR"],
+                    provenance=provenance,
+                    type=UMLS_TYPEDEFS[row["TTY - Term Type in Source"]].reference,
                 )
 
-
-            for sty_id in semantic_types.get(cui, set()):
+            for sty_id in semantic_types.get(cui, ()):
                 term.append_parent(Reference(prefix="sty", identifier=sty_id))
             yield term
 
 
 if __name__ == "__main__":
-    for _ in zip(range(10_000), iter_terms("2025AB"), strict=False):
-        pass
+    for term in zip(range(10), iter_terms("2025AB"), strict=False):
+        tqdm.write(str(term))
