@@ -135,6 +135,13 @@ def get_version_pins() -> dict[str, str]:
 def _ensure_date(value: Any) -> Any:
     if isinstance(value, datetime.datetime):
         value = value.date()
+    if isinstance(value, str):
+        try:
+            dt = datetime.datetime.fromisoformat(value)
+        except Exception:
+            return value
+        else:
+            return dt.date()
     return value
 
 

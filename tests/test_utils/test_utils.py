@@ -1,6 +1,10 @@
 """Test iteration tools."""
 
+import datetime
+import json
+import tempfile
 import unittest
+from pathlib import Path
 
 import curies
 
@@ -11,6 +15,7 @@ from pyobo.identifier_utils import (
 )
 from pyobo.sources.expasy import _parse_transfer
 from pyobo.utils.iter import iterate_together
+from pyobo.utils.ver import VersionMetadata
 
 
 class TestStringUtils(unittest.TestCase):
@@ -104,3 +109,21 @@ class TestIterate(unittest.TestCase):
         r = iterate_together(a, b)
         self.assertNotIsInstance(r, list)
         self.assertEqual(rv, list(r))
+
+
+class TestMisc(unittest.TestCase):
+    """Test miscellaneous utility functions."""
+
+    def test_version_metadata(self) -> None:
+        """Test version metadata."""
+        version_sentinel = "1.0"
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir).joinpath("test.json")
+            path.write_text(
+                json.dumps(
+                    {"version": version_sentinel, "date": datetime.datetime.now().isoformat()}
+                )
+            )
+            reconstituted = VersionMetadata.model_validate_json(path.read_text())
+            self.assertEqual(version_sentinel, reconstituted.version)
+            self.assertEqual(datetime.date.today(), reconstituted.date)
