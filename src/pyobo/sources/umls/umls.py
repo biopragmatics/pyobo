@@ -53,56 +53,64 @@ def iter_terms(version: str) -> Iterable[Term]:
     """Iterate over UMLS terms."""
     semantic_types = get_semantic_types(version=version)
     with open_mrconso_dict_reader(version=version) as reader:
-        lines = tqdm(reader, unit_scale=True, desc="[umls] parsing", total=LENGTH)
+        lines: Iterable[Mapping[str, str]] = tqdm(
+            reader, unit_scale=True, desc=f"[{PREFIX}] parsing", total=LENGTH
+        )
         lines = (
             line
             for line in lines
             # only keep english language for now
             if line["LAT - Language"] == "ENG"
         )
+        # could multiprocess after grouping?
         for cui, cui_lines_it in itt.groupby(lines, key=operator.itemgetter("CUI")):
-            cui_lines = list(cui_lines_it)
-            preferred_lines = [
-                line
-                for line in cui_lines
-                if line["ISPREF - is preferred"] == "Y"
-                and line["TS - Term Status"] == "P"
-                and line["STT - String Type"] == "PF"
-            ]
-            if len(preferred_lines) != 1:
-                # it.write(f"no preferred term for umls:{cui}. got {len(pref_rows_df.index)}")
+            term = _get_term(cui, cui_lines_it, semantic_types)
+            if term is not None:
+                yield term
+
+
+def _get_term(cui: str, cui_lines_it: Iterable[Mapping[str, str]], semantic_types) -> Term | None:
+    cui_lines = list(cui_lines_it)
+    preferred_lines = [
+        cui_line
+        for cui_line in cui_lines
+        if cui_line["ISPREF - is preferred"] == "Y"
+        and cui_line["TS - Term Status"] == "P"
+        and cui_line["STT - String Type"] == "PF"
+    ]
+    if len(preferred_lines) != 1:
+        # it.write(f"no preferred term for umls:{cui}. got {len(pref_rows_df.index)}")
+        return None
+    preferred_line = preferred_lines[0]
+
+    term = Term.from_triple(prefix=PREFIX, identifier=cui, name=preferred_line["STR"])
+
+    for row in cui_lines:  # TODO this adds a duplicate for the preferred line
+        xref_prefix = bioregistry.normalize_prefix(row["SAB - source name"])
+        xref_identifier = row["CODE"]
+        provenance: list[Reference]
+        if not xref_prefix or not xref_identifier:
+            provenance = []
+        elif "," in xref_identifier:
+            provenance = []  # TODO handle this?
+        else:
+            try:
+                ref = Reference(prefix=xref_prefix, identifier=xref_identifier)
+            except ValueError:
                 continue
-            preferred_line = preferred_lines[0]
+            else:
+                provenance = [ref]
+                term.append_xref(ref)
+        term.append_synonym(
+            row["STR"],
+            provenance=provenance,
+            type=UMLS_TYPEDEFS[row["TTY - Term Type in Source"]].reference,
+        )
 
-            term = Term.from_triple(prefix=PREFIX, identifier=cui, name=preferred_line["STR"])
-
-            for row in cui_lines:  # TODO this adds a duplicate for the preferred line
-                xref_prefix = bioregistry.normalize_prefix(row["SAB - source name"])
-                xref_identifier = row["CODE"]
-                provenance: list[Reference]
-                if not xref_prefix or not xref_identifier:
-                    provenance = []
-                elif "," in xref_identifier:
-                    provenance = []  # TODO handle this?
-                else:
-                    try:
-                        ref = Reference(prefix=xref_prefix, identifier=xref_identifier)
-                    except ValueError:
-                        continue
-                    else:
-                        provenance = [ref]
-                        term.append_xref(ref)
-                term.append_synonym(
-                    row["STR"],
-                    provenance=provenance,
-                    type=UMLS_TYPEDEFS[row["TTY - Term Type in Source"]].reference,
-                )
-
-            for sty_id in semantic_types.get(cui, ()):
-                term.append_parent(Reference(prefix="sty", identifier=sty_id))
-            yield term
+    for sty_id in semantic_types.get(cui, ()):
+        term.append_parent(Reference(prefix="sty", identifier=sty_id))
+    return term
 
 
 if __name__ == "__main__":
-    for _, term in zip(range(10), iter_terms("2025AB"), strict=False):
-        tqdm.write(str(term))
+    UMLSGetter.cli()
