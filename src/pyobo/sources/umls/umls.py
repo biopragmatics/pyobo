@@ -69,7 +69,9 @@ def iter_terms(version: str) -> Iterable[Term]:
                 yield term
 
 
-def _get_term(cui: str, cui_lines_it: Iterable[Mapping[str, str]], semantic_types) -> Term | None:
+def _get_term(
+    cui: str, cui_lines_it: Iterable[Mapping[str, str]], semantic_types: Mapping[str, set[str]]
+) -> Term | None:
     cui_lines = list(cui_lines_it)
     preferred_lines = [
         cui_line
