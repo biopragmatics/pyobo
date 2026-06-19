@@ -82,7 +82,7 @@ dependencies = [
     # Resource Downloaders
     "drugbank-downloader",
     "chembl-downloader",
-    "umls-downloader>=0.2.0",
+    "umls-downloader>=0.1.4",
     "clinicaltrials-downloader>=0.0.2",
     "nih-reporter-downloader>=0.0.1",
     "ror-downloader>=0.0.4",
