@@ -11,38 +11,18 @@ from collections.abc import Iterable, Mapping
 import bioregistry
 import pandas as pd
 from tqdm.auto import tqdm
-from umls_downloader import open_umls, open_umls_semantic_types
+from umls_downloader import (
+    open_mrconso_dict_reader,
+    open_umls_semantic_types,
+)
 
 from pyobo import Obo, Reference, Synonym, SynonymTypeDef, Term
-
-from .get_synonym_types import get_umls_typedefs
+from pyobo.sources.umls.get_synonym_types import get_umls_typedefs
 
 __all__ = [
     "UMLSGetter",
 ]
 
-
-RRF_COLUMNS = [
-    "CUI",
-    "LAT - Language",
-    "TS - Term Status",
-    "LUI - Local Unique Identifier",
-    "STT - String Type",
-    "SUI - Unique Identifier for String",
-    "ISPREF - is preferred",
-    "AUI - Unique atom identifier",
-    "SAUI - Source atom identifier",
-    "SCUI - Source concept identifier",
-    "SDUI - Source descriptor identifier",
-    "SAB - source name",
-    "TTY - Term Type in Source",
-    "CODE",
-    "STR",
-    "SRL",
-    "SUPPRESS",
-    "CVF",
-    "?",
-]
 
 PREFIX = "umls"
 SOURCE_VOCAB_URL = "https://www.nlm.nih.gov/research/umls/sourcereleasedocs/index.html"
@@ -77,32 +57,39 @@ LENGTH = 17_500_000
 def iter_terms(version: str) -> Iterable[Term]:
     """Iterate over UMLS terms."""
     semantic_types = get_semantic_types(version=version)
-
-    with open_umls(version=version) as file:
-        it = tqdm(file, unit_scale=True, desc="[umls] parsing", total=LENGTH)
-        lines = (line.decode("utf-8").strip().split("|") for line in it)
-        for cui, cui_lines in itt.groupby(lines, key=operator.itemgetter(0)):
-            df = pd.DataFrame(list(cui_lines), columns=RRF_COLUMNS)
-            df = df[df["LAT - Language"] == "ENG"]
-            idx = (
-                (df["ISPREF - is preferred"] == "Y")
-                & (df["TS - Term Status"] == "P")
-                & (df["STT - String Type"] == "PF"),
-            )
-            pref_rows_df = df.loc[idx]
-            if len(pref_rows_df.index) != 1:
+    with open_mrconso_dict_reader(version=version) as reader:
+        lines = tqdm(reader, unit_scale=True, desc="[umls] parsing", total=LENGTH)
+        lines = (
+            line
+            for line in lines
+            # only keep english language for now
+            if line["LAT - Language"] == "ENG"
+        )
+        for cui, cui_lines_it in itt.groupby(lines, key=operator.itemgetter(0)):
+            cui_lines = list(cui_lines_it)
+            preferred_lines = [
+                line
+                for line in cui_lines
+                if line["ISPREF - is preferred"] == "Y"
+                and line["TS - Term Status"] == "P"
+                and line["STT - String Type"] == "PF"
+            ]
+            if len(preferred_lines) != 1:
                 # it.write(f"no preferred term for umls:{cui}. got {len(pref_rows_df.index)}")
                 continue
+            preferred_line = preferred_lines[0]
 
-            df["TTY - Term Type in Source"] = df["TTY - Term Type in Source"].map(
-                UMLS_TYPEDEFS.__getitem__
-            )
+            term = Term.from_triple(prefix=PREFIX, identifier=cui, name=preferred_line["STR"])
 
-            _r = pref_rows_df.iloc[0]
-            sdf = df[["SAB - source name", "CODE", "TTY - Term Type in Source", "STR"]]
+            sdf = df[
+                [
+                    "SAB - source name",
+                    "CODE",
+                    "TTY - Term Type in Source",
+                    "STR",
+                ]
+            ]
 
-            synonyms = []
-            xrefs = set()
             for source, identifier, synonym_type, synonym in sdf.values:
                 norm_source = bioregistry.normalize_prefix(source)
                 if not norm_source or not identifier or "," in identifier:
@@ -119,19 +106,16 @@ def iter_terms(version: str) -> Iterable[Term]:
                     Synonym(
                         name=synonym,
                         provenance=provenance,
-                        type=synonym_type.reference,
+                        type=UMLS_TYPEDEFS[synonym_type].reference,
                     )
                 )
 
-            term = Term(
-                reference=Reference(prefix=PREFIX, identifier=cui, name=_r["STR"]),
-                synonyms=synonyms,
-                xrefs=sorted(xrefs),
-            )
+
             for sty_id in semantic_types.get(cui, set()):
                 term.append_parent(Reference(prefix="sty", identifier=sty_id))
             yield term
 
 
 if __name__ == "__main__":
-    UMLSGetter.cli()
+    for _ in zip(range(10_000), iter_terms("2025AB"), strict=False):
+        pass
