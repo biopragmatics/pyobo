@@ -10,10 +10,7 @@ from collections.abc import Iterable, Mapping
 
 import bioregistry
 from tqdm.auto import tqdm
-from umls_downloader import (
-    open_mrconso_dict_reader,
-    open_umls_semantic_types,
-)
+from umls_downloader import open_mrconso_dict_reader, open_umls_semantic_types
 
 from pyobo import Obo, Reference, SynonymTypeDef, Term
 from pyobo.sources.umls.get_synonym_types import get_umls_typedefs
@@ -63,7 +60,7 @@ def iter_terms(version: str) -> Iterable[Term]:
             # only keep english language for now
             if line["LAT - Language"] == "ENG"
         )
-        for cui, cui_lines_it in itt.groupby(lines, key=operator.itemgetter(0)):
+        for cui, cui_lines_it in itt.groupby(lines, key=operator.itemgetter("CUI")):
             cui_lines = list(cui_lines_it)
             preferred_lines = [
                 line
@@ -79,10 +76,10 @@ def iter_terms(version: str) -> Iterable[Term]:
 
             term = Term.from_triple(prefix=PREFIX, identifier=cui, name=preferred_line["STR"])
 
-            #
-            for row in cui_lines:
+            for row in cui_lines:  # TODO this adds a duplicate for the preferred line
                 xref_prefix = bioregistry.normalize_prefix(row["SAB - source name"])
                 xref_identifier = row["CODE"]
+                provenance: list[Reference]
                 if not xref_prefix or not xref_identifier:
                     provenance = []
                 elif "," in xref_identifier:
@@ -107,5 +104,5 @@ def iter_terms(version: str) -> Iterable[Term]:
 
 
 if __name__ == "__main__":
-    for term in zip(range(10), iter_terms("2025AB"), strict=False):
+    for _, term in zip(range(10), iter_terms("2025AB"), strict=False):
         tqdm.write(str(term))
