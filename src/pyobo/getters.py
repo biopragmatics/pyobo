@@ -199,6 +199,13 @@ def get_ontology(
         if cache:
             obo.write_default(force=force)
         return obo
+    elif ontology_format == "jskos":
+        from .struct.jskos import read_jskos
+
+        obo = read_jskos(prefix=prefix, path=path)
+        if cache:
+            obo.write_default(force=force)
+        return obo
     else:
         raise UnhandledFormatError(f"[{prefix}] unhandled ontology file format: {path.suffix}")
 
@@ -218,6 +225,7 @@ def get_ontology(
 
 ONTOLOGY_FORMAT_TO_SUFFIX: dict[OntologyFormat, str] = {
     "skos": ".ttl",
+    "jskos": ".json",
 }
 
 XX_TO_SUFFIX: dict[str, str] = {
