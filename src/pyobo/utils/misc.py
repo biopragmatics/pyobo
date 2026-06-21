@@ -144,6 +144,11 @@ def _get_skos_version(prefix: str, url: str) -> str | None:
     return None
 
 
+def _get_jskos_version(prefix: str, url: str) -> str | None:
+    # TODO add implementation
+    return None
+
+
 VersionGetter: TypeAlias = Callable[[str, str], str | None]
 
 #: A mapping from data type to gersion getter function
@@ -152,6 +157,7 @@ VERSION_GETTERS: dict[OntologyFormat, VersionGetter] = {
     "owl": _get_owl_version,
     "json": _get_obograph_json_version,
     "skos": _get_skos_version,
+    "jskos": _get_jskos_version,
 }
 
 

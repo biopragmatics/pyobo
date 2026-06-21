@@ -183,8 +183,12 @@ def get_ontology(
     ontology_format, path, rdf_format = path_pack
     if ontology_format == "obo":
         pass  # all gucci
-    elif ontology_format in {"owl", "rdf"}:
+    elif ontology_format == "owl":
         path = _convert_to_obo(path)
+    elif ontology_format == "rdf":
+        from .struct.generic_rdf import read_generic_rdf
+
+        return read_generic_rdf(path=path, prefix=prefix, rdf_format=rdf_format)
     elif ontology_format == "json":
         from .struct.obograph import read_obograph
 
@@ -196,6 +200,13 @@ def get_ontology(
         from .struct.skos import read_skos
 
         obo = read_skos(prefix=prefix, path=path, rdf_format=rdf_format)
+        if cache:
+            obo.write_default(force=force)
+        return obo
+    elif ontology_format == "jskos":
+        from .struct.jskos_utils import read_jskos
+
+        obo = read_jskos(prefix=prefix, path=path)
         if cache:
             obo.write_default(force=force)
         return obo
@@ -218,7 +229,9 @@ def get_ontology(
 
 ONTOLOGY_FORMAT_TO_SUFFIX: dict[OntologyFormat, str] = {
     "skos": ".ttl",
+    "jskos": ".json",
 }
+
 
 XX_TO_SUFFIX: dict[str, str] = {
     "rdf/xml": ".xml",
