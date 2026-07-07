@@ -4,11 +4,13 @@ import json
 from collections.abc import Mapping
 from functools import lru_cache
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import requests
 from tqdm import tqdm
 
-from ..reference import Reference
+if TYPE_CHECKING:
+    from pyobo import Reference
 
 __all__ = [
     "get_normalized_label",
@@ -85,6 +87,8 @@ def get_normalized_label(curie_or_uri: str) -> str | None:
 @lru_cache(1)
 def get_lookups() -> Mapping[str, Reference]:
     """Get lookups for relation ontology properties."""
+    from pyobo import Reference
+
     d = {}
     for record in json.loads(PATH.read_text()):
         prefix, identifier, label = record["prefix"], record["identifier"], record["label"]
@@ -115,38 +119,42 @@ HEADER = ["prefix", "identifier", "label", "synonyms"]
 def main() -> None:
     """Download and process the relation ontology data."""
     from bioontologies import get_obograph_by_prefix
-    from bioontologies.obograph import GraphDocument
     from bioontologies.robot import correct_raw_json
+    from bioregistry import get_default_converter
+    from obographs import GraphDocument, guess_primary_graph
+
+    converter = get_default_converter()
 
     rows = []
-    for source, url in URLS:
+    for source_prefix, url in URLS:
         if url is not None:
             res = requests.get(url, timeout=60)
             res.raise_for_status()
             res_json = res.json()
             correct_raw_json(res_json)
             graph_document = GraphDocument.model_validate(res_json)
-            graph = graph_document.guess(source)
+            graph = guess_primary_graph(graph_document, source_prefix).standardize(converter)
         else:
             try:
-                results = get_obograph_by_prefix(source)
-                graph = results.guess(source)
+                results = get_obograph_by_prefix(source_prefix)
+                graph = results.guess(source_prefix).standardize(converter)
             except ValueError as e:
-                tqdm.write(f"[{source}] error: {e}")
+                tqdm.write(f"[{source_prefix}] error: {e}")
                 continue
-        for node in tqdm(graph.nodes, desc=source, unit="node"):
-            if node.type != "PROPERTY" or not node.name:
+        for node in tqdm(graph.nodes, desc=source_prefix, unit="node"):
+            if node.type != "PROPERTY" or not node.label:
                 continue
-            node.standardize()
-            if not node.prefix:
-                tqdm.write(f"[{source}] could not parse node: {node.id}")
+            if not node.reference.prefix:
+                tqdm.write(f"[{source_prefix}] could not parse node: {node.reference.curie}")
                 continue
             rows.append(
                 (
-                    node.prefix,
-                    node.identifier,
-                    node.name,
-                    tuple(sorted(synonym.value for synonym in node.synonyms)),
+                    node.reference.prefix,
+                    node.reference.identifier,
+                    node.label,
+                    tuple(sorted(synonym.text for synonym in node.meta.synonyms))
+                    if node.meta and node.meta.synonyms
+                    else (),
                 )
             )
 
