@@ -157,6 +157,11 @@ class Stanza(Referenced, HasReferencesMixin):
     #: A description of the entity
     definition: str | None = None
 
+    #: while the assumption that the label for an entity that hasn't
+    #: been language tagged is either language-agnostic or in english,
+    #: this dictionary allows for explicit language-specific labels
+    labels: dict[str, str] | None = None
+
     @staticmethod
     def _reference(
         reference: Reference, ontology_prefix: str, add_name_comment: bool = False

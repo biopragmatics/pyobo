@@ -149,11 +149,14 @@ def ids(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> None:
 @lookup_annotate
 @prefix_argument
 @identifier_option
-def names(prefix: str, identifier: str | None, **kwargs: Unpack[GetOntologyKwargs]) -> None:
+@click.option("--language")
+def names(
+    prefix: str, identifier: str | None, language: str | None, **kwargs: Unpack[GetOntologyKwargs]
+) -> None:
     """Page through the identifiers and names of entities in the given namespace."""
     from ..api import get_id_name_mapping
 
-    id_to_name = get_id_name_mapping(prefix, **kwargs)
+    id_to_name = get_id_name_mapping(prefix, language=language, **kwargs)
     _help_page_mapping(id_to_name, identifier=identifier)
 
 
