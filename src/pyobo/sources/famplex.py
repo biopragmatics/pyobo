@@ -92,7 +92,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
             continue
         else:
             logger.exception(h_ns)
-            raise
+            raise ValueError
         if t_ns == "HGNC":
             t_identifier = hgnc_name_to_id.get(t_name)
             if t_identifier is None:
@@ -105,7 +105,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
         elif h_ns == "UP":
             continue
         else:
-            raise
+            raise ValueError
 
         out_edges[h].append((r, t))
         in_edges[t].append((r, h))
@@ -133,7 +133,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
             elif r == "partof":
                 term.annotate_object(part_of, t)
             else:
-                logging.warning("unhandled relation %s", r)
+                logger.warning("unhandled relation %s", r)
 
         for r, h in in_edges.get(reference, []):
             if r == "isa":
@@ -141,7 +141,7 @@ def get_terms(version: str, force: bool = False) -> Iterable[Term]:
             elif r == "partof":
                 term.annotate_object(has_part, h)
             else:
-                logging.warning("unhandled relation %s", r)
+                logger.warning("unhandled relation %s", r)
         yield term
 
 

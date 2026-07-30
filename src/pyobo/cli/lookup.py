@@ -358,5 +358,5 @@ def prefixes(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> None:
     from ..getters import get_ontology
 
     ontology = get_ontology(prefix, **kwargs)
-    for prefix in sorted(ontology._get_prefixes(), key=str.casefold):
-        click.echo(prefix)
+    for prefix_ in sorted(ontology._get_prefixes(), key=str.casefold):
+        click.echo(prefix_)

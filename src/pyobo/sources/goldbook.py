@@ -108,20 +108,20 @@ def _get_term(
     if status := record.pop("status", None):
         term.annotate_string(HAS_STATUS, status)
 
-    if initialism := record.pop("initialism", None):
-        if initialism.startswith("<em>initialism</em>:"):
-            initialism = initialism.removeprefix("<em>initialism</em>:").strip()
-            term.append_synonym(initialism, type=Reference.from_reference(abbreviation))
+    if (initialism := record.pop("initialism", None)) and initialism.startswith(
+        "<em>initialism</em>:"
+    ):
+        initialism = initialism.removeprefix("<em>initialism</em>:").strip()
+        term.append_synonym(initialism, type=Reference.from_reference(abbreviation))
     if (abbrev := record.pop("abbrev", None)) and abbrev.startswith("<em>abbrev</em>: "):
         abbrev = abbrev.removeprefix("<em>abbrev</em>: ").strip()
         term.append_synonym(abbrev, type=Reference.from_reference(abbreviation))
     if (acr := record.pop("acronym", None)) and acr.startswith("<em>acronym</em>:"):
         acr = acr.removeprefix("<em>acronym</em>:").strip()
         term.append_synonym(acr, type=Reference.from_reference(acronym))
-    if mentioned := record.pop("mentioned", None):
-        if mentioned.startswith("<em>mentioned</em>:"):
-            mentioned = mentioned.removeprefix("<em>mentioned</em>:").strip()
-            # TODO where to put this
+    if (mentioned := record.pop("mentioned", None)) and mentioned.startswith("<em>mentioned</em>:"):
+        _mentioned = mentioned.removeprefix("<em>mentioned</em>:").strip()
+        # TODO where to put this
 
     if (synonym := record.pop("synonym", None)) and synonym.startswith("<"):
         if synonym.startswith("<em>synonym</em>:"):

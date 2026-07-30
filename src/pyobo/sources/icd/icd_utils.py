@@ -140,9 +140,9 @@ def visiter(
         path.write_text(json.dumps(res_json, indent=2))
 
     yield converter(res_json)
-    for identifier in get_child_identifiers(endpoint, res_json):
+    for child_identifier in get_child_identifiers(endpoint, res_json):
         yield from visiter(
-            identifier,
+            child_identifier,
             visited_identifiers,
             directory,
             converter=converter,
