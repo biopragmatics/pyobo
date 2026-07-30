@@ -125,6 +125,7 @@ typing = [
     "types-python-dateutil",
     "types-redis",
     "types-pytz",
+    "fastapi",
 ]
 docs-lint = [
     { include-group = "docs" },
@@ -288,6 +289,7 @@ extend-select = [
 ignore = [
     "D105", # Missing docstring in magic method
     "E203", # Black conflicts with the following
+    "DTZ",
     # Everything below is TODO
     "ERA001",
     "S113",
