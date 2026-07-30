@@ -221,12 +221,16 @@ class Stanza(Referenced, HasReferencesMixin):
                 rv[prefix].update(references)
         return rv
 
+    def iter_literal_mappings(self) -> Iterable[LiteralMapping]:
+        """Iterate over literal mapping objects for this term, including one for its label."""
+        for synonym in self.synonyms:
+            yield _convert_synoynym(self, synonym)
+        if self.reference.name:
+            yield _get_stanza_name_synonym(self)
+
     def get_literal_mappings(self) -> list[LiteralMapping]:
         """Get synonym objects for this term, including one for its label."""
-        rv = [_convert_synoynym(self, synonym) for synonym in self.synonyms]
-        if self.reference.name:
-            rv.append(_get_stanza_name_synonym(self))
-        return rv
+        return list(self.iter_literal_mappings())
 
     def append_relationship(
         self,
