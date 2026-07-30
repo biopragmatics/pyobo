@@ -2,7 +2,6 @@
 
 import json
 import logging
-from abc import ABC
 from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import TypeVar
@@ -32,7 +31,7 @@ logger = logging.getLogger(__name__)
 X = TypeVar("X")
 
 
-class _CachedMapping(Cached[X], ABC):
+class _CachedMapping(Cached[X]):
     """A cache for simple mappings."""
 
     def __init__(
