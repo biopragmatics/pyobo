@@ -112,29 +112,26 @@ def _get_term(
         if initialism.startswith("<em>initialism</em>:"):
             initialism = initialism.removeprefix("<em>initialism</em>:").strip()
             term.append_synonym(initialism, type=Reference.from_reference(abbreviation))
-    if abbrev := record.pop("abbrev", None):
-        if abbrev.startswith("<em>abbrev</em>: "):
-            abbrev = abbrev.removeprefix("<em>abbrev</em>: ").strip()
-            term.append_synonym(abbrev, type=Reference.from_reference(abbreviation))
-    if acr := record.pop("acronym", None):
-        if acr.startswith("<em>acronym</em>:"):
-            acr = acr.removeprefix("<em>acronym</em>:").strip()
-            term.append_synonym(acr, type=Reference.from_reference(acronym))
+    if (abbrev := record.pop("abbrev", None)) and abbrev.startswith("<em>abbrev</em>: "):
+        abbrev = abbrev.removeprefix("<em>abbrev</em>: ").strip()
+        term.append_synonym(abbrev, type=Reference.from_reference(abbreviation))
+    if (acr := record.pop("acronym", None)) and acr.startswith("<em>acronym</em>:"):
+        acr = acr.removeprefix("<em>acronym</em>:").strip()
+        term.append_synonym(acr, type=Reference.from_reference(acronym))
     if mentioned := record.pop("mentioned", None):
         if mentioned.startswith("<em>mentioned</em>:"):
             mentioned = mentioned.removeprefix("<em>mentioned</em>:").strip()
             # TODO where to put this
 
-    if synonym := record.pop("synonym", None):
-        if synonym.startswith("<"):
-            if synonym.startswith("<em>synonym</em>:"):
-                synonym = synonym.removeprefix("<em>synonym</em>:")
-                term.append_synonym(_clean(synonym))
-            elif synonym.startswith("<em>synonyms</em>:"):
-                for s in synonym.removeprefix("<em>synonyms</em>:").strip().split(","):
-                    term.append_synonym(_clean(s))
-            else:
-                tqdm.write(f"[{term.curie}] issue with synonym: {synonym}")
+    if (synonym := record.pop("synonym", None)) and synonym.startswith("<"):
+        if synonym.startswith("<em>synonym</em>:"):
+            synonym = synonym.removeprefix("<em>synonym</em>:")
+            term.append_synonym(_clean(synonym))
+        elif synonym.startswith("<em>synonyms</em>:"):
+            for s in synonym.removeprefix("<em>synonyms</em>:").strip().split(","):
+                term.append_synonym(_clean(s))
+        else:
+            tqdm.write(f"[{term.curie}] issue with synonym: {synonym}")
 
     for x in SKIP_KEYS:
         if x in record:

@@ -122,7 +122,7 @@ class DefaultCoercionError(ParseError):
 
 
 def _is_uri(s: str) -> bool:
-    return s.startswith("http:") or s.startswith("https:")
+    return s.startswith(("http:", "https:"))
 
 
 def _preclean_uri(s: str) -> str:

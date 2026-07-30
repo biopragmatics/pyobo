@@ -116,7 +116,7 @@ def _process_definitions_lines(
                 identifier=accession,
                 name=product,
             )
-            if product.endswith("3p") or product.endswith("5p"):
+            if product.endswith(("3p", "5p")):
                 matures.append(product_reference)
             else:
                 pass

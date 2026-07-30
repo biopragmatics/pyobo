@@ -98,8 +98,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         if pd.notna(smiles):
             term.annotate_string(has_smiles, smiles)
         if pd.notna(inchi) and inchi != "InChI=none":
-            if inchi.startswith("InChI="):
-                inchi = inchi[len("InChI=") :]
+            inchi = inchi.removeprefix("InChI=")
             term.annotate_string(has_inchi, inchi)
         if pd.notna(inchikey):
             inchikey = inchikey.removeprefix("InChIKey=").strip()

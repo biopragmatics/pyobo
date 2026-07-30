@@ -4,13 +4,11 @@ import json
 from collections.abc import Mapping
 from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import requests
 from tqdm import tqdm
 
-if TYPE_CHECKING:
-    from pyobo import Reference
+from pyobo import Reference
 
 __all__ = [
     "get_normalized_label",
@@ -57,7 +55,6 @@ LABELS = {
     "http://purl.obolibrary.org/obo/uberon/core#posteriorly_connected_to": "posteriorly_connected_to",
     "http://purl.obolibrary.org/obo/uberon/core#evolved_from": "evolved_from",
     "http://purl.obolibrary.org/obo/uberon/core#anteriorly_connected_to": "anteriorly_connected_to",
-    #
     "obi:0000304": "is_manufactured_by",
     "vo:0003355": "immunizes_against_microbe",
     "bao:0002846": "has_assay_protocol",

@@ -131,7 +131,7 @@ def get_terms(force: bool = False, version: str | None = None) -> Iterable[Term]
                             has_gene_product, Reference(prefix=prefix, identifier=xref_id)
                         )
                     elif prefix == "ensembl":
-                        if xref_id.startswith("ENSMUSG") or xref_id.startswith("ENSRNOG"):
+                        if xref_id.startswith(("ENSMUSG", "ENSRNOG")):
                             # second one is reverse strand
                             term.append_xref(Reference(prefix=prefix, identifier=xref_id))
                         elif xref_id.startswith("ENSMUST"):

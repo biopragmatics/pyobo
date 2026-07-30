@@ -8,7 +8,7 @@ from collections import Counter
 from collections.abc import Iterable, Sequence
 from datetime import date as date_cls
 from datetime import datetime as datetime_cls
-from typing import Any, NamedTuple
+from typing import NamedTuple
 
 import bioregistry
 import curies
@@ -85,7 +85,7 @@ class Referenced:
     def __hash__(self) -> int:
         return self.reference.__hash__()
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, curies.Reference | Referenced):
             return self.prefix == other.prefix and self.identifier == other.identifier
         raise TypeError
@@ -269,9 +269,8 @@ def _parse_reference_or_uri_literal(
     context: str,
     name: str | None = None,
     upgrade: bool = True,
-    #
     counter: Counter[tuple[str, str]] | None = None,
-) -> None | Reference | OBOLiteral:
+) -> Reference | OBOLiteral | None:
     match _parse_str_or_curie_or_uri_helper(
         str_or_curie_or_uri,
         node=node,

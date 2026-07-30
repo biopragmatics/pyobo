@@ -52,9 +52,10 @@ def lookup_annotate(f: Callable[P, T]) -> Callable[P, T]:
     ]:
         f = decorator(f)
 
-    if param.annotation is None:
-        pass
-    elif param.annotation in {"Unpack[GetOntologyKwargs]", Unpack[GetOntologyKwargs]}:
+    if param.annotation is None or param.annotation in {
+        "Unpack[GetOntologyKwargs]",
+        Unpack[GetOntologyKwargs],
+    }:
         pass
     else:
         raise ValueError(f"unknown parameter type for {f}: {param.annotation}")

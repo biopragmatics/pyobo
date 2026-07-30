@@ -46,7 +46,7 @@ def _chomp_typedef(
         # This might happen if a synonym is just given as a string
         return None, ""
 
-    if s.startswith("[") or s.startswith("{"):
+    if s.startswith(("[", "{")):
         # there's no typedef reference here, just return
         return None, s
 

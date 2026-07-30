@@ -45,7 +45,6 @@ __all__ = [
     "OBOLiteral",
     "Obo",
     "Reference",
-    "Reference",
     "Referenced",
     "Stanza",
     "StanzaType",

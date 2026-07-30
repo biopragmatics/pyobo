@@ -890,7 +890,7 @@ class Obo:
         ) -> None:
             try:
                 inst = cls(force=force, data_version=version)
-            except Exception as e:
+            except Exception as e:  # noqa:BLE001
                 click.secho(f"[{cls.ontology}] Got an exception during instantiation - {type(e)}")
                 sys.exit(1)
             inst.write_default(
@@ -1120,7 +1120,7 @@ class Obo:
 
     def write_obo(
         self,
-        file: None | str | TextIO | Path = None,
+        file: str | TextIO | Path | None = None,
         *,
         use_tqdm: bool = False,
         emit_object_properties: bool = True,

@@ -41,7 +41,7 @@ class TestSources(unittest.TestCase):
                 )
                 for getter in getters:
                     if getter.idspaces:
-                        for prefix, _uri_prefix in getter.idspaces.items():
+                        for prefix in getter.idspaces:
                             with self.subTest(ontology=getter.ontology, prefix=prefix):
                                 norm_prefix = bioregistry.normalize_prefix(prefix)
                                 self.assertIsNotNone(

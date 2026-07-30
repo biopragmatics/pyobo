@@ -84,8 +84,7 @@ def cleanup_version(data_version: str, prefix: str) -> str:
         return VERSION_REWRITES[data_version]
 
     data_version = data_version.removesuffix(".owl")
-    if data_version.endswith(prefix):
-        data_version = data_version[: -len(prefix)]
+    data_version = data_version.removesuffix(prefix)
     data_version = data_version.removesuffix("/")
 
     data_version = data_version.removeprefix("releases/")
@@ -167,7 +166,7 @@ def _prioritize_version(
 
     if version:
         if version in BAD:
-            logger.debug("[%s] had known bad version, returning None: ", ontology_prefix, version)
+            logger.debug("[%s] had known bad version, returning None: %s", ontology_prefix, version)
             return None
 
         clean_injected_version = cleanup_version(version, prefix=ontology_prefix)
@@ -194,7 +193,7 @@ def _prioritize_version(
     if data_version:
         if data_version in BAD:
             logger.debug(
-                "[%s] had known bad version, returning None: ", ontology_prefix, data_version
+                "[%s] had known bad version, returning None: %s", ontology_prefix, data_version
             )
             return None
 

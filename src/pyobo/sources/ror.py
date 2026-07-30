@@ -67,7 +67,7 @@ ROR_ORGANIZATION_TYPE_TO_OBI: dict[OrganizationType, Term] = {
     .append_xref(Reference(prefix="ICO", identifier="0000048"))
     .append_xref(Reference(prefix="GSSO", identifier="004615")),
 }
-for _k, v in ROR_ORGANIZATION_TYPE_TO_OBI.items():
+for v in ROR_ORGANIZATION_TYPE_TO_OBI.values():
     v.append_parent(ORG_CLASS)
     v.append_contributor(CHARLIE_TERM)
     v.append_comment(PYOBO_INJECTED)

@@ -72,24 +72,23 @@ KEGG_URL_PREFIX = "http://www.genome.jp/kegg/pathway/hsa/"
 def _iter_entries(version: str, force: bool = False) -> Iterable[etree.ElementTree]:
     xml_url = f"{BASE_URL}/{version}.Hs/msigdb_v{version}.Hs.xml.zip"
     path = ensure_path(prefix=PREFIX, url=xml_url, version=version, force=force)
-    with zipfile.ZipFile(path, "r") as zf:
-        with zf.open(f"msigdb_v{version}.Hs.xml") as file:
-            for _ in range(3):
-                next(file)
-            # from here on out, every row except the last is a GENESET
-            for i, line_bytes in enumerate(file, start=4):
-                line = line_bytes.decode("utf8").strip()
-                if not line.startswith("<GENESET"):
-                    continue
-                try:
-                    tree = etree.fromstring(line)
-                except etree.XMLSyntaxError as e:
-                    # this is the result of faulty encoding in XML - maybe they
-                    # wrote XML with their own string formatting instead of using a
-                    # library.
-                    logger.debug("[%s] failed on line %s: %s", PREFIX, i, e)
-                else:
-                    yield tree
+    with zipfile.ZipFile(path, "r") as zf, zf.open(f"msigdb_v{version}.Hs.xml") as file:
+        for _ in range(3):
+            next(file)
+        # from here on out, every row except the last is a GENESET
+        for i, line_bytes in enumerate(file, start=4):
+            line = line_bytes.decode("utf8").strip()
+            if not line.startswith("<GENESET"):
+                continue
+            try:
+                tree = etree.fromstring(line)
+            except etree.XMLSyntaxError as e:
+                # this is the result of faulty encoding in XML - maybe they
+                # wrote XML with their own string formatting instead of using a
+                # library.
+                logger.debug("[%s] failed on line %s: %s", PREFIX, i, e)
+            else:
+                yield tree
 
 
 def iter_terms(version: str, force: bool = False) -> Iterable[Term]:

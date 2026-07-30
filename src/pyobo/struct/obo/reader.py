@@ -580,10 +580,9 @@ def _process_subsets(
         ontology_prefix=ontology_prefix,
         counter=SUBSET_ERROR_COUNTER,
     ):
-        if reference not in subset_typedefs:
-            if reference not in UNDEFINED_SUBSETS:
-                logger.debug("[%s] undefined subset: %s", stanza.curie, reference)
-                UNDEFINED_SUBSETS.add(reference)
+        if reference not in subset_typedefs and reference not in UNDEFINED_SUBSETS:
+            logger.debug("[%s] undefined subset: %s", stanza.curie, reference)
+            UNDEFINED_SUBSETS.add(reference)
         stanza.append_subset(reference)
 
 
@@ -737,7 +736,7 @@ def _get_subsetdefs(
     for subsetdef in graph.get("subsetdef", []):
         left, _, right = subsetdef.partition(" ")
         if not right:
-            logger.warning("[%s] subsetdef did not have two parts", ontology_prefix, subsetdef)
+            logger.warning("[%s] subsetdef did not have two parts - %s", ontology_prefix, subsetdef)
             continue
         left_ref = _obo_parse_identifier(
             left,
@@ -1065,7 +1064,7 @@ def _process_chain_helper(
 
 def get_definition(
     data: dict[str, Any], *, node: Reference, ontology_prefix: str, strict: bool = False
-) -> tuple[None | str, list[Reference | OBOLiteral]]:
+) -> tuple[str | None, list[Reference | OBOLiteral]]:
     """Extract the definition from the data."""
     definition = data.get("def")  # it's allowed not to have a definition
     if not definition:
@@ -1081,7 +1080,7 @@ def _extract_definition(
     node: Reference,
     strict: bool = False,
     ontology_prefix: str,
-) -> tuple[None | str, list[Reference | OBOLiteral]]:
+) -> tuple[str | None, list[Reference | OBOLiteral]]:
     """Extract the definitions."""
     if not s.startswith('"'):
         logger.warning(f"[{node.curie}] definition does not start with a quote")

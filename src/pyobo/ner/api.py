@@ -31,7 +31,7 @@ def get_grounder(
     prefixes: str | Iterable[str],
     *,
     grounder_cls: type[gilda.Grounder] | None = None,
-    versions: None | str | Iterable[str | None] | dict[str, str] = None,
+    versions: str | Iterable[str | None] | dict[str, str] | None = None,
     skip_obsolete: bool = False,
     raise_on_missing: bool = False,
     **kwargs: Unpack[GetOntologyKwargs],
@@ -60,7 +60,7 @@ def get_grounder(
 
 def _clean_prefix_versions(
     prefixes: str | Iterable[str],
-    versions: None | str | Iterable[str | None] | dict[str, str] = None,
+    versions: str | Iterable[str | None] | dict[str, str] | None = None,
 ) -> list[tuple[str, str | None]]:
     if isinstance(prefixes, str):
         prefixes = [prefixes]

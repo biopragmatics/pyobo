@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 X = TypeVar("X")
 
 
-class _CachedMapping(Cached[X], Generic[X], ABC):
+class _CachedMapping(Cached[X], ABC, Generic[X]):
     """A cache for simple mappings."""
 
     def __init__(
