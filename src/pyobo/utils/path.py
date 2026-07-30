@@ -155,12 +155,12 @@ class CacheArtifact(enum.Enum):
 def get_cache_path(
     ontology: str,
     name: CacheArtifact,
-    *,
+    *args: str,
     version: str | None = None,
 ) -> Path:
     """Get a cache path."""
     return prefix_directory_join(
-        ontology, CACHE_SUBDIRECTORY_NAME, name=name.value, version=version
+        ontology, CACHE_SUBDIRECTORY_NAME, *args, name=name.value, version=version
     )
 
 
