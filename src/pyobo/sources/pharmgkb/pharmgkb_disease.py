@@ -64,7 +64,7 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
             xref_curie, _, _ = xref_line.strip('"').partition("(")
             try:
                 xref = Reference.from_curie(xref_curie)
-            except Exception:  # noqa:S110
+            except ValueError:
                 pass  # this happens when there's a comma in the name, but not a problem
             else:
                 term.append_xref(xref)

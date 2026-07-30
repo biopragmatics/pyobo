@@ -146,13 +146,16 @@ def get_terms() -> Iterable[Term]:
                 term.append_relationship(has_role, role)
 
             function_counter[func] += 1
-            if func not in function_examples and name is not None:
-                if reference := chebi_grounder.get_best_match(name):
-                    if reference.curie != "chebi:15702":
-                        function_examples[func] = reference.curie, reference.name
-                elif reference := chebi_grounder.get_best_match(name.rstrip("s")):
-                    if reference.curie != "chebi:15702":
-                        function_examples[func] = reference.curie, reference.name
+            if (
+                func not in function_examples
+                and name is not None
+                and (
+                    (reference := chebi_grounder.get_best_match(name))
+                    or (reference := chebi_grounder.get_best_match(name.rstrip("s")))
+                )
+                and reference.curie != "chebi:15702"
+            ):
+                function_examples[func] = reference.curie, reference.name
 
         # TODO check if the `Harmonized_functions` is just actually
         #  the union of the following:
@@ -202,9 +205,9 @@ def _ground_echa(chebi_grounder: ssslm.Grounder[Reference], echa_grouping: str) 
     echa_grouping = echa_grouping.strip()
     if echa_grouping in ECHA_MAP:
         return ECHA_MAP[echa_grouping]
-    if match := chebi_grounder.get_best_match(echa_grouping):
-        return Reference.from_reference(match.reference)
-    elif match := chebi_grounder.get_best_match(echa_grouping.rstrip("s")):
+    if (match := chebi_grounder.get_best_match(echa_grouping)) or (
+        match := chebi_grounder.get_best_match(echa_grouping.rstrip("s"))
+    ):
         return Reference.from_reference(match.reference)
     return None
 

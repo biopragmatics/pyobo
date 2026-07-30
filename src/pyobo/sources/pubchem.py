@@ -82,10 +82,9 @@ def get_pubchem_id_to_mesh_id(version: str) -> Mapping[str, str]:
     mesh_ids = []
     for name in df["mesh_id"]:
         mesh_id = mesh_name_to_id.get(name)
-        if mesh_id is None:
-            if name not in needs_curation:
-                needs_curation.add(name)
-                logger.debug("[mesh] needs curating: %s", name)
+        if mesh_id is None and name not in needs_curation:
+            needs_curation.add(name)
+            logger.debug("[mesh] needs curating: %s", name)
         mesh_ids.append(mesh_id)
     logger.info("[mesh] %d/%d need updating", len(needs_curation), len(mesh_ids))
     df["mesh_id"] = mesh_ids

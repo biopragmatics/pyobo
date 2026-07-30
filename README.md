@@ -178,8 +178,7 @@ import pyobo
 
 hgnc_id_to_ncbigene_id = pyobo.get_filtered_xrefs("hgnc", "ncbigene")
 ncbigene_id_to_hgnc_id = {
-  ncbigene_id: hgnc_id
-  for hgnc_id, ncbigene_id in hgnc_id_to_ncbigene_id.items()
+    ncbigene_id: hgnc_id for hgnc_id, ncbigene_id in hgnc_id_to_ncbigene_id.items()
 }
 mapt_hgnc = ncbigene_id_to_hgnc_id["4137"]
 assert mapt_hgnc == "6893"
@@ -273,7 +272,10 @@ chebi_hierarchy = pyobo.get_hierarchy("chebi", properties=[prop])
 
 assert Reference.from_curie("chebi:132964") in chebi_hierarchy
 assert prop in chebi_hierarchy.nodes["chebi:132964"]
-assert chebi_hierarchy.nodes["chebi:132964"][prop] == "C1(=CC=C(N=C1)OC2=CC=C(C=C2)O[C@@H](C(OCCCC)=O)C)C(F)(F)F"
+assert (
+    chebi_hierarchy.nodes["chebi:132964"][prop]
+    == "C1(=CC=C(N=C1)OC2=CC=C(C=C2)O[C@@H](C(OCCCC)=O)C)C(F)(F)F"
+)
 ```
 
 ### Relations
@@ -283,6 +285,7 @@ way)
 
 ```python
 import pyobo
+
 human_mapt_hgnc_id = "6893"
 mouse_mapt_mgi_id = "97180"
 hgnc_mgi_orthology_mapping = pyobo.get_relation_mapping("hgnc", "ro:HOM0000017", "mgi")
@@ -293,6 +296,7 @@ If you want to do it in one line, use:
 
 ```python
 import pyobo
+
 human_mapt_hgnc_id = "6893"
 mouse_mapt_mgi_id = "97180"
 assert mouse_mapt_mgi_id == pyobo.get_relation("hgnc", "ro:HOM0000017", "mgi", human_mapt_hgnc_id)
@@ -310,17 +314,20 @@ import unittest
 import pyobo
 from pyobo.mocks import get_mock_id_name_mapping
 
-mock_id_name_mapping = get_mock_id_name_mapping({
-  "chebi": {
-      "132964": "fluazifop-P-butyl",
-  },
-})
+mock_id_name_mapping = get_mock_id_name_mapping(
+    {
+        "chebi": {
+            "132964": "fluazifop-P-butyl",
+        },
+    }
+)
+
 
 class MyTestCase(unittest.TestCase):
-  def my_test(self):
-      with mock_id_name_mapping:
-          # use functions directly, or use your functions that wrap them
-          pyobo.get_name("chebi:1234")
+    def my_test(self):
+        with mock_id_name_mapping:
+            # use functions directly, or use your functions that wrap them
+            pyobo.get_name("chebi:1234")
 ```
 
 ## Troubleshooting

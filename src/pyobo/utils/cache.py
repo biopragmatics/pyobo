@@ -2,10 +2,9 @@
 
 import json
 import logging
-from abc import ABC
 from collections.abc import Iterable, Mapping
 from pathlib import Path
-from typing import Generic, TypeVar
+from typing import TypeVar
 
 import networkx as nx
 from pystow.cache import Cached
@@ -32,7 +31,7 @@ logger = logging.getLogger(__name__)
 X = TypeVar("X")
 
 
-class _CachedMapping(Cached[X], Generic[X], ABC):
+class _CachedMapping(Cached[X]):
     """A cache for simple mappings."""
 
     def __init__(

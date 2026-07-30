@@ -191,8 +191,8 @@ def get_references(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> set[Refe
     except NoBuildError:
         logger.debug("[%s] no build", prefix)
         return set()
-    except (Exception, subprocess.CalledProcessError) as e:
-        logger.exception("[%s v%s] could not load: %s", prefix, version, e)
+    except (Exception, subprocess.CalledProcessError):
+        logger.exception("[%s v%s] could not load", prefix, version)
         return set()
 
 
@@ -229,8 +229,8 @@ def get_id_name_mapping(
     except NoBuildError:
         logger.debug("[%s] no build", prefix)
         return {}
-    except (Exception, subprocess.CalledProcessError) as e:
-        logger.exception("[%s v%s] could not load: %s", prefix, version, e)
+    except (Exception, subprocess.CalledProcessError):
+        logger.exception("[%s v%s] could not load", prefix, version)
         return {}
 
 

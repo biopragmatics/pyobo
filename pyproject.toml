@@ -71,7 +71,7 @@ dependencies = [
     "pystow>=0.8.17",
     "bioversions>=0.10.45",
     "bioregistry>=0.13.59",
-    "ssslm>=0.2.0",
+    "ssslm>=0.2.2",
     "zenodo-client>=0.4.1",
     "class-resolver>=0.7.1",
     "pydantic>=2.0",
@@ -89,7 +89,7 @@ dependencies = [
     #
     "typing-extensions",
     "rdflib",
-    "obographs>=0.0.11",
+    "obographs>=0.0.15",
     "sssom-pydantic>=0.5.11",
     "pytz",
     "robot-obo-tool",
@@ -125,6 +125,7 @@ typing = [
     "types-python-dateutil",
     "types-redis",
     "types-pytz",
+    "fastapi",
 ]
 docs-lint = [
     { include-group = "docs" },
@@ -288,6 +289,7 @@ extend-select = [
 ignore = [
     "D105", # Missing docstring in magic method
     "E203", # Black conflicts with the following
+    "DTZ",
     # Everything below is TODO
     "ERA001",
     "S113",

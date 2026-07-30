@@ -425,7 +425,7 @@ def iter_helper_helper(
             else:
                 logger.warning(str(e))
             if strict and not bioregistry.is_deprecated(prefix):
-                raise e
+                raise
         except RuntimeError as e:
             if "DrugBank" not in str(e):
                 raise
@@ -450,7 +450,7 @@ def iter_helper_helper(
         except TypeError as e:
             logger.exception("[%s] got exception %s while parsing", prefix, e.__class__.__name__)
             if strict:
-                raise e
+                raise
         else:
             yield prefix, yv
 
@@ -461,7 +461,7 @@ def _is_xml(e: Exception) -> bool:
     )
 
 
-def _prep_dir(directory: None | str | pathlib.Path) -> pathlib.Path:
+def _prep_dir(directory: str | pathlib.Path | None) -> pathlib.Path:
     if directory is None:
         rv = DATABASE_DIRECTORY
     elif isinstance(directory, str):
@@ -479,7 +479,7 @@ def db_output_helper(
     db_name: str,
     columns: Sequence[str],
     *,
-    directory: None | str | pathlib.Path = None,
+    directory: str | pathlib.Path | None = None,
     strict: bool = False,
     use_gzip: bool = True,
     summary_detailed: Sequence[int] | None = None,

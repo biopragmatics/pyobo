@@ -1062,7 +1062,7 @@ def _typedef_warn(
     from pyobo.struct.typedef import default_typedefs
 
     if predicate.pair in default_typedefs or predicate.pair in typedefs:
-        return None
+        return
     key = prefix, predicate
     if key not in _TYPEDEF_WARNINGS:
         _TYPEDEF_WARNINGS.add(key)

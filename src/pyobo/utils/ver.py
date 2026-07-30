@@ -138,7 +138,7 @@ def _ensure_date(value: Any) -> Any:
     if isinstance(value, str):
         try:
             dt = datetime.datetime.fromisoformat(value)
-        except Exception:
+        except ValueError:
             return value
         else:
             return dt.date()

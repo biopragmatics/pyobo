@@ -1,9 +1,9 @@
 """Converter for miRBase."""
 
-import gzip
 import logging
 from collections.abc import Iterable, Mapping
 
+from pystow.utils import safe_open
 from tqdm.auto import tqdm
 
 from pyobo.struct import Obo, Reference, Synonym, Term, from_species
@@ -47,13 +47,7 @@ def get_terms(version: str, force: bool = False) -> list[Term]:
     _assert_frozen_version(version)
     url = f"{BASE_URL}/miRNA.dat.gz"
     definitions_path = ensure_path(PREFIX, url=url, version=version, force=force)
-
-    file_handle = (
-        gzip.open(definitions_path, "rt")
-        if definitions_path.suffix.endswith(".gz")
-        else open(definitions_path)
-    )
-    with file_handle as file:
+    with safe_open(definitions_path) as file:
         return list(_process_definitions_lines(file, version=version, force=force))
 
 
@@ -116,7 +110,7 @@ def _process_definitions_lines(
                 identifier=accession,
                 name=product,
             )
-            if product.endswith("3p") or product.endswith("5p"):
+            if product.endswith(("3p", "5p")):
                 matures.append(product_reference)
             else:
                 pass
