@@ -1165,14 +1165,26 @@ class Obo:
         ofn = get_ofn_from_obo(self)
         ofn.write_funowl(path)
 
-    def write_owl(self, path: str | Path) -> None:
-        """Write OWL, by first outputting OFN then converting with ROBOT."""
-        import robot_obo_tool
+    def write_owl(
+        self, path: str | Path, *, method: Literal["native", "ofn"] | None = None
+    ) -> None:
+        """Write OWL, by first outputting OFN then converting with ROBOT.
 
-        with tempfile.TemporaryDirectory() as directory:
-            ofn_path = Path(directory).joinpath("tmp.ofn")
-            self.write_ofn(ofn_path)
-            robot_obo_tool.convert(ofn_path, path)
+        :param path: The path to output OWL to
+        :param method: If ``native``, will output OWL/XML through the native
+            writer, otherwise will output OFN then convert to OWL/XML with ROBOT.
+        """
+        if method == "native":
+            from .owl import write_owl
+
+            write_owl(self, path)
+        else:
+            import robot_obo_tool
+
+            with tempfile.TemporaryDirectory() as directory:
+                ofn_path = Path(directory).joinpath("tmp.ofn")
+                self.write_ofn(ofn_path)
+                robot_obo_tool.convert(ofn_path, path)
 
     def write_rdf(self, path: str | Path) -> None:
         """Write as Turtle RDF."""
