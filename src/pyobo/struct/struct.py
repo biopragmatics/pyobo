@@ -104,6 +104,8 @@ logger = logging.getLogger(__name__)
 FORMAT_VERSION = "1.4"
 _SOURCES = Path(__file__).parent.parent.joinpath("sources").resolve()
 
+OBO_DEFAULT_PREFIXES = {"obo", "oboInOwl"}
+
 
 @dataclass
 class Synonym(HasReferencesMixin):
@@ -937,6 +939,7 @@ class Obo:
 
     def iterate_obo_lines(
         self,
+        *,
         emit_object_properties: bool = True,
         emit_annotation_properties: bool = True,
     ) -> Iterable[str]:
@@ -988,24 +991,24 @@ class Obo:
         # 9 TODO default-namespace
         # 10 TODO namespace-id-rule
         # 11
-        for prefix, url in sorted(self._get_clean_idspaces().items()):
-            if prefix in DEFAULT_PREFIX_MAP:
+        for curie_prefix, uri_prefix in sorted(self._get_clean_idspaces().items()):
+            if curie_prefix in DEFAULT_PREFIX_MAP:
                 # we don't need to write out the 4 default prefixes from
                 # table 2 in https://www.w3.org/TR/owl2-syntax/#IRIs since
                 # they're considered to always be builtin
                 continue
 
             # additional assumptions about built in
-            if prefix in {"obo", "oboInOwl"}:
+            if curie_prefix in OBO_DEFAULT_PREFIXES:
                 continue
 
             # ROBOT assumes that all OBO foundry prefixes are builtin,
             # so don't re-declare them
-            if bioregistry.is_obo_foundry(prefix):
+            if bioregistry.is_obo_foundry(curie_prefix):
                 continue
 
-            yv = f"idspace: {prefix} {url}"
-            if _yv_name := bioregistry.get_name(prefix):
+            yv = f"idspace: {curie_prefix} {uri_prefix}"
+            if _yv_name := bioregistry.get_name(curie_prefix):
                 yv += f' "{_yv_name}"'
             yield yv
         # 12-15 are handled only during reading, and

@@ -68,11 +68,19 @@ NO_BUILD_PREFIXES: set[str] = set()
 def _help_get(
     f: Callable[[str, Unpack[GetOntologyKwargs]], Mapping[str, X]],
     reference: SimpleReferenceHint,
-    *,
     upgrade_identifier: bool | None = None,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> X | None:
-    """Get the result for an entity based on a mapping maker function ``f``."""
+    """Get the result for an entity based on a mapping maker function ``f``.
+
+    :param f: The getter function for ID->name, ID->definition, etc.
+    :param reference: The reference to get the field for
+    :param upgrade_identifier: Should the reference get upgraded using
+        non-primary identifier mappings.
+        If none, will only try and upgrade the identifier if required to
+        get a value. If true, will explicitly try upgrading. If false, will
+        not try upgrading, even if not available.
+    """
     reference = _get_pi(reference)
 
     try:
@@ -105,7 +113,7 @@ def _help_get(
     elif upgrade_identifier is True:
         primary_id = get_primary_identifier(reference, **kwargs)
         return mapping.get(primary_id)
-    else:
+    else:  # be explicit
         return mapping.get(reference.identifier)
 
 
