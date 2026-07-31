@@ -13,6 +13,7 @@ import robot_obo_tool
 from pyobo.struct.struct import Obo, Term, TypeDef
 
 __all__ = [
+    "TermMixin",
     "TestMixin",
 ]
 
@@ -27,6 +28,13 @@ class TestMixin(unittest.TestCase):
     def assert_obo_lines(self, text: str, ontology: Obo) -> None:
         """Assert OBO header has the right lines."""
         self.assert_lines(text, ontology.iterate_obo_lines())
+
+    def assert_obo_equal(self, expected: Obo, ontology: Obo) -> None:
+        """Assert two OBO documents are equivalent by exporting them."""
+        self.assertEqual(
+            "\n".join(expected.iterate_obo_lines()),
+            "\n".join(ontology.iterate_obo_lines()),
+        )
 
     def assert_ofn_lines(self, text: str, ontology: Obo, *, oracle: bool = False) -> None:
         """Assert OFN header has the right lines."""
