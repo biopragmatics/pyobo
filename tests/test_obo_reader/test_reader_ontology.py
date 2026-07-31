@@ -3,31 +3,18 @@
 import datetime
 import unittest
 
-from pyobo import Obo, Reference, SynonymTypeDef, Term, TypeDef, default_reference
+from pyobo import Reference, SynonymTypeDef, default_reference
 from pyobo.struct import part_of
 from pyobo.struct.obo import from_str
 from pyobo.struct.reference import OBOLiteral
 from pyobo.struct.struct_utils import Annotation
 from pyobo.struct.typedef import equivalent_class, has_comment
 from pyobo.struct.vocabulary import has_license
+from tests import cases
 
 
-class TestReaderOntologyMetadata(unittest.TestCase):
+class TestReaderOntologyMetadata(cases.TestMixin):
     """Test the reader on ontology metadata."""
-
-    def get_only_term(self, ontology: Obo) -> Term:
-        """Assert there is only a single term in the ontology and return it."""
-        terms = list(ontology.iter_terms())
-        self.assertEqual(1, len(terms))
-        term = terms[0]
-        return term
-
-    def get_only_typedef(self, ontology: Obo) -> TypeDef:
-        """Assert there is only a single typedef in the ontology and return it."""
-        if ontology.typedefs is None:
-            raise self.fail()
-        self.assertEqual(1, len(ontology.typedefs))
-        return ontology.typedefs[0]
 
     def test_0_missing_date_version(self) -> None:
         """Test an ontology with a missing date and version."""

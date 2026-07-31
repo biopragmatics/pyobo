@@ -95,4 +95,4 @@ class TestConversion(unittest.TestCase):
         )
 
         reconstituted_obo_ontology = get_obo_from_ofn("go", ofn_ontology)
-        self.assertEqual(obo_ontology, reconstituted_obo_ontology)
+        self.assertEqual(obo_ontology.iterate_obo_lines(), reconstituted_obo_ontology)
