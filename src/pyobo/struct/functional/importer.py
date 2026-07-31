@@ -15,7 +15,7 @@ from ..struct import Obo, SynonymTypeDef, Term, TypeDef, build_ontology
 from ...identifier_utils import Reference
 
 
-def ontology_from_document(prefix: str, document: Document) -> Obo:
+def get_obo_from_ofn(prefix: str, document: Document) -> Obo:
     """Get an ontology from a functional OWL document."""
     if len(document.ontologies) != 1:
         raise ValueError

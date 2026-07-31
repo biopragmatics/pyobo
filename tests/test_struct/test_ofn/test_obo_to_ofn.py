@@ -12,7 +12,7 @@ from pyobo.struct import (
     Term,
     default_reference,
 )
-from pyobo.struct.functional import get_ofn_from_obo
+from pyobo.struct.functional import get_obo_from_ofn, get_ofn_from_obo
 
 
 class TestConversion(unittest.TestCase):
@@ -93,3 +93,6 @@ class TestConversion(unittest.TestCase):
             """).strip(),
             ofn_ontology.to_funowl().strip(),
         )
+
+        reconstituted_obo_ontology = get_obo_from_ofn("go", ofn_ontology)
+        self.assertEqual(obo_ontology, reconstituted_obo_ontology)
