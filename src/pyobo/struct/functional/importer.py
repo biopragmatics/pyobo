@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import curies
 import rdflib
 from curies import Converter
 from functional_owl import Document
 from functional_owl import dsl as f
 
-from ..struct import Obo, Term, TypeDef, build_ontology, default_reference
+from ..reference import default_reference
+from ..struct import Obo, SynonymTypeDef, Term, TypeDef, build_ontology
 from ...identifier_utils import Reference
 
 
@@ -20,8 +23,8 @@ def ontology_from_document(prefix: str, document: Document) -> Obo:
     ontology = document.ontologies[0]
     terms = {}
     typedefs = {}
-    synonym_typedefs = {}
-    kwargs = {}
+    synonym_typedefs: dict[str, SynonymTypeDef] = {}
+    kwargs: dict[str, Any] = {}
 
     converter = Converter.from_prefix_map(document.prefix_map)
     ss = f"http://purl.obolibrary.org/obo/{prefix}#"

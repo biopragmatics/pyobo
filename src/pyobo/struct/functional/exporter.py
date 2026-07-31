@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from ..struct import Obo, Term, TypeDef
     from ..struct_utils import Annotation as OBOAnnotation
     from ..struct_utils import Stanza
+    from ...identifier_utils import Reference
 
 __all__ = [
     "get_ofn_from_obo",
@@ -193,7 +194,7 @@ def get_term_axioms(term: Term) -> Iterable[f.Box]:
 def _get_annotations(
     term: Stanza,
     p: curies.Reference | Referenced,
-    o: curies.Reference | Referenced | OBOLiteral | str,
+    o: Reference | Referenced | OBOLiteral | str,
 ) -> list[f.Annotation]:
     return _process_anns(term._get_annotations(p, o))
 
