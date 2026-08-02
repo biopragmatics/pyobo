@@ -3,7 +3,7 @@
 import logging
 import unittest
 
-from pyobo import Obo, Reference, Term
+from pyobo import Reference
 from pyobo.identifier_utils import NotCURIEError, UnparsableIRIError, UnregisteredPrefixError
 from pyobo.struct import TypeDef, default_reference
 from pyobo.struct import vocabulary as v
@@ -22,6 +22,8 @@ from pyobo.struct.typedef import (
     term_replaced_by,
 )
 from pyobo.struct.vocabulary import CHARLIE
+from tests import cases
+from tests.cases import TermMixin
 
 REASON_OBONET_IMPL = (
     "This needs to be fixed upstream, since obonet's parser "
@@ -48,18 +50,8 @@ class TestUtils(unittest.TestCase):
         self.assertIsNone(get_first_nonescaped_quote('\\"hello\\"'))
 
 
-class TestReaderTerm(unittest.TestCase):
+class TestReaderTerm(cases.TestMixin, TermMixin):
     """Test the reader."""
-
-    def get_only_term(self, ontology: Obo) -> Term:
-        """Assert there is only a single term in the ontology and return it."""
-        terms = list(ontology.iter_terms())
-        self.assertNotEqual(0, len(terms), msg="was not able to parse the only term")
-        self.assertEqual(
-            1, len(terms), msg="got too many terms:\n\n{}".format("\n".join(str(t) for t in terms))
-        )
-        term = terms[0]
-        return term
 
     def assert_boolean_flag(self, tag: str) -> None:
         """Test a boolean flag."""
@@ -115,7 +107,7 @@ class TestReaderTerm(unittest.TestCase):
         xref = term.xrefs[0]
         self.assertEqual("drugbank:DB12345", xref.curie)
 
-    def test_1_node_unparsable(self) -> None:
+    def test_1_id(self) -> None:
         """Test loading an ontology with unparsable nodes."""
         text = """\
             ontology: chebi
@@ -175,6 +167,18 @@ class TestReaderTerm(unittest.TestCase):
             ],
             list(term.alt_ids),
         )
+
+    def test_6_definition(self) -> None:
+        """Test parsing a definition missing a starting quote."""
+        ontology = from_str("""\
+            ontology: chebi
+
+            [Term]
+            id: CHEBI:1234
+            def: "test text"
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual("test text", term.definition)
 
     def test_6_definition_missing_start_quote(self) -> None:
         """Test parsing a definition missing a starting quote."""

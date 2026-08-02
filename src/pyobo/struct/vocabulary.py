@@ -8,6 +8,7 @@ from curies import vocabulary as _v
 from ..identifier_utils import Reference
 
 __all__ = [
+    "CHARLIE",
     "equivalent_class",
     "has_contributor",
     "mapping_has_confidence",
