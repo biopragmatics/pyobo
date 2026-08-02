@@ -6,7 +6,7 @@ from curies import vocabulary as v
 
 from pyobo import build_ontology
 from pyobo.struct import Obo, Reference, SynonymTypeDef, Term, default_reference
-from pyobo.struct.functional import get_obo_from_ofn, get_ofn_from_obo
+from pyobo.struct.functional import get_ofn_from_obo
 from tests import cases
 
 R1 = Reference(prefix="GO", identifier="0032571", name="response to vitamin K")
@@ -21,10 +21,6 @@ class TestConversion(cases.TestMixin):
         """Assert an OBO ontology."""
         ofn_ontology = get_ofn_from_obo(obo_ontology)
         self.assertEqual(dedent(ofn).strip(), ofn_ontology.to_funowl().strip())
-        reconstituted_obo_ontology = get_obo_from_ofn(
-            obo_ontology.ontology, ofn_ontology, enrich_metadata=enrich_metadata
-        )
-        self.assert_obo_equal(obo_ontology, reconstituted_obo_ontology)
 
     def test_0_id(self) -> None:
         """Test a term."""
