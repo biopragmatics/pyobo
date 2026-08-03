@@ -13,16 +13,16 @@ from functional_owl import dsl as f
 from functional_owl import macros as m
 from rdflib import XSD
 
-from . import vocabulary as pv
-from .reference import OBOLiteral, _parse_datetime
-from .struct import get_iris
-from ..identifier_utils import Reference
+from .. import vocabulary as pv
+from ..reference import OBOLiteral, _parse_datetime
+from ..struct import get_iris
 
 if TYPE_CHECKING:
-    from .reference import Referenced
-    from .struct import Obo, Term, TypeDef
-    from .struct_utils import Annotation as OBOAnnotation
-    from .struct_utils import Stanza
+    from ..reference import Referenced
+    from ..struct import Obo, Term, TypeDef
+    from ..struct_utils import Annotation as OBOAnnotation
+    from ..struct_utils import Stanza
+    from ...identifier_utils import Reference
 
 __all__ = [
     "get_ofn_from_obo",
@@ -192,7 +192,9 @@ def get_term_axioms(term: Term) -> Iterable[f.Box]:
 
 
 def _get_annotations(
-    term: Stanza, p: curies.Reference | Referenced, o: Reference | Referenced | OBOLiteral | str
+    term: Stanza,
+    p: curies.Reference | Referenced,
+    o: Reference | Referenced | OBOLiteral | str,
 ) -> list[f.Annotation]:
     return _process_anns(term._get_annotations(p, o))
 
