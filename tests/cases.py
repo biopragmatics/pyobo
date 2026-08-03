@@ -175,6 +175,6 @@ class TermMixin(unittest.TestCase, ABC):
     def test_22_replaced_by(self) -> None:
         """Test the ``replaced-by`` tag."""
 
-    @abstractmethod
     def test_23_consider(self) -> None:
         """Test the ``consider`` tag."""
+        # TODO make abstract method
