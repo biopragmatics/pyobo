@@ -589,6 +589,12 @@ class Stanza(Referenced, HasReferencesMixin):
         """Add a replaced by property."""
         return self.annotate_object(v.term_replaced_by, reference, annotations=annotations)
 
+    def append_consider(
+        self, reference: Reference, *, annotations: Iterable[Annotation] | None = None
+    ) -> Self:
+        """Add a ``oboInOwl:consider`` property."""
+        return self.annotate_object(v.obo_consider, reference, annotations=annotations)
+
     def iterate_relations(self) -> Iterable[tuple[Reference, Reference]]:
         """Iterate over pairs of typedefs and targets."""
         for typedef, targets in sorted(self.relationships.items()):

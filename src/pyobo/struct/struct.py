@@ -562,7 +562,7 @@ class Term(Stanza):
         )
         # 23
         yield from _tag_property_targets(
-            "consider", self, v.see_also, ontology_prefix=ontology_prefix
+            "consider", self, v.obo_consider, ontology_prefix=ontology_prefix
         )
 
 
@@ -2519,7 +2519,7 @@ class TypeDef(Stanza):
         )
         # 37
         yield from _tag_property_targets(
-            "consider", self, v.see_also, ontology_prefix=ontology_prefix
+            "consider", self, v.obo_consider, ontology_prefix=ontology_prefix
         )
         # 38 TODO expand_assertion_to
         # 39 TODO expand_expression_to

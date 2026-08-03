@@ -178,9 +178,11 @@ grape = [
 [project.optional-dependencies]
 gilda = [
     "ssslm[gilda-slim]",
+    "nltk!=3.10.1",
 ]
 gilda-slim = [
     "ssslm[gilda-slim]",
+    "nltk!=3.10.1",
 ]
 sources = [
     # keep as sum of all sources

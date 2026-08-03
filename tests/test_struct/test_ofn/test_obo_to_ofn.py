@@ -15,9 +15,7 @@ R1 = Reference(prefix="GO", identifier="0032571", name="response to vitamin K")
 class TestConversion(cases.TestMixin):
     """Test conversion from OBO to OFN."""
 
-    def assert_something(
-        self, obo_ontology: Obo, ofn: str, *, enrich_metadata: bool = False
-    ) -> None:
+    def assert_ontology_ofn(self, obo_ontology: Obo, ofn: str) -> None:
         """Assert an OBO ontology."""
         ofn_ontology = get_ofn_from_obo(obo_ontology)
         self.assertEqual(dedent(ofn).strip(), ofn_ontology.to_funowl().strip())
@@ -26,8 +24,8 @@ class TestConversion(cases.TestMixin):
         """Test a term."""
         self.maxDiff = None
         term = Term(reference=Reference.from_reference(R1.without_name()))
-        obo = build_ontology(prefix="go", terms=[term])
-        self.assert_something(
+        obo = build_ontology(prefix="go", terms=[term], enrich_metadata=False)
+        self.assert_ontology_ofn(
             obo,
             """\
 
@@ -50,10 +48,7 @@ class TestConversion(cases.TestMixin):
         """Test conversion."""
         subset = default_reference("go", "SUBSET-1")
         synonym_typedef = SynonymTypeDef(reference=Reference.from_reference(v.previous_name))
-        term = Term(
-            reference=Reference(prefix="go", identifier="1234567", name="test"),
-            subsets=[subset],
-        )
+        term = Term(reference=R1, subsets=[subset])
         term.append_synonym("test-synonym-1")
         term.append_synonym("test-synonym-2", type=synonym_typedef)
         term.append_synonym("test-synonym-3", specificity="EXACT")
@@ -71,8 +66,9 @@ class TestConversion(cases.TestMixin):
             idspaces={
                 "GO": "http://purl.obolibrary.org/obo/GO_",
             },
+            enrich_metadata=True,
         )
-        self.assert_something(
+        self.assert_ontology_ofn(
             obo_ontology,
             """\
                 Prefix(dcterms:=<http://purl.org/dc/terms/>)
@@ -111,7 +107,7 @@ class TestConversion(cases.TestMixin):
                 AnnotationAssertion(rdfs:label OMO:0003008 "previous name")
                 SubAnnotationPropertyOf(OMO:0003008 oboInOwl:SynonymTypeProperty)
                 Declaration(Class(GO:0032571))
-                AnnotationAssertion(rdfs:label GO:0032571 "response to vitamin k")
+                AnnotationAssertion(rdfs:label GO:0032571 "response to vitamin K")
                 AnnotationAssertion(oboInOwl:inSubset GO:0032571 obo:go#SUBSET-1)
                 AnnotationAssertion(oboInOwl:hasRelatedSynonym GO:0032571 "test-synonym-1")
                 AnnotationAssertion(Annotation(oboInOwl:hasSynonymType OMO:0003008) oboInOwl:hasRelatedSynonym GO:0032571 "test-synonym-2")
