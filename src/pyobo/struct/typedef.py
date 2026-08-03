@@ -45,6 +45,7 @@ __all__ = [
     "has_homepage",
     "has_inchi",
     "has_isomeric_smiles",
+    "has_license",
     "has_mailbox",
     "has_mailing_list",
     "has_mature",
