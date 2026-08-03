@@ -1,13 +1,12 @@
 """Test reading typedefs."""
 
-import unittest
-
-from pyobo import Obo, Reference, TypeDef, default_reference
+from pyobo import Reference, default_reference
 from pyobo.struct import part_of
 from pyobo.struct.obo import from_str
 from pyobo.struct.reference import OBOLiteral
 from pyobo.struct.typedef import is_conjugate_base_of, occurs_in, see_also
 from pyobo.struct.vocabulary import CHARLIE, has_contributor, obo_consider
+from tests import cases
 
 REASON_OBONET_IMPL = (
     "This needs to be fixed upstream, since obonet's parser "
@@ -15,15 +14,8 @@ REASON_OBONET_IMPL = (
 )
 
 
-class TestReaderTypedef(unittest.TestCase):
+class TestReaderTypedef(cases.TestMixin):
     """Tests for typedefs."""
-
-    def get_only_typedef(self, ontology: Obo) -> TypeDef:
-        """Assert there is only a single typedef in the ontology and return it."""
-        if ontology.typedefs is None:
-            raise self.fail()
-        self.assertEqual(1, len(ontology.typedefs))
-        return ontology.typedefs[0]
 
     def assert_boolean_tag(self, tag: str) -> None:
         """Assert the boolean flag works right."""
