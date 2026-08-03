@@ -858,7 +858,7 @@ class TestTypeDef(unittest.TestCase):
     def test_37_consider(self) -> None:
         """Test the ``consider`` tag."""
         typedef = TypeDef(reference=Reference(prefix="GO", identifier="0000001"))
-        typedef.append_see_also(Reference(prefix="GO", identifier="0000002"))
+        typedef.append_consider(Reference(prefix="GO", identifier="0000002"))
         self.assert_obo_stanza(
             """\
             [Typedef]
