@@ -11,6 +11,9 @@ from tests import cases
 class TestOBOHeader(cases.TestMixin):
     """Test ontologies."""
 
+    def test_1_format_version(self) -> None:
+        """Test the ``format-version`` tag."""  # TODO
+
     def test_2_data_version(self) -> None:
         """Test ontology definition."""
         ontology = build_ontology(
@@ -25,6 +28,12 @@ class TestOBOHeader(cases.TestMixin):
             """,
             ontology,
         )
+
+    def test_3_date(self) -> None:
+        """Test the ``date`` tag."""  # TODO
+
+    def test_4_saved_by(self) -> None:
+        """Test the ``saved-by`` tag."""  # TODO
 
     def test_5_data_version(self) -> None:
         """Test ontology definition."""
@@ -42,7 +51,7 @@ class TestOBOHeader(cases.TestMixin):
         )
 
     def test_6_import(self) -> None:
-        """Test imports."""
+        """Test the ``import`` tag."""  # TODO
 
     def test_7_subsets(self) -> None:
         """Test ontology definition."""
@@ -73,13 +82,13 @@ class TestOBOHeader(cases.TestMixin):
         )
 
     def test_8_synonymtypedef(self) -> None:
-        """Test ontology synonym type definitions."""
+        """Test ontology synonym type definitions."""  # TODO
 
     def test_9_default_namespace(self) -> None:
-        """Test default namespace."""
+        """Test default namespace."""  # TODO
 
     def test_10_namespace_id_rule(self) -> None:
-        """Test namespace-id-rule."""
+        """Test namespace-id-rule."""  # TODO
 
     def test_11_idspace(self) -> None:
         """Test idspace definitions."""
@@ -98,19 +107,19 @@ class TestOBOHeader(cases.TestMixin):
         )
 
     def test_12_xrefs_equivalent(self) -> None:
-        """Test treat-xrefs-as-equivalent."""
+        """Test the ``treat-xrefs-as-equivalent`` tag."""  # TODO
 
     def test_13_xrefs_differentia(self) -> None:
-        """Test treat-xrefs-as-genus-differentia."""
+        """Test the ``treat-xrefs-as-genus-differentia`` tag."""  # TODO
 
     def test_14_xrefs_rels(self) -> None:
-        """Test treat-xrefs-as-relationship."""
+        """Test the ``treat-xrefs-as-relationship`` tag."""  # TODO
 
     def test_15_xrefs_is_a(self) -> None:
-        """Test treat-xrefs-as-is_a."""
+        """Test the ``treat-xrefs-as-is_a `` tag."""  # TODO
 
     def test_16_remark(self) -> None:
-        """Test remark."""
+        """Test remark."""  # TODO
 
     def test_17_ontology(self) -> None:
         """Test ontology definition."""
