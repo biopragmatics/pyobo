@@ -155,7 +155,7 @@ extended_match_typedefs: Sequence[Reference] = (
 SKIP_PROPERTY_PREDICATES_OBJECTS = [
     term_replaced_by,  # maps to "replaced_by:" line
     alternative_term,  # maps to "alt_id:" line
-    obo_consider, # maps to ``consider`` tag
+    obo_consider,  # maps to ``consider`` tag
 ]
 
 SKIP_PROPERTY_PREDICATES_LITERAL = [
