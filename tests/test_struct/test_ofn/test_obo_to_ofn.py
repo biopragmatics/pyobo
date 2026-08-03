@@ -87,13 +87,13 @@ class TestConversion(cases.TestMixin):
 
                 Ontology(<https://w3id.org/biopragmatics/resources/go/go.ofn> <https://w3id.org/biopragmatics/resources/go/30/go.ofn>
                 Annotation(dcterms:title "Gene Ontology"^^xsd:string)
+                Annotation(IAO:0000700 GO:0032571)
                 Annotation(dcterms:license "CC-BY-4.0"^^xsd:string)
                 Annotation(dcterms:description "The Gene Ontology project provides a controlled vocabulary to describe gene and gene product attributes in any organism."^^xsd:string)
                 Annotation(foaf:homepage "http://geneontology.org/"^^xsd:anyURI)
                 Annotation(doap:repository "https://github.com/geneontology/go-ontology"^^xsd:anyURI)
                 Annotation(foaf:logo "https://obofoundry.org/images/go_logo.png"^^xsd:anyURI)
                 Annotation(doap:maintainer orcid:0000-0001-6787-2901)
-                Annotation(IAO:0000700 GO:0032571)
                 Annotation(owl:versionInfo "30"^^xsd:string)
                 Annotation(oboInOwl:auto-generated-by "PyOBO"^^xsd:string)
 

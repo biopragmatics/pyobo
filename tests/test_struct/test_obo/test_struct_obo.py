@@ -322,10 +322,11 @@ class TestOBOHeader(cases.TestMixin):
 
     def test_ror_metadata(self) -> None:
         """Test the ROR metadata can be turned into OWL."""
-        ontology = build_ontology("ror")
+        ontology = build_ontology("ror", auto_generated_by="test")
         self.assert_obo_lines(
             r"""
             format-version: 1.4
+            auto-generated-by: test
             idspace: dcterms http://purl.org/dc/terms/ "Dublin Core Metadata Initiative Terms"
             idspace: doap http://usefulinc.com/ns/doap# "Description of a Project"
             idspace: foaf http://xmlns.com/foaf/0.1/ "Friend of a Friend"
