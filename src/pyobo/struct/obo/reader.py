@@ -1008,7 +1008,7 @@ def _process_consider(
         ontology_prefix=ontology_prefix,
         strict=strict,
     ):
-        stanza.append_see_also(reference)
+        stanza.append_consider(reference)
 
 
 def _process_equivalent_to_chain(
