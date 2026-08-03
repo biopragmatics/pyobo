@@ -1299,3 +1299,22 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
                 AnnotationAssertion(IAO:0100001 GO:0050069 GO:1234569)
             """,
         )
+
+    def test_23_consider(self) -> None:
+        """Test the ``consider`` tag."""
+        term = Term(LYSINE_DEHYDROGENASE_ACT)
+        term.append_replaced_by(Reference(prefix="GO", identifier="1234569", name="dummy"))
+        self.assert_obo_stanza(
+            term,
+            obo="""\
+                [Term]
+                id: GO:0050069
+                name: lysine dehydrogenase activity
+                consider: GO:1234569 ! dummy
+            """,
+            ofn="""
+                Declaration(Class(GO:0050069))
+                AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
+                AnnotationAssertion(oboInOwl:consider GO:0050069 GO:1234569)
+            """,
+        )

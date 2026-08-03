@@ -18,6 +18,7 @@ from pyobo.struct.typedef import (
     has_comment,
     has_dbxref,
     is_conjugate_base_of,
+    obo_consider,
     see_also,
     term_replaced_by,
 )
@@ -1356,7 +1357,7 @@ class TestReaderTerm(unittest.TestCase):
             consider: CHEBI:5678
         """)
         term = self.get_only_term(ontology)
-        consider = term.get_property_values(see_also)
+        consider = term.get_property_values(obo_consider)
         self.assertEqual(1, len(consider))
         self.assertEqual(
             Reference(prefix="CHEBI", identifier="5678"),
