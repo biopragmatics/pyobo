@@ -348,6 +348,7 @@ class TestOBOHeader(cases.TestMixin):
             Prefix(dcterms:=<http://purl.org/dc/terms/>)
             Prefix(doap:=<http://usefulinc.com/ns/doap#>)
             Prefix(foaf:=<http://xmlns.com/foaf/0.1/>)
+            Prefix(oboInOwl:=<http://www.geneontology.org/formats/oboInOwl#>)
             Prefix(orcid:=<https://orcid.org/>)
             Prefix(owl:=<http://www.w3.org/2002/07/owl#>)
             Prefix(rdf:=<http://www.w3.org/1999/02/22-rdf-syntax-ns#>)
@@ -365,6 +366,7 @@ class TestOBOHeader(cases.TestMixin):
             Annotation(foaf:logo "https://ror.org/img/ror-logo.svg"^^xsd:anyURI)
             Annotation(doap:mailing-list "support@ror.org"^^xsd:string)
             Annotation(doap:maintainer orcid:0000-0002-2916-3423)
+            Annotation(oboInOwl:auto-generated-by "test"^^xsd:string)
             )
             """,
             ontology,
@@ -382,7 +384,8 @@ class TestOBOHeader(cases.TestMixin):
                  xmlns:foaf="http://xmlns.com/foaf/0.1/"
                  xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
                  xmlns:orcid="https://orcid.org/"
-                 xmlns:dcterms="http://purl.org/dc/terms/">
+                 xmlns:dcterms="http://purl.org/dc/terms/"
+                 xmlns:oboInOwl="http://www.geneontology.org/formats/oboInOwl#">
                 <owl:Ontology rdf:about="https://w3id.org/biopragmatics/resources/ror/ror.ofn">
                     <dcterms:description>ROR (Research Organization Registry) is a global, community-led registry
             of open persistent identifiers for research organizations. ROR is jointly
@@ -392,6 +395,7 @@ class TestOBOHeader(cases.TestMixin):
                     <doap:mailing-list>support@ror.org</doap:mailing-list>
                     <doap:maintainer rdf:resource="https://orcid.org/0000-0002-2916-3423"/>
                     <doap:repository rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://github.com/ror-community</doap:repository>
+                    <oboInOwl:auto-generated-by>test</oboInOwl:auto-generated-by>
                     <foaf:homepage rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://ror.org</foaf:homepage>
                     <foaf:logo rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://ror.org/img/ror-logo.svg</foaf:logo>
                 </owl:Ontology>
@@ -414,6 +418,8 @@ class TestOBOHeader(cases.TestMixin):
                 <owl:AnnotationProperty rdf:about="http://usefulinc.com/ns/doap#maintainer"/>
                 <!-- http://usefulinc.com/ns/doap#repository -->
                 <owl:AnnotationProperty rdf:about="http://usefulinc.com/ns/doap#repository"/>
+                <!-- http://www.geneontology.org/formats/oboInOwl#auto-generated-by -->
+                <owl:AnnotationProperty rdf:about="http://www.geneontology.org/formats/oboInOwl#auto-generated-by"/>
                 <!-- http://xmlns.com/foaf/0.1/homepage -->
                 <owl:AnnotationProperty rdf:about="http://xmlns.com/foaf/0.1/homepage"/>
                 <!-- http://xmlns.com/foaf/0.1/logo -->
