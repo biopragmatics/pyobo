@@ -19,6 +19,8 @@ class TestOBOHeader(cases.TestMixin):
         ontology = build_ontology(
             prefix="xxx",
             version="1.0",
+            enrich_metadata=False,
+            check_bioregistry_prefix=False,
         )
         self.assert_obo_lines(
             """\
@@ -40,6 +42,7 @@ class TestOBOHeader(cases.TestMixin):
         ontology = build_ontology(
             prefix="xxx",
             auto_generated_by="test",
+            check_bioregistry_prefix=False,
         )
         self.assert_obo_lines(
             """\
@@ -58,6 +61,8 @@ class TestOBOHeader(cases.TestMixin):
         ontology = build_ontology(
             prefix="xxx",
             subsetdefs={default_reference("xxx", "HELLO"): "test"},
+            enrich_metadata=False,
+            check_bioregistry_prefix=False,
         )
         self.assert_obo_lines(
             """\
@@ -71,6 +76,8 @@ class TestOBOHeader(cases.TestMixin):
         ontology = build_ontology(
             prefix="xxx",
             subsetdefs={default_reference("go", "HELLO"): "test"},
+            enrich_metadata=False,
+            check_bioregistry_prefix=False,
         )
         self.assert_obo_lines(
             """\
@@ -97,6 +104,8 @@ class TestOBOHeader(cases.TestMixin):
             idspaces={
                 "go": "http://purl.obolibrary.org/obo/GO_",
             },
+            enrich_metadata=False,
+            check_bioregistry_prefix=False,
         )
         self.assert_obo_lines(
             """\
@@ -123,7 +132,7 @@ class TestOBOHeader(cases.TestMixin):
 
     def test_17_ontology(self) -> None:
         """Test ontology definition."""
-        ontology = build_ontology("xxx")
+        ontology = build_ontology("xxx", enrich_metadata=False, check_bioregistry_prefix=False)
         self.assert_obo_lines(
             """\
             format-version: 1.4
@@ -137,6 +146,8 @@ class TestOBOHeader(cases.TestMixin):
         ontology = build_ontology(
             prefix="xxx",
             root_terms=[default_reference("xxx", "ROOT1")],
+            enrich_metadata=False,
+            check_bioregistry_prefix=False,
         )
         self.assert_obo_lines(
             """\
@@ -149,10 +160,12 @@ class TestOBOHeader(cases.TestMixin):
 
     def test_18_properties_bioregistry(self) -> None:
         """Test auto-populating."""
-        ontology = build_ontology("go")
+        self.maxDiff = None
+        ontology = build_ontology("go", enrich_metadata=True, auto_generated_by="test")
         self.assert_obo_lines(
             """\
             format-version: 1.4
+            auto-generated-by: test
             idspace: dcterms http://purl.org/dc/terms/ "Dublin Core Metadata Initiative Terms"
             idspace: doap http://usefulinc.com/ns/doap# "Description of a Project"
             idspace: foaf http://xmlns.com/foaf/0.1/ "Friend of a Friend"
@@ -174,6 +187,8 @@ class TestOBOHeader(cases.TestMixin):
         ontology = build_ontology(
             prefix="xxx",
             description="MeSH (Medical Subject Headings)",
+            enrich_metadata=False,
+            check_bioregistry_prefix=False,
         )
         self.assert_obo_lines(
             r"""
@@ -241,6 +256,8 @@ class TestOBOHeader(cases.TestMixin):
         ontology = build_ontology(
             prefix="xxx",
             description='Something "Like This"',
+            enrich_metadata=False,
+            check_bioregistry_prefix=False,
         )
         self.assert_obo_lines(
             r"""
@@ -305,10 +322,11 @@ class TestOBOHeader(cases.TestMixin):
 
     def test_ror_metadata(self) -> None:
         """Test the ROR metadata can be turned into OWL."""
-        ontology = build_ontology("ror")
+        ontology = build_ontology("ror", auto_generated_by="test")
         self.assert_obo_lines(
             r"""
             format-version: 1.4
+            auto-generated-by: test
             idspace: dcterms http://purl.org/dc/terms/ "Dublin Core Metadata Initiative Terms"
             idspace: doap http://usefulinc.com/ns/doap# "Description of a Project"
             idspace: foaf http://xmlns.com/foaf/0.1/ "Friend of a Friend"
@@ -330,6 +348,7 @@ class TestOBOHeader(cases.TestMixin):
             Prefix(dcterms:=<http://purl.org/dc/terms/>)
             Prefix(doap:=<http://usefulinc.com/ns/doap#>)
             Prefix(foaf:=<http://xmlns.com/foaf/0.1/>)
+            Prefix(oboInOwl:=<http://www.geneontology.org/formats/oboInOwl#>)
             Prefix(orcid:=<https://orcid.org/>)
             Prefix(owl:=<http://www.w3.org/2002/07/owl#>)
             Prefix(rdf:=<http://www.w3.org/1999/02/22-rdf-syntax-ns#>)
@@ -347,6 +366,7 @@ class TestOBOHeader(cases.TestMixin):
             Annotation(foaf:logo "https://ror.org/img/ror-logo.svg"^^xsd:anyURI)
             Annotation(doap:mailing-list "support@ror.org"^^xsd:string)
             Annotation(doap:maintainer orcid:0000-0002-2916-3423)
+            Annotation(oboInOwl:auto-generated-by "test"^^xsd:string)
             )
             """,
             ontology,
@@ -364,7 +384,8 @@ class TestOBOHeader(cases.TestMixin):
                  xmlns:foaf="http://xmlns.com/foaf/0.1/"
                  xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
                  xmlns:orcid="https://orcid.org/"
-                 xmlns:dcterms="http://purl.org/dc/terms/">
+                 xmlns:dcterms="http://purl.org/dc/terms/"
+                 xmlns:oboInOwl="http://www.geneontology.org/formats/oboInOwl#">
                 <owl:Ontology rdf:about="https://w3id.org/biopragmatics/resources/ror/ror.ofn">
                     <dcterms:description>ROR (Research Organization Registry) is a global, community-led registry
             of open persistent identifiers for research organizations. ROR is jointly
@@ -374,6 +395,7 @@ class TestOBOHeader(cases.TestMixin):
                     <doap:mailing-list>support@ror.org</doap:mailing-list>
                     <doap:maintainer rdf:resource="https://orcid.org/0000-0002-2916-3423"/>
                     <doap:repository rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://github.com/ror-community</doap:repository>
+                    <oboInOwl:auto-generated-by>test</oboInOwl:auto-generated-by>
                     <foaf:homepage rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://ror.org</foaf:homepage>
                     <foaf:logo rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://ror.org/img/ror-logo.svg</foaf:logo>
                 </owl:Ontology>
@@ -396,6 +418,8 @@ class TestOBOHeader(cases.TestMixin):
                 <owl:AnnotationProperty rdf:about="http://usefulinc.com/ns/doap#maintainer"/>
                 <!-- http://usefulinc.com/ns/doap#repository -->
                 <owl:AnnotationProperty rdf:about="http://usefulinc.com/ns/doap#repository"/>
+                <!-- http://www.geneontology.org/formats/oboInOwl#auto-generated-by -->
+                <owl:AnnotationProperty rdf:about="http://www.geneontology.org/formats/oboInOwl#auto-generated-by"/>
                 <!-- http://xmlns.com/foaf/0.1/homepage -->
                 <owl:AnnotationProperty rdf:about="http://xmlns.com/foaf/0.1/homepage"/>
                 <!-- http://xmlns.com/foaf/0.1/logo -->
@@ -412,6 +436,8 @@ class TestOBOHeader(cases.TestMixin):
             properties=[
                 Annotation(has_license.reference, OBOLiteral.string("CC0")),
             ],
+            enrich_metadata=False,
+            check_bioregistry_prefix=False,
         )
         self.assert_obo_lines(
             """\
@@ -428,6 +454,8 @@ class TestOBOHeader(cases.TestMixin):
         ontology = build_ontology(
             prefix="xxx",
             ontology_iri="https://example.org/xxx.owl",
+            enrich_metadata=False,
+            check_bioregistry_prefix=False,
         )
         self.assert_obo_lines(
             r"""

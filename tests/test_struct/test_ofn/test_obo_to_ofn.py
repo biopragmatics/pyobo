@@ -24,16 +24,13 @@ class TestConversion(cases.TestMixin):
         """Test a term."""
         self.maxDiff = None
         term = Term(reference=Reference.from_reference(R1.without_name()))
-        obo = build_ontology(prefix="go", terms=[term])
+        obo = build_ontology(prefix="go", terms=[term], enrich_metadata=False)
         self.assert_ontology_ofn(
             obo,
             """\
 
         Prefix(dcterms:=<http://purl.org/dc/terms/>)
-        Prefix(doap:=<http://usefulinc.com/ns/doap#>)
-        Prefix(foaf:=<http://xmlns.com/foaf/0.1/>)
         Prefix(GO:=<http://purl.obolibrary.org/obo/GO_>)
-        Prefix(orcid:=<https://orcid.org/>)
         Prefix(owl:=<http://www.w3.org/2002/07/owl#>)
         Prefix(rdf:=<http://www.w3.org/1999/02/22-rdf-syntax-ns#>)
         Prefix(rdfs:=<http://www.w3.org/2000/01/rdf-schema#>)
@@ -41,12 +38,6 @@ class TestConversion(cases.TestMixin):
 
         Ontology(<https://w3id.org/biopragmatics/resources/go/go.ofn>
         Annotation(dcterms:title "Gene Ontology"^^xsd:string)
-        Annotation(dcterms:license "CC-BY-4.0"^^xsd:string)
-        Annotation(dcterms:description "The Gene Ontology project provides a controlled vocabulary to describe gene and gene product attributes in any organism."^^xsd:string)
-        Annotation(foaf:homepage "http://geneontology.org/"^^xsd:anyURI)
-        Annotation(doap:repository "https://github.com/geneontology/go-ontology"^^xsd:anyURI)
-        Annotation(foaf:logo "https://obofoundry.org/images/go_logo.png"^^xsd:anyURI)
-        Annotation(doap:maintainer orcid:0000-0001-6787-2901)
 
         Declaration(Class(GO:0032571))
         )
@@ -75,6 +66,7 @@ class TestConversion(cases.TestMixin):
             idspaces={
                 "GO": "http://purl.obolibrary.org/obo/GO_",
             },
+            enrich_metadata=True,
         )
         self.assert_ontology_ofn(
             obo_ontology,
@@ -95,13 +87,13 @@ class TestConversion(cases.TestMixin):
 
                 Ontology(<https://w3id.org/biopragmatics/resources/go/go.ofn> <https://w3id.org/biopragmatics/resources/go/30/go.ofn>
                 Annotation(dcterms:title "Gene Ontology"^^xsd:string)
+                Annotation(IAO:0000700 GO:0032571)
                 Annotation(dcterms:license "CC-BY-4.0"^^xsd:string)
                 Annotation(dcterms:description "The Gene Ontology project provides a controlled vocabulary to describe gene and gene product attributes in any organism."^^xsd:string)
                 Annotation(foaf:homepage "http://geneontology.org/"^^xsd:anyURI)
                 Annotation(doap:repository "https://github.com/geneontology/go-ontology"^^xsd:anyURI)
                 Annotation(foaf:logo "https://obofoundry.org/images/go_logo.png"^^xsd:anyURI)
                 Annotation(doap:maintainer orcid:0000-0001-6787-2901)
-                Annotation(IAO:0000700 GO:0032571)
                 Annotation(owl:versionInfo "30"^^xsd:string)
                 Annotation(oboInOwl:auto-generated-by "PyOBO"^^xsd:string)
 

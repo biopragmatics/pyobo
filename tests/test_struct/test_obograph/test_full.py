@@ -63,6 +63,7 @@ class TestFull(unittest.TestCase):
             prefix="test",
             typedefs=[td],
             idspaces=prefix_map,
+            enrich_metadata=False,
         )
 
         # this test acts differently depending on the order of running

@@ -38,6 +38,6 @@ class TestSKOSReader(unittest.TestCase):
                 "skos": "http://www.w3.org/2004/02/skos/core#",
             }
         )
-        ontology = read_skos(url, converter=converter)
+        ontology = read_skos(url, converter=converter, prefix="isced2013")
         for term in ontology:
             self.assertEqual([], term.get_property_objects(v.narrow_match))

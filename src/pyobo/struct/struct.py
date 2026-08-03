@@ -616,6 +616,44 @@ class BioregistryError(ValueError):
 LOGGED_MISSING_URI: set[tuple[str, str]] = set()
 
 
+def _enrich_obo_metadata(prefix: str, *, skip_maintainers: bool = False) -> Iterable[Annotation]:
+    resource = bioregistry.get_resource(prefix)
+    if not resource:
+        return
+
+    # License
+    # TODO add SPDX to idspaces and use as a CURIE?
+    if license_spdx_id := resource.get_license():
+        if license_spdx_id.startswith("http"):
+            license_literal = OBOLiteral.uri(license_spdx_id)
+        else:
+            license_literal = OBOLiteral.string(license_spdx_id)
+        yield Annotation(v.has_license, license_literal)
+
+    if description := resource.get_description():
+        yield Annotation(v.has_description, OBOLiteral.string(description.strip()))
+    if homepage := resource.get_homepage():
+        yield Annotation(v.has_homepage, OBOLiteral.uri(homepage))
+    if repository := resource.get_repository():
+        yield Annotation(v.has_repository, OBOLiteral.uri(repository))
+    if logo := resource.get_logo():
+        yield Annotation(v.has_logo, OBOLiteral.uri(logo))
+    if mailing_list := resource.get_mailing_list():
+        yield Annotation(v.has_mailing_list, OBOLiteral.string(mailing_list))
+    if not skip_maintainers:
+        if (maintainer := resource.get_contact()) and maintainer.orcid:
+            yield Annotation(
+                v.has_maintainer,
+                Reference(prefix="orcid", identifier=maintainer.orcid, name=maintainer.name),
+            )
+        for maintainer in resource.contact_extras or []:
+            if maintainer.orcid:
+                yield Annotation(
+                    v.has_maintainer,
+                    Reference(prefix="orcid", identifier=maintainer.orcid, name=maintainer.name),
+                )
+
+
 @dataclass
 class Obo:
     """An OBO document."""
@@ -679,6 +717,9 @@ class Obo:
 
     ontology_version_iri: ClassVar[str | None] = None
 
+    #: Should metadata be automatically enriched on construction?
+    enrich_metadata: ClassVar[bool] = True
+
     #: Allow skipping adding maintainers annotations, in case
     #: the resource maintainers don't want their names associated
     #: with the OWL exports that e.g. end up on EBI OLS
@@ -687,33 +728,40 @@ class Obo:
     def __post_init__(self) -> None:
         """Run post-init checks."""
         if self.ontology is None:
-            raise ValueError
+            raise ValueError("ontology is required")
         if self.check_bioregistry_prefix and self.ontology != bioregistry.normalize_prefix(
             self.ontology
         ):
             raise BioregistryError(self.ontology)
-        # The type ignores are because of the hack where we override the
-        # class variables in the instance
-        if self.name is None:
-            self.name = bioregistry.get_name(self.ontology)  # type:ignore
+
         if not self.data_version:
             if self.static_version:
                 self.data_version = self.static_version
             else:
                 self.data_version = self._get_version()
-        if not self.dynamic_version:
-            if self.data_version is None:
-                raise ValueError(f"{self.ontology} is missing data_version")
-            elif "/" in self.data_version:
-                raise ValueError(f"{self.ontology} has a slash in version: {self.data_version}")
+        if self.data_version is not None and "/" in self.data_version:
+            raise ValueError(f"{self.ontology} has a slash in version: {self.data_version}")
 
-        file_path = Path(inspect.getfile(self.__class__)).resolve()
-        script_url = f"https://github.com/biopragmatics/pyobo/blob/main/src/pyobo/sources/{file_path.relative_to(_SOURCES)}"
+        if self.enrich_metadata:
+            # The type ignores are because of the hack where we override the
+            # class variables in the instance
+            if self.name is None:
+                self.name = bioregistry.get_name(self.ontology)  # type:ignore[misc]
 
-        if self.auto_generated_by is None:
-            self.auto_generated_by = (  # type:ignore
-                f"PyOBO v{get_pyobo_version(with_git_hash=True)} on "
-                f"{datetime.datetime.now().isoformat()} by {script_url}"
+            if self.auto_generated_by is None:
+                self.auto_generated_by = (  # type:ignore[misc]
+                    f"PyOBO v{get_pyobo_version(with_git_hash=True)} on "
+                    f"{datetime.datetime.now().isoformat()}"
+                )
+                file_path = Path(inspect.getfile(self.__class__)).resolve()
+                if "src/pyobo/sources" in file_path.as_posix():
+                    self.auto_generated_by += f" by https://github.com/biopragmatics/pyobo/blob/main/src/pyobo/sources/{file_path.relative_to(_SOURCES)}"  # type:ignore[misc]
+
+            if self.property_values is None:
+                self.property_values = []  # type:ignore[misc]
+
+            self.property_values.extend(
+                _enrich_obo_metadata(self.ontology, skip_maintainers=self.skip_maintainers)
             )
 
     def _get_clean_idspaces(self) -> dict[str, str]:
@@ -1075,43 +1123,6 @@ class Obo:
         # Title
         if self.name:
             yield Annotation(v.has_title, OBOLiteral.string(self.name))
-
-        # License
-        # TODO add SPDX to idspaces and use as a CURIE?
-        if license_spdx_id := bioregistry.get_license(self.ontology):
-            if license_spdx_id.startswith("http"):
-                license_literal = OBOLiteral.uri(license_spdx_id)
-            else:
-                license_literal = OBOLiteral.string(license_spdx_id)
-            yield Annotation(v.has_license, license_literal)
-
-        if resource := bioregistry.get_resource(self.ontology):
-            if description := resource.get_description():
-                yield Annotation(v.has_description, OBOLiteral.string(description.strip()))
-            if homepage := resource.get_homepage():
-                yield Annotation(v.has_homepage, OBOLiteral.uri(homepage))
-            if repository := resource.get_repository():
-                yield Annotation(v.has_repository, OBOLiteral.uri(repository))
-            if logo := resource.get_logo():
-                yield Annotation(v.has_logo, OBOLiteral.uri(logo))
-            if mailing_list := resource.get_mailing_list():
-                yield Annotation(v.has_mailing_list, OBOLiteral.string(mailing_list))
-            if not self.skip_maintainers:
-                if (maintainer := resource.get_contact()) and maintainer.orcid:
-                    yield Annotation(
-                        v.has_maintainer,
-                        Reference(
-                            prefix="orcid", identifier=maintainer.orcid, name=maintainer.name
-                        ),
-                    )
-                for maintainer in resource.contact_extras or []:
-                    if maintainer.orcid:
-                        yield Annotation(
-                            v.has_maintainer,
-                            Reference(
-                                prefix="orcid", identifier=maintainer.orcid, name=maintainer.name
-                            ),
-                        )
 
         # Root terms
         for root_term in self.root_terms or []:
@@ -2560,6 +2571,8 @@ def build_ontology(
     ontology_version_iri: str | None = None,
     auto_generated_by: str | None = None,
     date: datetime.datetime | None = None,
+    enrich_metadata: bool = True,
+    check_bioregistry_prefix: bool = True,
 ) -> Obo:
     """Build an ontology from parts."""
     if name is None:
@@ -2576,7 +2589,7 @@ def build_ontology(
 
         properties.append(Annotation.string(has_description.reference, description))
         if has_description not in typedefs:
-            typedefs.append(has_description)  # TODO get proper typedef
+            typedefs.append(has_description)
 
     if homepage:
         from .typedef import has_homepage
@@ -2622,6 +2635,8 @@ def build_ontology(
         _ontology_iri=ontology_iri,
         _ontology_version_iri=ontology_version_iri,
         terms=terms,
+        _enrich_metadata=enrich_metadata,
+        _check_bioregistry_prefix=check_bioregistry_prefix,
     )
 
 
@@ -2648,6 +2663,8 @@ def _make_ad_hoc_ontology(
     _ontology_version_iri: str | None = None,
     *,
     terms: list[Term] | None = None,
+    _enrich_metadata: bool = True,
+    _check_bioregistry_prefix: bool = True,
 ) -> Obo:
     """Make an ad-hoc ontology."""
 
@@ -2666,10 +2683,13 @@ def _make_ad_hoc_ontology(
         imports = _imports
         ontology_iri = _ontology_iri
         ontology_version_iri = _ontology_version_iri
+        enrich_metadata = _enrich_metadata
+        check_bioregistry_prefix = _check_bioregistry_prefix
 
         def __post_init__(self) -> None:
             self.date = _date
             self.data_version = _data_version
+            super().__post_init__()
 
         def iter_terms(self, force: bool = False) -> Iterable[Term]:
             """Iterate over terms in the ad hoc ontology."""
