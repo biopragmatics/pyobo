@@ -562,7 +562,7 @@ class Term(Stanza):
         )
         # 23
         yield from _tag_property_targets(
-            "consider", self, v.see_also, ontology_prefix=ontology_prefix
+            "consider", self, v.obo_consider, ontology_prefix=ontology_prefix
         )
 
 
@@ -728,38 +728,38 @@ class Obo:
     def __post_init__(self) -> None:
         """Run post-init checks."""
         if self.ontology is None:
-            raise ValueError
+            raise ValueError("ontology is required")
         if self.check_bioregistry_prefix and self.ontology != bioregistry.normalize_prefix(
             self.ontology
         ):
             raise BioregistryError(self.ontology)
-        # The type ignores are because of the hack where we override the
-        # class variables in the instance
-        if self.name is None:
-            self.name = bioregistry.get_name(self.ontology)  # type:ignore
+
         if not self.data_version:
             if self.static_version:
                 self.data_version = self.static_version
             else:
                 self.data_version = self._get_version()
-        if not self.dynamic_version:
-            if self.data_version is None:
-                raise ValueError(f"{self.ontology} is missing data_version")
-            elif "/" in self.data_version:
-                raise ValueError(f"{self.ontology} has a slash in version: {self.data_version}")
-
-        file_path = Path(inspect.getfile(self.__class__)).resolve()
-        script_url = f"https://github.com/biopragmatics/pyobo/blob/main/src/pyobo/sources/{file_path.relative_to(_SOURCES)}"
-
-        if self.auto_generated_by is None:
-            self.auto_generated_by = (  # type:ignore[misc]
-                f"PyOBO v{get_pyobo_version(with_git_hash=True)} on "
-                f"{datetime.datetime.now().isoformat()} by {script_url}"
-            )
+        if self.data_version is not None and "/" in self.data_version:
+            raise ValueError(f"{self.ontology} has a slash in version: {self.data_version}")
 
         if self.enrich_metadata:
+            # The type ignores are because of the hack where we override the
+            # class variables in the instance
+            if self.name is None:
+                self.name = bioregistry.get_name(self.ontology)  # type:ignore[misc]
+
+            if self.auto_generated_by is None:
+                self.auto_generated_by = (  # type:ignore[misc]
+                    f"PyOBO v{get_pyobo_version(with_git_hash=True)} on "
+                    f"{datetime.datetime.now().isoformat()}"
+                )
+                file_path = Path(inspect.getfile(self.__class__)).resolve()
+                if "src/pyobo/sources" in file_path.as_posix():
+                    self.auto_generated_by += f" by https://github.com/biopragmatics/pyobo/blob/main/src/pyobo/sources/{file_path.relative_to(_SOURCES)}"  # type:ignore[misc]
+
             if self.property_values is None:
                 self.property_values = []  # type:ignore[misc]
+
             self.property_values.extend(
                 _enrich_obo_metadata(self.ontology, skip_maintainers=self.skip_maintainers)
             )
@@ -2519,7 +2519,7 @@ class TypeDef(Stanza):
         )
         # 37
         yield from _tag_property_targets(
-            "consider", self, v.see_also, ontology_prefix=ontology_prefix
+            "consider", self, v.obo_consider, ontology_prefix=ontology_prefix
         )
         # 38 TODO expand_assertion_to
         # 39 TODO expand_expression_to
@@ -2572,6 +2572,7 @@ def build_ontology(
     auto_generated_by: str | None = None,
     date: datetime.datetime | None = None,
     enrich_metadata: bool = True,
+    check_bioregistry_prefix: bool = True,
 ) -> Obo:
     """Build an ontology from parts."""
     if name is None:
@@ -2635,6 +2636,7 @@ def build_ontology(
         _ontology_version_iri=ontology_version_iri,
         terms=terms,
         _enrich_metadata=enrich_metadata,
+        _check_bioregistry_prefix=check_bioregistry_prefix,
     )
 
 
@@ -2662,6 +2664,7 @@ def _make_ad_hoc_ontology(
     *,
     terms: list[Term] | None = None,
     _enrich_metadata: bool = True,
+    _check_bioregistry_prefix: bool = True,
 ) -> Obo:
     """Make an ad-hoc ontology."""
 
@@ -2681,10 +2684,12 @@ def _make_ad_hoc_ontology(
         ontology_iri = _ontology_iri
         ontology_version_iri = _ontology_version_iri
         enrich_metadata = _enrich_metadata
+        check_bioregistry_prefix = _check_bioregistry_prefix
 
         def __post_init__(self) -> None:
             self.date = _date
             self.data_version = _data_version
+            super().__post_init__()
 
         def iter_terms(self, force: bool = False) -> Iterable[Term]:
             """Iterate over terms in the ad hoc ontology."""

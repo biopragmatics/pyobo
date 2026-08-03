@@ -293,11 +293,14 @@ class TestReaderOntologyMetadata(cases.TestMixin):
 
     def test_16_remark(self) -> None:
         """Test the ``remark`` tag."""
-        ontology = from_str("""\
+        ontology = from_str(
+            """\
             ontology: ro
             remark: hello 1
             remark: hello 2
-        """)
+            """,
+            enrich_metadata=False,
+        )
         self.assertEqual(
             [
                 Annotation(has_comment.reference, OBOLiteral.string("hello 1")),
@@ -316,10 +319,13 @@ class TestReaderOntologyMetadata(cases.TestMixin):
 
     def test_18_properties(self) -> None:
         """Test parsing properties."""
-        ontology = from_str("""\
+        ontology = from_str(
+            """\
             ontology: chebi
             property_value: heyo also_heyo
-        """)
+            """,
+            enrich_metadata=False,
+        )
         self.assertEqual(
             [(default_reference("chebi", "heyo"), default_reference("chebi", "also_heyo"))],
             ontology.property_values,
@@ -386,10 +392,13 @@ class TestReaderOntologyMetadata(cases.TestMixin):
 
     def test_18_root_with_rewrite(self) -> None:
         """Test root terms as URL."""
-        ontology = from_str("""\
+        ontology = from_str(
+            """\
             ontology: lepao
             property_value: dcterms:license https://creativecommons.org/licenses/by/4.0/
-        """)
+            """,
+            enrich_metadata=False,
+        )
         self.assertEqual(
             [(has_license, Reference(prefix="spdx", identifier="CC-BY-4.0"))],
             ontology.property_values,

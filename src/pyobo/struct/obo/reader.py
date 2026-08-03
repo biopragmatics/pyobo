@@ -131,6 +131,7 @@ def from_str(
     upgrade: bool = True,
     ignore_obsolete: bool = False,
     use_tqdm: bool = False,
+    enrich_metadata: bool = True,
 ) -> Obo:
     """Read an ontology from a string representation."""
     import obonet
@@ -140,7 +141,14 @@ def from_str(
     io.write(text)
     io.seek(0)
     graph = obonet.read_obo(io, ignore_obsolete=ignore_obsolete)
-    return from_obonet(graph, strict=strict, version=version, upgrade=upgrade, use_tqdm=use_tqdm)
+    return from_obonet(
+        graph,
+        strict=strict,
+        version=version,
+        upgrade=upgrade,
+        use_tqdm=use_tqdm,
+        enrich_metadata=enrich_metadata,
+    )
 
 
 def from_obonet(
@@ -150,6 +158,7 @@ def from_obonet(
     version: str | None = None,
     upgrade: bool = True,
     use_tqdm: bool = False,
+    enrich_metadata: bool = True,
 ) -> Obo:
     """Get all the terms from a OBO graph."""
     ontology_prefix_raw = graph.graph["ontology"]
@@ -260,6 +269,7 @@ def from_obonet(
         # ontology_iri
         # ontology_version_iri
         terms=terms,
+        enrich_metadata=enrich_metadata,
     )
 
 
@@ -1008,7 +1018,7 @@ def _process_consider(
         ontology_prefix=ontology_prefix,
         strict=strict,
     ):
-        stanza.append_see_also(reference)
+        stanza.append_consider(reference)
 
 
 def _process_equivalent_to_chain(
