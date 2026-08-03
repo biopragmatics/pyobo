@@ -15,7 +15,9 @@ from ..struct import Obo, SynonymTypeDef, Term, TypeDef, build_ontology
 from ...identifier_utils import Reference
 
 
-def get_obo_from_ofn(prefix: str, document: Document, *, enrich_metadata: bool = True) -> Obo:
+def get_obo_from_ofn(
+    prefix: str, document: Document, *, enrich_metadata: bool = True, **kwargs: Any
+) -> Obo:
     """Get an ontology from a functional OWL document."""
     if len(document.ontologies) != 1:
         raise ValueError
@@ -24,7 +26,6 @@ def get_obo_from_ofn(prefix: str, document: Document, *, enrich_metadata: bool =
     terms = {}
     typedefs = {}
     synonym_typedefs: dict[str, SynonymTypeDef] = {}
-    kwargs: dict[str, Any] = {}
 
     converter = Converter.from_prefix_map(document.prefix_map)
     ss = f"http://purl.obolibrary.org/obo/{prefix}#"
