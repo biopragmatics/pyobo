@@ -5,7 +5,7 @@ from pyobo.struct import part_of
 from pyobo.struct.obo import from_str
 from pyobo.struct.reference import OBOLiteral
 from pyobo.struct.typedef import is_conjugate_base_of, occurs_in, see_also
-from pyobo.struct.vocabulary import CHARLIE, has_contributor
+from pyobo.struct.vocabulary import CHARLIE, has_contributor, obo_consider
 from tests import cases
 
 REASON_OBONET_IMPL = (
@@ -438,7 +438,8 @@ class TestReaderTypedef(cases.TestMixin):
             consider: RO:1111111
         """)
         typedef = self.get_only_typedef(ontology)
-        r = typedef.get_property_objects(see_also)
+        self.assertEqual(0, len(typedef.get_property_objects(see_also)))
+        r = typedef.get_property_objects(obo_consider)
         self.assertEqual(1, len(r))
         self.assertEqual(Reference(prefix="RO", identifier="1111111"), r[0])
 
