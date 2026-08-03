@@ -96,7 +96,6 @@ class TestConversion(cases.TestMixin):
                 Annotation(doap:repository "https://github.com/geneontology/go-ontology"^^xsd:anyURI)
                 Annotation(foaf:logo "https://obofoundry.org/images/go_logo.png"^^xsd:anyURI)
                 Annotation(doap:maintainer orcid:0000-0001-6787-2901)
-                Annotation(IAO:0000700 GO:0032571)
                 Annotation(owl:versionInfo "30"^^xsd:string)
                 Annotation(oboInOwl:auto-generated-by "PyOBO"^^xsd:string)
 
