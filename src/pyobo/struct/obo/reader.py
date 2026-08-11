@@ -16,7 +16,7 @@ import bioregistry
 import networkx as nx
 from curies import ReferenceTuple
 from curies.preprocessing import BlocklistError
-from curies.vocabulary import SynonymScope
+from curies.vocabulary import SynonymScope, xsd_datetime
 from more_itertools import pairwise
 from pystow.utils import open_zipfile, safe_open
 from tqdm.auto import tqdm
@@ -40,6 +40,7 @@ from ..struct import (
 )
 from ..struct_utils import Annotation, Stanza
 from ..typedef import default_typedefs, has_comment, has_ontology_root_term
+from ..vocabulary import term_tracker_item, xsd_uri
 from ...constants import DATE_FORMAT, PROVENANCE_PREFIXES
 from ...identifier_utils import (
     NotCURIEError,
@@ -735,7 +736,6 @@ def _handle_xref(
 
 SUBSET_ERROR_COUNTER: Counter[tuple[str, str]] = Counter()
 
-
 SubsetTypeDefs: TypeAlias = dict[Reference, str]
 
 
@@ -1254,6 +1254,10 @@ UNHANDLED_PROP_OBJECTS: Counter[tuple[str, str]] = Counter()
 
 UNHANDLED_PROPS: Counter[tuple[str, str]] = Counter()
 
+PREDICATE_TO_DATATYPE = {
+    term_tracker_item: xsd_uri,
+}
+
 
 def _handle_prop(
     prop_value_type: str,
@@ -1286,7 +1290,9 @@ def _handle_prop(
     value_type = value_type.strip()
     datatype: Reference | None
     if " " not in value_type:
-        value, datatype = value_type, None
+        value = value_type
+        # this automatically upgrades the datatype in some cases
+        datatype = PREDICATE_TO_DATATYPE.get(prop_reference)
     else:
         value, datatype_raw = (s.strip() for s in value_type.rsplit(" ", 1))
         match _parse_str_or_curie_or_uri_helper(
@@ -1319,7 +1325,7 @@ def _handle_prop(
 
     # first, special case datetimes. Whether it's quoted or not,
     # we always deal with this first
-    if datatype and datatype.curie == "xsd:dateTime":
+    if datatype == xsd_datetime:
         try:
             obo_literal = OBOLiteral.datetime(value)
         except ValueError:
@@ -1330,7 +1336,7 @@ def _handle_prop(
         else:
             return Annotation(prop_reference, obo_literal)
 
-    if datatype and datatype.curie == "xsd:anyURI":
+    if datatype == xsd_uri:
         match _parse_str_or_curie_or_uri_helper(
             value,
             node=node,
