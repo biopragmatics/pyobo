@@ -22,7 +22,7 @@ from pyobo.struct.typedef import (
     see_also,
     term_replaced_by,
 )
-from pyobo.struct.vocabulary import CHARLIE
+from pyobo.struct.vocabulary import CHARLIE, term_tracker_item
 from tests import cases
 from tests.cases import TermMixin
 
@@ -1094,6 +1094,24 @@ class TestReaderTerm(cases.TestMixin, TermMixin):
         xx = term.get_property_objects(definition_source)
         self.assertEqual(1, len(xx))
         self.assertEqual(Reference(prefix="pubmed", identifier="17921072"), xx[0])
+
+    def test_12_property_bare_term_tracker_type(self) -> None:
+        """Test parsing a property whose datatype should get inferred."""
+        ontology = from_str("""\
+            ontology: ro
+
+            [Term]
+            id: RO:0002160
+            property_value: IAO:0000233 https://github.com/obophenotype/human-phenotype-ontology/issues/11573
+        """)
+        term = self.get_only_term(ontology)
+        self.assertEqual(1, len(list(term.properties)))
+        xx = term.get_property_literals(term_tracker_item)
+        self.assertEqual(1, len(xx))
+        self.assertEqual(
+            OBOLiteral.uri("https://github.com/obophenotype/human-phenotype-ontology/issues/11573"),
+            xx[0],
+        )
 
     def test_13_parent(self) -> None:
         """Test parsing out a parent."""
