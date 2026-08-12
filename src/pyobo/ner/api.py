@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Iterable
-from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 
 import ssslm
@@ -14,7 +13,6 @@ from typing_extensions import Unpack
 
 from pyobo.api import get_literal_mappings
 from pyobo.constants import GetOntologyKwargs, check_should_use_tqdm
-from pyobo.getters import NoBuildError
 from pyobo.struct import Reference
 
 if TYPE_CHECKING:
@@ -40,11 +38,13 @@ def get_grounder(
     all_literal_mappings: list[LiteralMapping[Reference]] = []
     it = _clean_prefix_versions(prefixes, versions=versions)
     disable = len(it) == 1 or not check_should_use_tqdm(kwargs)
-    for prefix, kwargs["version"] in tqdm(it, leave=False, disable=disable):
+    it = tqdm(it, leave=False, disable=disable)
+    for prefix, kwargs["version"] in it:
+        it.set_description(f"Getting grounder for {prefix}")
         try:
             literal_mappings = get_literal_mappings(prefix, skip_obsolete=skip_obsolete, **kwargs)
-        except (NoBuildError, CalledProcessError) as e:
-            logger.warning("[%s] unable to get literal mappings: %s", prefix, e)
+        except Exception:
+            logger.exception("[%s] unable to get literal mappings", prefix)
             continue
         else:
             if not literal_mappings:
