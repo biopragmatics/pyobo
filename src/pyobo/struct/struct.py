@@ -1638,9 +1638,7 @@ class Obo:
         """Get the set of identifiers."""
         return set(self.iterate_ids(use_tqdm=use_tqdm))
 
-    def iterate_id_name(
-        self, *, use_tqdm: bool = False, language: str | None = None
-    ) -> Iterable[tuple[str, str]]:
+    def iterate_id_name(self, *, use_tqdm: bool = False) -> Iterable[tuple[str, str]]:
         """Iterate identifier name pairs."""
         for stanza in self._iter_stanzas(
             use_tqdm=use_tqdm, desc="getting id->name", require_in_ontology="loose"
