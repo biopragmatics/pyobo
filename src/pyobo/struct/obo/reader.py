@@ -102,13 +102,14 @@ def _read_obo(
     prefix: str | None,
     ignore_obsolete: bool,
     use_tqdm: bool = True,
+    leave: bool = False,
 ) -> nx.MultiDiGraph:
     import obonet
 
     tqdm_kwargs = {
         "unit_scale": True,
         "desc": f"[{prefix or ''}] parsing OBO",
-        "leave": True,
+        "leave": leave,
     }
     return obonet.read_obo(
         tqdm(lines, disable=not use_tqdm, **tqdm_kwargs),
