@@ -1643,12 +1643,21 @@ class Obo:
         for stanza in self._iter_stanzas(
             use_tqdm=use_tqdm, desc="getting id->name", require_in_ontology="loose"
         ):
-            if stanza.name is not None:
+            if language is not None:
+                for literal_mapping in stanza.get_literal_mappings():
+                    if (
+                        literal_mapping.language == language
+                        and literal_mapping.predicate == _cv.has_label
+                    ):
+                        yield stanza.identifier, literal_mapping.text
+            elif stanza.name:
                 yield stanza.identifier, stanza.name
 
-    def get_id_name_mapping(self, *, use_tqdm: bool = False) -> Mapping[str, str]:
+    def get_id_name_mapping(
+        self, *, use_tqdm: bool = False, language: str | None = None
+    ) -> Mapping[str, str]:
         """Get a mapping from identifiers to names."""
-        return dict(self.iterate_id_name(use_tqdm=use_tqdm))
+        return dict(self.iterate_id_name(use_tqdm=use_tqdm, language=language))
 
     def iterate_id_definition(self, *, use_tqdm: bool = False) -> Iterable[tuple[str, str]]:
         """Iterate over pairs of terms' identifiers and their respective definitions."""

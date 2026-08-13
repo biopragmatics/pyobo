@@ -5,12 +5,13 @@ from __future__ import annotations
 import logging
 import subprocess
 from collections.abc import Callable, Mapping
-from functools import lru_cache
+from functools import lru_cache, partial
 from typing import TypeVar
 
 import curies
 import pandas as pd
 import ssslm
+from pydantic_extra_types.language_code import _index_by_alpha2
 from pystow.cache import Cached
 from ssslm import LiteralMapping
 from typing_extensions import Unpack
@@ -122,11 +123,15 @@ def get_name(
     /,
     *,
     upgrade_identifier: bool | None = None,
+    language: str | None = None,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> str | None:
     """Get the name for an entity."""
     return _help_get(
-        get_id_name_mapping, reference, upgrade_identifier=upgrade_identifier, **kwargs
+        partial(get_id_name_mapping, language=language),
+        reference,
+        upgrade_identifier=upgrade_identifier,
+        **kwargs,
     )
 
 
@@ -208,6 +213,8 @@ def get_references(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> set[Refe
 @wrap_norm_prefix
 def get_id_name_mapping(
     prefix: str,
+    *,
+    language: str | None = None,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> Mapping[str, str]:
     """Get an identifier to name mapping for the OBO file."""
@@ -220,7 +227,12 @@ def get_id_name_mapping(
         return rv
 
     version = get_version_from_kwargs(prefix, kwargs)
-    path = get_cache_path(prefix, CacheArtifact.names, version=version)
+
+    if language is None:
+        path = get_cache_path(prefix, CacheArtifact.names, version=version)
+    else:
+        language = _normalize_lang(language)
+        path = get_cache_path(prefix, CacheArtifact.names, language, version=version)
 
     @cached_mapping(
         path=path,
@@ -230,7 +242,7 @@ def get_id_name_mapping(
     )
     def _get_id_name_mapping() -> Mapping[str, str]:
         ontology = get_ontology(prefix, **kwargs)
-        return ontology.get_id_name_mapping()
+        return ontology.get_id_name_mapping(language=language)
 
     try:
         return _get_id_name_mapping()
@@ -240,6 +252,12 @@ def get_id_name_mapping(
     except (Exception, subprocess.CalledProcessError):
         logger.exception("[%s v%s] could not load", prefix, version)
         return {}
+
+
+def _normalize_lang(language: str) -> str:
+    if language not in _index_by_alpha2():
+        raise ValueError("invalid 2-letter language code")
+    return language
 
 
 @lru_cache
