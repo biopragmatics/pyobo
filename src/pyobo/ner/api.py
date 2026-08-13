@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Iterable
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeAlias
 
 import ssslm
 from ssslm import LiteralMapping
@@ -19,32 +19,37 @@ if TYPE_CHECKING:
     import gilda
 
 __all__ = [
+    "GrounderVersionsHint",
     "get_grounder",
 ]
 
 logger = logging.getLogger(__name__)
+
+GrounderVersionsHint: TypeAlias = str | Iterable[str | None] | dict[str, str]
 
 
 def get_grounder(
     prefixes: str | Iterable[str],
     *,
     grounder_cls: type[gilda.Grounder] | None = None,
-    versions: str | Iterable[str | None] | dict[str, str] | None = None,
+    versions: GrounderVersionsHint | None = None,
     skip_obsolete: bool = False,
     raise_on_missing: bool = False,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> ssslm.Grounder[Reference]:
     """Get a grounder for the given prefix(es)."""
     all_literal_mappings: list[LiteralMapping[Reference]] = []
-    it = _clean_prefix_versions(prefixes, versions=versions)
-    disable = len(it) == 1 or not check_should_use_tqdm(kwargs)
-    it = tqdm(it, leave=False, disable=disable)
+    prefix_version_pairs = _clean_prefix_versions(prefixes, versions=versions)
+    disable = len(prefix_version_pairs) == 1 or not check_should_use_tqdm(kwargs)
+    it = tqdm(prefix_version_pairs, leave=False, disable=disable, desc="Getting grounders")
+    failures = []
     for prefix, kwargs["version"] in it:
         it.set_description(f"Getting grounder for {prefix}")
         try:
             literal_mappings = get_literal_mappings(prefix, skip_obsolete=skip_obsolete, **kwargs)
         except Exception:
             logger.exception("[%s] unable to get literal mappings", prefix)
+            failures.append(prefix)
             continue
         else:
             if not literal_mappings:
@@ -53,6 +58,11 @@ def get_grounder(
                 logger.warning("[%s] no literal mappings loaded", prefix)
             all_literal_mappings.extend(literal_mappings)
 
+    if len(failures) > 1:
+        tqdm.write("failure summary for get_grounder():")
+        for failure in failures:
+            tqdm.write(f"- {failure}")
+
     return ssslm.make_grounder(
         all_literal_mappings, implementation="gilda", grounder_cls=grounder_cls
     )
@@ -60,7 +70,7 @@ def get_grounder(
 
 def _clean_prefix_versions(
     prefixes: str | Iterable[str],
-    versions: str | Iterable[str | None] | dict[str, str] | None = None,
+    versions: GrounderVersionsHint | None = None,
 ) -> list[tuple[str, str | None]]:
     if isinstance(prefixes, str):
         prefixes = [prefixes]
