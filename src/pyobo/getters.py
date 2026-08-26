@@ -9,7 +9,6 @@ import subprocess
 import time
 import typing
 import urllib.error
-import warnings
 import zipfile
 from collections import Counter
 from collections.abc import Callable, Iterable, Mapping, Sequence
