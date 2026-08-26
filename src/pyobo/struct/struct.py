@@ -1642,7 +1642,7 @@ class Obo:
     def iterate_id_name(self, *, progress: bool = False) -> Iterable[tuple[str, str]]:
         """Iterate identifier name pairs."""
         for stanza in self._iter_stanzas(
-            progress=progress, desc="getting id->name", require_in_ontology="loose"
+            progress=progress, desc="getting id->name", require_in_ontology="strict"
         ):
             if stanza.name is not None:
                 yield stanza.identifier, stanza.name
@@ -2138,6 +2138,7 @@ class Obo:
         return reference.prefix == self.ontology
 
     def _in_ontology_aux(self, reference: Reference | Referenced) -> bool:
+        # this checks if something is a "default" reference
         return reference.prefix == "obo" and reference.identifier.startswith(self.ontology + "#")
 
     #########
