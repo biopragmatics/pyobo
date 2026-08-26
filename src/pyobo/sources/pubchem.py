@@ -100,7 +100,11 @@ def _ensure_cid_name_path(*, version: str | None = None, force: bool = False) ->
     return cid_name_path
 
 
-def get_terms(*, version: str, use_tqdm: bool = True, force: bool = False) -> Iterable[Term]:
+#: got this by reading the exports page
+TOTAL_ESTIMATE = 146000000
+
+
+def get_terms(*, version: str, progress: bool = True, force: bool = False) -> Iterable[Term]:
     """Get PubChem Compound terms."""
     cid_name_path = _ensure_cid_name_path(version=version, force=force)
 
@@ -109,10 +113,14 @@ def get_terms(*, version: str, use_tqdm: bool = True, force: bool = False) -> It
     cid_synonyms_path = ensure_path(PREFIX, url=cid_synonyms_url, version=version, force=force)
 
     it = iterate_gzips_together(cid_name_path, cid_synonyms_path)
-
-    if use_tqdm:
-        total = 146000000  # got this by reading the exports page
-        it = tqdm(it, desc=f"mapping {PREFIX}", unit_scale=True, unit="compound", total=total)
+    it = tqdm(
+        it,
+        desc=f"mapping {PREFIX}",
+        unit_scale=True,
+        unit="compound",
+        total=TOTAL_ESTIMATE,
+        disable=not progress,
+    )
     for identifier, name, raw_synonyms in it:
         reference = Reference(prefix=PREFIX, identifier=identifier, name=name)
         xrefs = []

@@ -20,7 +20,7 @@ from ..constants import (
     GetOntologyKwargs,
     check_should_cache,
     check_should_force,
-    check_should_use_tqdm,
+    check_show_progress,
     get_semantic_mapping_metadata,
 )
 from ..getters import get_ontology
@@ -137,7 +137,7 @@ def _get_sssom_getter(
         converter = bioregistry.get_default_converter()
         mappings = list(
             ontology.get_semantic_mappings(
-                progress=check_should_use_tqdm(kwargs),
+                progress=check_show_progress(kwargs),
             )
         )
         return sssom_pydantic.SemanticMappingPack(
@@ -182,7 +182,7 @@ def get_mappings_df(
     """
     if isinstance(prefix, Obo):
         df = prefix.get_mappings_df(
-            use_tqdm=check_should_use_tqdm(kwargs),
+            progress=check_show_progress(kwargs),
         )
         prefix = prefix.ontology
 
@@ -196,7 +196,7 @@ def get_mappings_df(
         def _df_getter() -> pd.DataFrame:
             logger.info("[%s] rebuilding SSSOM", prefix)
             ontology = get_ontology(prefix, **kwargs)
-            return ontology.get_mappings_df(use_tqdm=check_should_use_tqdm(kwargs))
+            return ontology.get_mappings_df(progress=check_show_progress(kwargs))
 
         df = _df_getter()
 

@@ -12,7 +12,7 @@ from ..constants import (
     GetOntologyKwargs,
     check_should_cache,
     check_should_force,
-    check_should_use_tqdm,
+    check_show_progress,
 )
 from ..getters import get_ontology
 from ..identifier_utils import wrap_norm_prefix
@@ -48,7 +48,7 @@ def get_object_properties_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -
     )
     def _df_getter() -> pd.DataFrame:
         return get_ontology(prefix, **kwargs).get_object_properties_df(
-            use_tqdm=check_should_use_tqdm(kwargs)
+            progress=check_show_progress(kwargs)
         )
 
     return _df_getter()
@@ -85,7 +85,7 @@ def get_literal_properties(
             desc=f"[{prefix}] parsing properties",
             unit_scale=True,
             unit="triple",
-            disable=not check_should_use_tqdm(kwargs),
+            disable=not check_show_progress(kwargs),
         )
     ]
 
@@ -100,7 +100,7 @@ def get_literal_properties_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) 
     )
     def _df_getter() -> pd.DataFrame:
         return get_ontology(prefix, **kwargs).get_literal_properties_df(
-            use_tqdm=check_should_use_tqdm(kwargs)
+            progress=check_show_progress(kwargs)
         )
 
     return _df_getter()

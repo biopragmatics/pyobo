@@ -31,7 +31,7 @@ __all__ = [
     "TypeDefType",
     "check_should_cache",
     "check_should_force",
-    "check_should_use_tqdm",
+    "check_show_progress",
     "get_semantic_mapping_metadata",
 ]
 
@@ -137,20 +137,20 @@ class DatabaseKwargs(TypedDict):
     """Keyword arguments for database CLI functions."""
 
     #: Should strict identifier parsing be enabled?
-    strict: bool
+    strict: NotRequired[bool]
     #: Should re-download and re-processing be forced?
-    force: bool
+    force: NotRequired[bool]
     #: Should re-processing be forced?
-    force_process: bool
+    force_process: NotRequired[bool]
 
     #: Should a progress bar be used?
-    use_tqdm: bool
+    progress: NotRequired[bool]
     #: Skip all prefixes lexicographically sorted below the given prefix
-    skip_below: str | None
+    skip_below: NotRequired[str | None]
     #: If true, skips prefixes that are ontologized as sources in PyOBO
-    skip_pyobo: bool
+    skip_pyobo: NotRequired[bool]
     #: An enumerated set of prefixes to skip
-    skip_set: set[str] | None
+    skip_set: NotRequired[set[str] | None]
 
 
 class SlimGetOntologyKwargs(TypedDict):
@@ -180,7 +180,7 @@ class GetOntologyKwargs(SlimGetOntologyKwargs):
     #: Should the cache be used?
     cache: NotRequired[bool]
     #: Should a progress bar be used?
-    use_tqdm: NotRequired[bool]
+    progress: NotRequired[bool]
 
 
 def check_should_force(data: GetOntologyKwargs) -> bool:
@@ -196,27 +196,27 @@ def check_should_cache(data: GetOntologyKwargs) -> bool:
     return data.get("cache", True)
 
 
-def check_should_use_tqdm(data: GetOntologyKwargs) -> bool:
+def check_show_progress(data: GetOntologyKwargs) -> bool:
     """Determine whether caching should be done based on generic keyword arguments."""
-    return data.get("use_tqdm", True)
+    return data.get("progress", True)
 
 
 class IterHelperHelperDict(SlimGetOntologyKwargs):
     """Represents arguments needed when iterating over all ontologies.
 
-    The explicitly defind arguments in this typed dict are used for the loop function
+    The explicitly defined arguments in this typed dict are used for the loop function
     :func:`iter_helper_helper` and the rest that are inherited get passed to
     :func:`pyobo.get_ontology` in each iteration.
     """
 
     #: Should a progress bar be used?
-    use_tqdm: bool
+    progress: NotRequired[bool]
     #: Skip all prefixes lexicographically sorted below the given prefix
-    skip_below: str | None
+    skip_below: NotRequired[str | None]
     #: If true, skips prefixes that are ontologized as sources in PyOBO
-    skip_pyobo: bool
+    skip_pyobo: NotRequired[bool]
     #: An enumerated set of prefixes to skip
-    skip_set: set[str] | None
+    skip_set: NotRequired[set[str] | None]
 
 
 #: The ontology format

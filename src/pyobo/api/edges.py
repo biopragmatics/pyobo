@@ -11,7 +11,7 @@ from pyobo.constants import (
     GetOntologyKwargs,
     check_should_cache,
     check_should_force,
-    check_should_use_tqdm,
+    check_show_progress,
 )
 from pyobo.getters import get_ontology
 
@@ -46,7 +46,7 @@ def get_edges_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFra
         path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)
     )
     def _df_getter() -> pd.DataFrame:
-        return get_ontology(prefix, **kwargs).get_edges_df(use_tqdm=check_should_use_tqdm(kwargs))
+        return get_ontology(prefix, **kwargs).get_edges_df(progress=check_show_progress(kwargs))
 
     return _df_getter()
 
@@ -63,6 +63,6 @@ def get_edges(
             desc=f"[{prefix}] parsing edges",
             unit="edge",
             unit_scale=True,
-            disable=not check_should_use_tqdm(kwargs),
+            disable=not check_show_progress(kwargs),
         )
     ]

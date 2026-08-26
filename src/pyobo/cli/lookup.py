@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import inspect
 from collections.abc import Callable, Iterable, Mapping
+from pathlib import Path
 from typing import TYPE_CHECKING, ParamSpec, TypeVar
 
 import click
@@ -104,7 +105,12 @@ def mappings(target: str | None, prefix: str, **kwargs: Unpack[GetOntologyKwargs
 
 @lookup_annotate
 @prefix_argument
-@click.option("--output", "-o")
+@click.option(
+    "--output",
+    "-o",
+    type=Path,
+    help="Path to output SSSOM TSV file. If not given, defaults to STDOUT.",
+)
 def sssom(prefix: str, output: str, **kwargs: Unpack[GetOntologyKwargs]) -> None:
     """Get SSSOM for the given resource."""
     import sys

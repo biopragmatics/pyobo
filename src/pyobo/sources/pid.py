@@ -38,10 +38,10 @@ class PIDGetter(Obo):
         return iter_terms()
 
 
-def iter_networks(use_tqdm: bool = False, force: bool = False) -> Iterable[tuple[str, CX]]:
+def iter_networks(*, progress: bool = False, force: bool = False) -> Iterable[tuple[str, CX]]:
     """Iterate over NCI PID networks."""
     yield from ensure_ndex_network_set(
-        PREFIX, NDEX_NETWORK_SET_UUID, use_tqdm=use_tqdm, force=force
+        PREFIX, NDEX_NETWORK_SET_UUID, progress=progress, force=force
     )
 
 
@@ -52,7 +52,7 @@ def iter_terms(force: bool = False) -> Iterable[Term]:
     hgnc_id_to_name = get_id_name_mapping("hgnc")
     hgnc_name_to_id = {v: k for k, v in hgnc_id_to_name.items()}
 
-    for uuid, cx in iter_networks(force=force, use_tqdm=True):
+    for uuid, cx in iter_networks(force=force, progress=True):
         name = None
         for node in iterate_aspect(cx, "networkAttributes"):
             if node["n"] == "name":
