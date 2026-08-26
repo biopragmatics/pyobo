@@ -32,16 +32,14 @@ Y = TypeVar("Y")
 
 
 def open_map_tsv(
-    path: str | Path, *, use_tqdm: bool = False, has_header: bool = True
+    path: str | Path, *, progress: bool = False, has_header: bool = True
 ) -> dict[str, str]:
     """Load a mapping TSV file into a dictionary."""
     rv = {}
     with pystow.utils.safe_open_reader(path) as reader:
         if has_header:
             next(reader)  # throw away header
-        if use_tqdm:
-            reader = tqdm(reader, desc=f"loading TSV from {path}")
-        for row in reader:
+        for row in tqdm(reader, desc=f"loading TSV from {path}", disable=not progress):
             if len(row) != 2:
                 logger.warning("[%s] malformed row can not be put in dict: %s", path, row)
                 continue
@@ -52,11 +50,11 @@ def open_map_tsv(
 def open_multimap_tsv(
     path: str | Path,
     *,
-    use_tqdm: bool = False,
+    progress: bool = False,
     has_header: bool = True,
 ) -> Mapping[str, list[str]]:
     """Load a mapping TSV file that has multiple mappings for each."""
-    with _help_multimap_tsv(path=path, use_tqdm=use_tqdm, has_header=has_header) as file:
+    with _help_multimap_tsv(path=path, progress=progress, has_header=has_header) as file:
         return multidict(file)
 
 
@@ -64,7 +62,7 @@ def open_multimap_tsv(
 def _help_multimap_tsv(
     path: str | Path,
     *,
-    use_tqdm: bool = False,
+    progress: bool = False,
     has_header: bool = True,
 ) -> Generator[Iterable[tuple[str, str]], None, None]:
     with safe_open_reader(path) as reader:
@@ -73,7 +71,7 @@ def _help_multimap_tsv(
                 next(reader)  # throw away header
             except gzip.BadGzipFile as e:
                 raise ValueError(f"could not open file {path}") from e
-        if use_tqdm:
+        if progress:
             yield tqdm(reader, desc=f"loading TSV from {path}")
         else:
             yield cast(Iterable[tuple[str, str]], reader)

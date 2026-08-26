@@ -12,7 +12,7 @@ from tqdm import tqdm
 from typing_extensions import Unpack
 
 from pyobo.api import get_literal_mappings
-from pyobo.constants import GetOntologyKwargs, check_should_use_tqdm
+from pyobo.constants import GetOntologyKwargs, check_show_progress
 from pyobo.struct import Reference
 
 if TYPE_CHECKING:
@@ -40,7 +40,7 @@ def get_grounder(
     """Get a grounder for the given prefix(es)."""
     all_literal_mappings: list[LiteralMapping[Reference]] = []
     prefix_version_pairs = _clean_prefix_versions(prefixes, versions=versions)
-    disable = len(prefix_version_pairs) == 1 or not check_should_use_tqdm(kwargs)
+    disable = len(prefix_version_pairs) == 1 or not check_show_progress(kwargs)
     it = tqdm(prefix_version_pairs, leave=False, disable=disable, desc="Getting grounders")
     failures = []
     for prefix, kwargs["version"] in it:

@@ -251,14 +251,14 @@ class TestEverything(unittest.TestCase):
             self.assertIsNone(pyobo.get_name(r2, cache=False, upgrade_identifier=False))
 
             # Xrefs
-            d = pyobo.get_filtered_xrefs(TEST_P1, TEST_P2, cache=False, use_tqdm=False)
+            d = pyobo.get_filtered_xrefs(TEST_P1, TEST_P2, cache=False, progress=False)
             self.assertEqual({"1": "X", "3": "Y"}, d)
 
             semantic_mappings = list(
                 pyobo.get_semantic_mappings(
                     TEST_P1,
                     cache=False,
-                    use_tqdm=False,
+                    progress=False,
                     version="1.0.0",
                 )
             )
@@ -322,10 +322,10 @@ class TestEverything(unittest.TestCase):
 
             # Properties
 
-            value = pyobo.get_property(r1, prop=v.comment, cache=False, use_tqdm=False)
+            value = pyobo.get_property(r1, prop=v.comment, cache=False, progress=False)
             self.assertEqual("test comment", value)
 
-            edges = pyobo.get_edges(TEST_P1, cache=False, use_tqdm=False)
+            edges = pyobo.get_edges(TEST_P1, cache=False, progress=False)
             self.assertEqual(
                 {
                     (r3, v.is_a, r1),
@@ -336,7 +336,7 @@ class TestEverything(unittest.TestCase):
                 set(edges),
             )
 
-            graph = pyobo.get_hierarchy(TEST_P1, cache=False, use_tqdm=False)
+            graph = pyobo.get_hierarchy(TEST_P1, cache=False, progress=False)
             self.assertEqual(4, graph.number_of_nodes())
             self.assertIn(r1, graph)
             self.assertIn(r2, graph)
@@ -344,31 +344,31 @@ class TestEverything(unittest.TestCase):
             self.assertIn(tr1, graph)
             self.assertEqual(1, graph.number_of_edges())
 
-            self.assertEqual(set(), pyobo.get_ancestors(r1, cache=False, use_tqdm=False))
-            self.assertEqual(set(), pyobo.get_descendants(r3, cache=False, use_tqdm=False))
-            self.assertEqual(set(), pyobo.get_children(r3, cache=False, use_tqdm=False))
+            self.assertEqual(set(), pyobo.get_ancestors(r1, cache=False, progress=False))
+            self.assertEqual(set(), pyobo.get_descendants(r3, cache=False, progress=False))
+            self.assertEqual(set(), pyobo.get_children(r3, cache=False, progress=False))
 
-            self.assertEqual({r1}, pyobo.get_ancestors(r3, cache=False, use_tqdm=False))
-            self.assertEqual({r3}, pyobo.get_descendants(r1, cache=False, use_tqdm=False))
-            self.assertEqual({r3}, pyobo.get_children(r1, cache=False, use_tqdm=False))
+            self.assertEqual({r1}, pyobo.get_ancestors(r3, cache=False, progress=False))
+            self.assertEqual({r3}, pyobo.get_descendants(r1, cache=False, progress=False))
+            self.assertEqual({r3}, pyobo.get_children(r1, cache=False, progress=False))
 
-            self.assertTrue(pyobo.has_ancestor(r3, r1, cache=False, use_tqdm=False))
-            self.assertTrue(pyobo.has_ancestor(r3.curie, r1.curie, cache=False, use_tqdm=False))
-            self.assertFalse(pyobo.has_ancestor(r1, r3, cache=False, use_tqdm=False))
-            self.assertFalse(pyobo.has_ancestor(r1.curie, r3.curie, cache=False, use_tqdm=False))
+            self.assertTrue(pyobo.has_ancestor(r3, r1, cache=False, progress=False))
+            self.assertTrue(pyobo.has_ancestor(r3.curie, r1.curie, cache=False, progress=False))
+            self.assertFalse(pyobo.has_ancestor(r1, r3, cache=False, progress=False))
+            self.assertFalse(pyobo.has_ancestor(r1.curie, r3.curie, cache=False, progress=False))
             self.assertTrue(
                 pyobo.has_ancestor(
-                    r3.curie, r1.curie, cache=False, use_tqdm=False, direction="down"
+                    r3.curie, r1.curie, cache=False, progress=False, direction="down"
                 )
             )
             self.assertTrue(
-                pyobo.has_ancestor(r3, r1, cache=False, use_tqdm=False, direction="down")
+                pyobo.has_ancestor(r3, r1, cache=False, progress=False, direction="down")
             )
             self.assertFalse(
-                pyobo.has_ancestor(r1, r3, cache=False, use_tqdm=False, direction="down")
+                pyobo.has_ancestor(r1, r3, cache=False, progress=False, direction="down")
             )
             self.assertFalse(
                 pyobo.has_ancestor(
-                    r1.curie, r3.curie, cache=False, use_tqdm=False, direction="down"
+                    r1.curie, r3.curie, cache=False, progress=False, direction="down"
                 )
             )

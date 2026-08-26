@@ -19,7 +19,7 @@ from ..constants import (
     GetOntologyKwargs,
     check_should_cache,
     check_should_force,
-    check_should_use_tqdm,
+    check_show_progress,
 )
 from ..getters import get_ontology
 from ..identifier_utils import Reference, wrap_norm_prefix
@@ -68,7 +68,7 @@ def get_relations_df(
     )
     def _df_getter() -> pd.DataFrame:
         ontology = get_ontology(prefix, **kwargs)
-        return ontology.get_relations_df(use_tqdm=check_should_use_tqdm(kwargs))
+        return ontology.get_relations_df(progress=check_show_progress(kwargs))
 
     rv = _df_getter()
 
@@ -105,7 +105,7 @@ def get_filtered_relations_df(
     def _df_getter() -> pd.DataFrame:
         logger.info("[%s] no cached relations found. getting from OBO loader", prefix)
         ontology = get_ontology(prefix, **kwargs)
-        return ontology.get_filtered_relations_df(relation, use_tqdm=check_should_use_tqdm(kwargs))
+        return ontology.get_filtered_relations_df(relation, progress=check_show_progress(kwargs))
 
     return _df_getter()
 
@@ -120,7 +120,7 @@ def get_id_multirelations_mapping(
     kwargs["version"] = get_version_from_kwargs(prefix, kwargs)
     ontology = get_ontology(prefix, **kwargs)
     return ontology.get_id_multirelations_mapping(
-        typedef=typedef, use_tqdm=check_should_use_tqdm(kwargs)
+        typedef=typedef, progress=check_show_progress(kwargs)
     )
 
 
@@ -148,7 +148,7 @@ def get_relation_mapping(
     """
     ontology = get_ontology(prefix, **kwargs)
     return ontology.get_relation_mapping(
-        relation=relation, target_prefix=target_prefix, use_tqdm=check_should_use_tqdm(kwargs)
+        relation=relation, target_prefix=target_prefix, progress=check_show_progress(kwargs)
     )
 
 
