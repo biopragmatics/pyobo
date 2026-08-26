@@ -3,26 +3,28 @@
 from __future__ import annotations
 
 import tempfile
+from collections.abc import Mapping
+from functools import partial
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, cast
+from typing import TYPE_CHECKING, Any, Literal, TypeAlias, Union, cast
 
 import bioregistry
 import curies
 import numpy as np
 import pandas as pd
 from pystow import get_sentence_transformer
-from tqdm import tqdm
+from tqdm.contrib.concurrent import process_map
 from typing_extensions import Unpack
 
 from pyobo.api.edges import get_edges_df
-from pyobo.api.names import get_definition, get_id_name_mapping, get_name
+from pyobo.api.names import get_definition, get_id_definition_mapping, get_id_name_mapping, get_name
 from pyobo.api.utils import get_version_from_kwargs
 from pyobo.constants import GetOntologyKwargs, check_should_force
 from pyobo.identifier_utils import wrap_norm_prefix
 from pyobo.utils.path import CacheArtifact, get_cache_path
 
 if TYPE_CHECKING:
-    import sentence_transformers
+    from sentence_transformers import SentenceTransformer
 
 __all__ = [
     "get_graph_embeddings_df",
@@ -37,15 +39,15 @@ def _get_text(
     /,
     *,
     name: str | None = None,
-    **kwargs: Unpack[GetOntologyKwargs],
 ) -> str | None:
     if name is None:
-        name = get_name(reference, **kwargs)
+        name = get_name(reference)
     if name is None:
         return None
-    description = get_definition(reference, **kwargs)
+    description = get_definition(reference)
     if description:
         name += " " + description
+    # TODO include synonyms?
     return name
 
 
@@ -116,13 +118,15 @@ def get_graph_embeddings_df(
 
 EMBEDDING_INDEX_NAME = "luid"
 EMBEDDING_DIMENSIONALITY = 384
+TransformerHint: TypeAlias = Union[str, "SentenceTransformer", None]
 
 
 @wrap_norm_prefix
 def get_text_embeddings_df(
     prefix: str,
     *,
-    model: sentence_transformers.SentenceTransformer | None = None,
+    model: TransformerHint = None,
+    encode_kwargs: dict[str, Any] | None = None,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> pd.DataFrame:
     """Get embeddings for all entities in the resource.
@@ -130,6 +134,8 @@ def get_text_embeddings_df(
     :param prefix: A reference, either as a string or Reference object
     :param model: A sentence transformer model. Defaults to ``all-MiniLM-L6-v2`` if not
         given.
+    :param encode_kwargs: Additional keyword arguments to pass to the encoder function
+        :meth:`sentence_transformers.SentenceTransformer.encode`
     :param kwargs: The keyword arguments to forward to ontology getter functions for
         names, definitions, and version
 
@@ -152,27 +158,42 @@ def get_text_embeddings_df(
         return df
 
     id_to_name = get_id_name_mapping(prefix, **kwargs)
+    # no kwargs needed because ontology was loaded above.
+    id_to_description = get_id_definition_mapping(prefix)
 
-    luids, texts = [], []
-    for identifier, name in tqdm(id_to_name.items(), desc=f"[{prefix}] constructing text"):
-        text = _get_text(curies.ReferenceTuple(prefix, identifier), name=name, **kwargs)
-        if text is None:
-            continue
-        luids.append(identifier)
-        texts.append(text)
-    if model is None:
-        model = get_sentence_transformer()
-    res = model.encode(texts, show_progress_bar=True)
-    df = pd.DataFrame(res, index=luids)
+    identifiers = list(id_to_name)
+    texts = process_map(
+        partial(_id_to_text, id_to_name=id_to_name, id_to_description=id_to_description),
+        identifiers,
+        desc=f"[{prefix}] constructing text",
+        unit_scale=True,
+        chunksize=1000,
+    )
+
+    model_ = get_sentence_transformer(model)
+    # TODO update to using MPL
+    if encode_kwargs is None:
+        encode_kwargs = {}
+    encode_kwargs.setdefault("show_progress_bar", True)
+    res = model_.encode(texts, **encode_kwargs)
+    df = pd.DataFrame(res, index=identifiers)
     df.index.name = EMBEDDING_INDEX_NAME
     df.to_csv(path, sep="\t")  # index is important here!
     return df
 
 
+def _id_to_text(
+    identifier: str, id_to_name: Mapping[str, str], id_to_description: Mapping[str, str]
+) -> str:
+    if identifier in id_to_description:
+        return id_to_name[identifier] + " " + id_to_description[identifier]
+    return id_to_name[identifier]
+
+
 def get_text_embedding(
     reference: str | curies.Reference | curies.ReferenceTuple,
     *,
-    model: sentence_transformers.SentenceTransformer | None = None,
+    model: TransformerHint = None,
 ) -> np.ndarray[tuple[int], np.dtype[np.float64]] | None:
     """Get a text embedding for an entity, or return none if no text is available.
 
@@ -194,18 +215,17 @@ def get_text_embedding(
     .. code-block:: python
 
         import pyobo
-        from pyobo.api.embedding import get_text_embedding_model
+        from pystow import get_sentence_transformer
 
-        model = get_text_embedding_model()
+        model = get_sentence_transformer()
         embedding = pyobo.get_text_embedding("GO:0000001", model=model)
         # [-5.68335280e-02  7.96175096e-03 -3.36112119e-02  2.34440481e-03 ... ]
     """
     text = _get_text(reference)
     if text is None:
         return None
-    if model is None:
-        model = get_sentence_transformer()
-    res = model.encode([text])
+    model_ = get_sentence_transformer(model)
+    res = model_.encode([text])
     return cast(np.ndarray[tuple[int], np.dtype[np.float64]], res[0])
 
 
@@ -213,7 +233,7 @@ def get_text_embedding_similarity(
     reference_1: str | curies.Reference | curies.ReferenceTuple,
     reference_2: str | curies.Reference | curies.ReferenceTuple,
     *,
-    model: sentence_transformers.SentenceTransformer | None = None,
+    model: TransformerHint = None,
 ) -> float | None:
     """Get the pairwise similarity.
 
@@ -237,16 +257,15 @@ def get_text_embedding_similarity(
     .. code-block:: python
 
         import pyobo
-        from pyobo.api.embedding import get_text_embedding_model
+        from pystow import get_sentence_transformer
 
-        model = get_text_embedding_model()
+        model = get_sentence_transformer()
         similarity = pyobo.get_text_embedding_similarity("GO:0000001", "GO:0000004", model=model)
         # 0.24702128767967224
     """
-    if model is None:
-        model = get_sentence_transformer()
-    e1 = get_text_embedding(reference_1, model=model)
-    e2 = get_text_embedding(reference_2, model=model)
+    model_ = get_sentence_transformer(model)
+    e1 = get_text_embedding(reference_1, model=model_)
+    e2 = get_text_embedding(reference_2, model=model_)
     if e1 is None or e2 is None:
         return None
-    return cast(float, model.similarity(e1, e2)[0][0].item())
+    return cast(float, model_.similarity(e1, e2)[0][0].item())
