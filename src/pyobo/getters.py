@@ -25,6 +25,7 @@ from pydantic import BaseModel
 from pystow.utils import write_pydantic_json
 from tabulate import tabulate
 from tqdm.auto import tqdm
+from tqdm.contrib.logging import logging_redirect_tqdm
 from typing_extensions import Unpack
 
 from .constants import (
@@ -100,7 +101,7 @@ def get_ontology(
     robot_check: bool = True,
     upgrade: bool = True,
     cache: bool = True,
-    progress: bool = False,
+    progress: bool = True,
 ) -> Obo:
     """Get the OBO for a given graph.
 
@@ -203,15 +204,16 @@ def get_ontology(
     else:
         raise UnhandledFormatError(f"[{prefix}] unhandled ontology file format: {path.suffix}")
 
-    obo = from_obo_path(
-        path,
-        prefix=prefix,
-        strict=strict,
-        version=version,
-        upgrade=upgrade,
-        progress=progress,
-        _cache_path=obonet_json_gz_path,
-    )
+    with logging_redirect_tqdm():
+        obo = from_obo_path(
+            path,
+            prefix=prefix,
+            strict=strict,
+            version=version,
+            upgrade=upgrade,
+            progress=progress,
+            _cache_path=obonet_json_gz_path,
+        )
     if cache:
         obo.write_default(force=force_process)
     return obo

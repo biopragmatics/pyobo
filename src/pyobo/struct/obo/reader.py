@@ -852,8 +852,8 @@ def iterate_graph_synonym_typedefs(
             specificity = None
         elif specificity not in t.get_args(SynonymScope):
             if strict:
-                raise ValueError(f"invalid synonym specificty: {specificity}")
-            logger.warning("[%s] invalid synonym specificty: %s", ontology_prefix, specificity)
+                raise ValueError(f"invalid synonym specificity: {specificity}")
+            logger.warning("[%s] invalid synonym specificity: %s", ontology_prefix, specificity)
             specificity = None
 
         curie, name = line.split(" ", 1)

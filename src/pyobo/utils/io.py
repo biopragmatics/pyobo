@@ -126,10 +126,12 @@ def write_iterable_tsv(
     header: Iterable[str] | None = None,
     it: Iterable[tuple[str, ...]],
     sep: str = "\t",
+    sort: bool = True,
 ) -> None:
     """Write a mapping dictionary to a TSV file."""
     it = (row for row in it if all(cell is not None for cell in row))
-    it = sorted(it)
+    if sort:
+        it = sorted(it)
     with safe_open_writer(path, delimiter=sep) as writer:
         if header is not None:
             writer.writerow(header)
