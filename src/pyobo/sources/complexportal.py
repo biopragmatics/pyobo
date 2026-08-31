@@ -128,7 +128,7 @@ def _parse_xrefs(s: str) -> list[tuple[Reference, str]]:
         try:
             xref_curie, note = xref.split("(")
         except ValueError:
-            logger.warning("xref missing (: %s", xref)
+            logger.debug("xref missing (: %s", xref)
             continue
         note = note.rstrip(")")
 
@@ -138,10 +138,10 @@ def _parse_xrefs(s: str) -> list[tuple[Reference, str]]:
         try:
             reference = _parse_str_or_curie_or_uri(xref_curie)
         except ValueError:
-            logger.warning("can not parse CURIE: %s", xref_curie)
+            logger.debug("can not parse CURIE: %s", xref_curie)
             continue
         if reference is None:
-            logger.warning("reference is None after parsing: %s", xref)
+            logger.debug("reference is None after parsing: %s", xref)
             continue
         rv.append((reference, note))
     return rv
