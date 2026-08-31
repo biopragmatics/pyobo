@@ -230,7 +230,7 @@ def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
     elif typedef.predicate_type == "data":
         yield f.Declaration(r, type="DataProperty")
     else:
-        raise ValueError
+        raise UnknownPredicateTypeError(typedef.predicate_type)
     # 2
     if typedef.is_anonymous is not None:
         yield m.IsAnonymousMacro(r, typedef.is_anonymous)
@@ -267,7 +267,7 @@ def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
         elif typedef.predicate_type == "data":
             yield f.DataPropertyDomain(r, typedef.domain)
         else:
-            raise ValueError
+            raise UnknownPredicateTypeError(typedef.predicate_type)
     # 13
     if typedef.range:
         if typedef.predicate_type is None or typedef.predicate_type == "object":
@@ -277,7 +277,7 @@ def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
         elif typedef.predicate_type == "data":
             yield f.DataPropertyRange(r, typedef.range)
         else:
-            raise ValueError
+            raise UnknownPredicateTypeError(typedef.predicate_type)
     # 14
     if typedef.builtin is not None:
         yield m.IsOBOBuiltinMacro(r, typedef.builtin)
@@ -314,7 +314,8 @@ def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
         elif typedef.predicate_type == "data":
             yield f.SubDataPropertyOf(r, parent)
         else:
-            raise ValueError
+            raise UnknownPredicateTypeError(typedef.predicate_type)
+
     # 24 TODO intersection_of, ROBOT does not create any output
     # 25 TODO union_of, ROBOT does not create any output
     # 26
@@ -325,14 +326,12 @@ def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
         yield f.DisjointObjectProperties([x, r])
     # 28
     if typedef.inverse:
-        if typedef.predicate_type == "annotation":
-            pass  # not sure what to do
-        elif typedef.predicate_type == "object":
+        if typedef.predicate_type is None or typedef.predicate_type == "object":
             yield f.InverseObjectProperties(r, typedef.inverse)
-        elif typedef.predicate_type == "data":
-            pass
+        elif typedef.predicate_type in {"annotation", "data"}:
+            pass  # not sure what to do
         else:
-            raise ValueError
+            raise UnknownPredicateTypeError(typedef.predicate_type)
     # 29
     for to in typedef.transitive_over:
         yield m.TransitiveOver(r, to)
@@ -357,6 +356,10 @@ def get_typedef_axioms(typedef: TypeDef) -> Iterable[f.Box]:
     # 41
     if typedef.is_class_level is not None:
         yield m.OBOIsClassLevelMacro(r, typedef.is_class_level)
+
+
+class UnknownPredicateTypeError(ValueError):
+    """Raised when a predicate type is not recognized."""
 
 
 def _yield_definition(term: Stanza, s: f.IdentifierBox) -> Iterable[m.DescriptionMacro]:
