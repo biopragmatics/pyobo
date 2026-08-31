@@ -69,7 +69,6 @@ gene_xrefs = [
     ("lncipedia", "lncipedia"),
     ("orphanet", "orphanet"),
     ("pseudogene", "pseudogene.org"),
-    #  ("ena.embl", "ena"), FIXME, ena gets mapped into into insdc.run. Need a top-level insdc namespace for this.
     ("refseq", "refseq_accession"),
     ("iuphar.receptor", "iuphar"),
     # ("mgi", "mgd_id"),
@@ -246,9 +245,12 @@ class HGNCGetter(Obo):
         )
 
 
-def _get_location_to_chr() -> dict[str, Reference]:
+def _get_location_to_chr(
+    *, version: str | None = None, force: bool = False
+) -> dict[str, Reference]:
     uri_prefix = "http://purl.obolibrary.org/obo/CHR_9606-chr"
-    graph: obographs.Graph = obographs.read(CHR_URL, squeeze=True)
+    path = ensure_path(PREFIX, url=CHR_URL, version=version, force=force)
+    graph: obographs.Graph = obographs.read(path, squeeze=True)
     rv = {}
     for node in graph.nodes:
         if node.id.startswith(uri_prefix):
@@ -259,13 +261,13 @@ def _get_location_to_chr() -> dict[str, Reference]:
     return rv
 
 
-def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]:
+def get_terms(*, version: str | None = None, force: bool = False) -> Iterable[Term]:
     """Get HGNC terms."""
     if version is None:
         version = get_version(PREFIX)
 
     unhandled_locations: defaultdict[str, set[str]] = defaultdict(set)
-    location_to_chr = _get_location_to_chr()
+    location_to_chr = _get_location_to_chr(version=version, force=force)
 
     unhandled_entry_keys: typing.Counter[str] = Counter()
     path = ensure_path(
@@ -310,6 +312,11 @@ def get_terms(version: str | None = None, force: bool = False) -> Iterable[Term]
             is_obsolete=is_obsolete,
         )
 
+        for ena_id in entry.pop("ena", []):
+            # TODO better relationship?
+            term.append_xref(
+                Reference(prefix="insdc.run", identifier=ena_id),
+            )
         for uniprot_id in entry.pop("uniprot_ids", []):
             term.append_relationship(
                 has_gene_product,
