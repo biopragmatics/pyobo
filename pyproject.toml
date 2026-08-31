@@ -89,10 +89,10 @@ dependencies = [
     #
     "typing-extensions",
     "rdflib",
-    "obographs>=0.0.15",
+    "obographs>=0.1.0",
     "sssom-pydantic>=0.6.2",
     "pytz",
-    "robot-obo-tool",
+    "robot-obo-tool>=0.1.0",
     "pyperclip",
     "lxml",
     "functional-owl>=0.1.6",
