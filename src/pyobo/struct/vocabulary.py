@@ -69,6 +69,7 @@ alternative_term = _c(_v.alternative_term)
 has_ontology_root_term = _c(_v.has_ontology_root_term)
 has_ontology_hierarchy_predicate = _c(_v.has_ontology_hierarchical_property)
 has_term_editor = _c(_v.has_term_editor)
+term_tracker_item = _c(_v.term_tracker_item)
 
 see_also = _c(_v.see_also)
 comment = _c(_v.has_comment)

@@ -12,7 +12,7 @@ class TestGround(unittest.TestCase):
     def test_ground(self) -> None:
         """Test grounding a TAXRANK entry by name and synonym."""
         result = pyobo.ground(
-            "taxrank", "biovariety", cache=False, use_tqdm=False, strict_match=True
+            "taxrank", "biovariety", cache=False, progress=False, strict_match=True
         )
         self.assertEqual("taxrank", result.prefix)
         self.assertEqual("0000032", result.identifier)
@@ -24,6 +24,6 @@ class TestGround(unittest.TestCase):
     )
     def test_scispacy_knowledgebase(self) -> None:
         """Test loading a small ontology via PyOBO."""
-        kb = pyobo.get_scispacy_knowledgebase("taxrank", cache=False, use_tqdm=False)
+        kb = pyobo.get_scispacy_knowledgebase("taxrank", cache=False, progress=False)
         # this might grow over time
         self.assertLessEqual(73, len(kb.cui_to_entity))

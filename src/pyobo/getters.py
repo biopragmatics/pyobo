@@ -25,6 +25,7 @@ from pydantic import BaseModel
 from pystow.utils import write_pydantic_json
 from tabulate import tabulate
 from tqdm.auto import tqdm
+from tqdm.contrib.logging import logging_redirect_tqdm
 from typing_extensions import Unpack
 
 from .constants import (
@@ -100,7 +101,7 @@ def get_ontology(
     robot_check: bool = True,
     upgrade: bool = True,
     cache: bool = True,
-    use_tqdm: bool = True,
+    progress: bool = True,
 ) -> Obo:
     """Get the OBO for a given graph.
 
@@ -117,6 +118,7 @@ def get_ontology(
     :param upgrade: If set to true, will automatically upgrade relationships, such as
         ``obo:chebi#part_of`` to ``BFO:0000051``
     :param cache: Should cached objects be written? defaults to True
+    :param progress: Should a progress bar be used?
 
     :returns: An OBO object
 
@@ -172,7 +174,7 @@ def get_ontology(
                 strict=strict,
                 version=version,
                 upgrade=upgrade,
-                use_tqdm=use_tqdm,
+                progress=progress,
             )
         else:
             logger.debug("[%s] no obonet cache found at %s", prefix, obonet_json_gz_path)
@@ -202,15 +204,16 @@ def get_ontology(
     else:
         raise UnhandledFormatError(f"[{prefix}] unhandled ontology file format: {path.suffix}")
 
-    obo = from_obo_path(
-        path,
-        prefix=prefix,
-        strict=strict,
-        version=version,
-        upgrade=upgrade,
-        use_tqdm=use_tqdm,
-        _cache_path=obonet_json_gz_path,
-    )
+    with logging_redirect_tqdm():
+        obo = from_obo_path(
+            path,
+            prefix=prefix,
+            strict=strict,
+            version=version,
+            upgrade=upgrade,
+            progress=progress,
+            _cache_path=obonet_json_gz_path,
+        )
     if cache:
         obo.write_default(force=force_process)
     return obo
@@ -358,7 +361,7 @@ def _prefixes(
 
 def iter_helper_helper(
     f: Callable[[str, Unpack[GetOntologyKwargs]], X],
-    use_tqdm: bool = True,
+    progress: bool = True,
     skip_below: str | None = None,
     skip_pyobo: bool = False,
     skip_set: set[str] | None = None,
@@ -368,7 +371,7 @@ def iter_helper_helper(
 
     :param f: A function that takes a prefix and gives back something that will be used
         by an outer function.
-    :param use_tqdm: If true, use the tqdm progress bar
+    :param progress: If true, use the progress bar
     :param skip_below: If true, skip sources whose names are less than this (used for
         iterative curation
     :param skip_pyobo: If true, skip sources implemented in PyOBO
@@ -395,7 +398,7 @@ def iter_helper_helper(
         )
     )
     prefix_it = tqdm(
-        prefixes, disable=not use_tqdm, desc=f"Building with {f.__name__}()", unit="resource"
+        prefixes, disable=not progress, desc=f"Building with {f.__name__}()", unit="resource"
     )
     for prefix in prefix_it:
         prefix_it.set_postfix(prefix=prefix)

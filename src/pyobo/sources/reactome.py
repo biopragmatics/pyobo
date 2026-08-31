@@ -4,8 +4,10 @@ import logging
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
 from functools import lru_cache
+from typing import cast
 
 import pandas as pd
+from pystow.utils.download import DownloadKwargs
 from tqdm.auto import tqdm
 
 from ..api import get_id_multirelations_mapping
@@ -41,18 +43,35 @@ class ReactomeGetter(Obo):
         yield from iter_terms(version=self._version_or_raise, force=force)
 
 
+# need this to set agent, otherwise it gets rejected
+REACTOME_DOWNLOAD_KWARGS = cast(DownloadKwargs, {"backend": "requests"})
+
+
 def ensure_participant_df(version: str, force: bool = False) -> pd.DataFrame:
     """Get the pathway uniprot participant dataframe."""
     uniprot_pathway_url = f"https://reactome.org/download/{version}/UniProt2Reactome_All_Levels.txt"
     return ensure_df(
-        PREFIX, url=uniprot_pathway_url, header=None, usecols=[0, 1], version=version, force=force
+        PREFIX,
+        url=uniprot_pathway_url,
+        header=None,
+        usecols=[0, 1],
+        version=version,
+        force=force,
+        download_kwargs=REACTOME_DOWNLOAD_KWARGS,
     )
 
 
 def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
     """Iterate Reactome terms."""
     provenance_url = f"https://reactome.org/download/{version}/ReactionPMIDS.txt"
-    provenance_df = ensure_df(PREFIX, url=provenance_url, header=None, version=version, force=force)
+    provenance_df = ensure_df(
+        PREFIX,
+        url=provenance_url,
+        header=None,
+        version=version,
+        force=force,
+        download_kwargs=REACTOME_DOWNLOAD_KWARGS,
+    )
     provenance_d = multidict(provenance_df.values)
 
     pathway_names_url = f"https://reactome.org/download/{version}/ReactomePathways.txt"
@@ -63,6 +82,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         names=["reactome_id", "name", "species"],
         version=version,
         force=force,
+        download_kwargs=REACTOME_DOWNLOAD_KWARGS,
     )
     df["species"] = df["species"].map(lambda x: SPECIES_REMAPPING.get(x) or x)
     df["taxonomy_id"] = df["species"].map(get_ncbitaxon_id)
@@ -85,7 +105,12 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
 
     pathways_hierarchy_url = f"https://reactome.org/download/{version}/ReactomePathwaysRelation.txt"
     hierarchy_df = ensure_df(
-        PREFIX, url=pathways_hierarchy_url, header=None, version=version, force=force
+        PREFIX,
+        url=pathways_hierarchy_url,
+        header=None,
+        version=version,
+        force=force,
+        download_kwargs=REACTOME_DOWNLOAD_KWARGS,
     )
     for parent_id, child_id in hierarchy_df.values:
         terms[child_id].append_parent(terms[parent_id])
@@ -119,6 +144,7 @@ def iter_terms(version: str, force: bool = False) -> Iterable[Term]:
         usecols=[0, 1],
         version=version,
         force=force,
+        download_kwargs=REACTOME_DOWNLOAD_KWARGS,
     )
     for chebi_id, reactome_id in tqdm(
         chebi_pathway_df.values,

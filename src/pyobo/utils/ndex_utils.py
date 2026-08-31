@@ -6,6 +6,7 @@ from collections.abc import Iterable, Mapping
 from typing import Any, cast
 
 import requests
+from pystow.constants import TimeoutHint
 from tqdm.auto import tqdm
 
 from .path import prefix_directory_join
@@ -30,14 +31,16 @@ def iterate_aspect(cx: CX, aspect: str) -> Iterable[Any]:
             yield from element[aspect]
 
 
-def ensure_ndex_network(prefix: str, uuid: str, force: bool = False) -> CX:
+def ensure_ndex_network(
+    prefix: str, uuid: str, *, force: bool = False, timeout: TimeoutHint | None = None
+) -> CX:
     """Ensure a network from NDEx is cached."""
     path = prefix_directory_join(prefix, "ndex", name=f"{uuid}.json")
     if os.path.exists(path) and not force:
         with open(path) as file:
             return cast(CX, json.load(file))
 
-    res = requests.get(f"{NETWORK_ENDPOINT}/{uuid}")
+    res = requests.get(f"{NETWORK_ENDPOINT}/{uuid}", timeout=timeout)
     res_json = res.json()
     with open(path, "w") as file:
         json.dump(res_json, file, indent=2)
@@ -45,17 +48,22 @@ def ensure_ndex_network(prefix: str, uuid: str, force: bool = False) -> CX:
 
 
 def ensure_ndex_network_set(
-    prefix: str, uuid: str, use_tqdm: bool = False, force: bool = False
+    prefix: str,
+    uuid: str,
+    *,
+    progress: bool = False,
+    force: bool = False,
+    timeout: TimeoutHint = None,
 ) -> Iterable[tuple[str, CX]]:
     """Ensure the list of networks that goes with NCI PID on NDEx."""
-    it = _help_ensure_ndex_network_set(prefix, uuid, force=force)
-    if use_tqdm:
-        it = tqdm(it, desc=f"Downloading ndex:{uuid}")
-    for network_uuid in it:
-        yield network_uuid, ensure_ndex_network(prefix, network_uuid, force=force)
+    network_uuids = _help_ensure_ndex_network_set(prefix, uuid, force=force, timeout=timeout)
+    for network_uuid in tqdm(network_uuids, desc=f"Downloading ndex:{uuid}", disable=not progress):
+        yield network_uuid, ensure_ndex_network(prefix, network_uuid, force=force, timeout=timeout)
 
 
-def _help_ensure_ndex_network_set(prefix: str, uuid: str, force: bool = False) -> list[str]:
+def _help_ensure_ndex_network_set(
+    prefix: str, uuid: str, *, force: bool = False, timeout: TimeoutHint = None
+) -> list[str]:
     """Ensure the list of networks that goes with NCI PID on NDEx."""
     networkset_path = prefix_directory_join(prefix, name="networks.txt")
     if os.path.exists(networkset_path) and not force:
@@ -63,7 +71,7 @@ def _help_ensure_ndex_network_set(prefix: str, uuid: str, force: bool = False) -
             return sorted(line.strip() for line in file)
 
     url = f"{NETWORKSET_ENDPOINT}/{uuid}"
-    res = requests.get(url)
+    res = requests.get(url, timeout=timeout)
     res_json = res.json()
     network_uuids = cast(list[str], res_json["networks"])
     with open(networkset_path, "w") as file:

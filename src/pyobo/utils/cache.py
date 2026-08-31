@@ -39,14 +39,14 @@ class _CachedMapping(Cached[X]):
         path: str | Path,
         header: Iterable[str],
         *,
-        use_tqdm: bool = False,
+        progress: bool = False,
         force: bool = False,
         cache: bool = True,
     ) -> None:
         """Initialize the mapping cache."""
         super().__init__(path=path, cache=cache, force=force)
         self.header = header
-        self.use_tqdm = use_tqdm
+        self.progress = progress
 
 
 class CachedMapping(_CachedMapping[Mapping[str, str]]):
@@ -54,7 +54,7 @@ class CachedMapping(_CachedMapping[Mapping[str, str]]):
 
     def load(self) -> Mapping[str, str]:
         """Load a TSV file."""
-        return open_map_tsv(self.path, use_tqdm=self.use_tqdm)
+        return open_map_tsv(self.path, progress=self.progress)
 
     def dump(self, rv: Mapping[str, str]) -> None:
         """Write a TSV file."""
@@ -98,7 +98,7 @@ class CachedMultidict(_CachedMapping[Mapping[str, list[str]]]):
 
     def load(self) -> Mapping[str, list[str]]:
         """Load a TSV file representing a multimap."""
-        return open_multimap_tsv(self.path, use_tqdm=self.use_tqdm)
+        return open_multimap_tsv(self.path, progress=self.progress)
 
     def dump(self, rv: Mapping[str, list[str]]) -> None:
         """Write a TSV file representing a multimap."""

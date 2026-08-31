@@ -16,7 +16,7 @@ import bioregistry
 import networkx as nx
 from curies import ReferenceTuple
 from curies.preprocessing import BlocklistError
-from curies.vocabulary import SynonymScope
+from curies.vocabulary import SynonymScope, xsd_datetime
 from more_itertools import pairwise
 from pystow.utils import open_zipfile, safe_open
 from tqdm.auto import tqdm
@@ -40,6 +40,7 @@ from ..struct import (
 )
 from ..struct_utils import Annotation, Stanza
 from ..typedef import default_typedefs, has_comment, has_ontology_root_term
+from ..vocabulary import term_tracker_item, xsd_uri
 from ...constants import DATE_FORMAT, PROVENANCE_PREFIXES
 from ...identifier_utils import (
     NotCURIEError,
@@ -69,7 +70,7 @@ def from_obo_path(
     strict: bool = False,
     version: str | None,
     upgrade: bool = True,
-    use_tqdm: bool = False,
+    progress: bool = False,
     ignore_obsolete: bool = False,
     _cache_path: Path | None = None,
 ) -> Obo:
@@ -78,11 +79,11 @@ def from_obo_path(
     if path.suffix.endswith(".zip"):
         logger.info("[%s] parsing zipped OBO with obonet from %s", prefix or "<unknown>", path)
         with open_zipfile(path, path.name.removesuffix(".zip")) as file:
-            graph = _read_obo(file, prefix, ignore_obsolete=ignore_obsolete, use_tqdm=use_tqdm)
+            graph = _read_obo(file, prefix, ignore_obsolete=ignore_obsolete, progress=progress)
     else:
         logger.info("[%s] parsing OBO with obonet from %s", prefix or "<unknown>", path)
         with safe_open(path, operation="read") as file:
-            graph = _read_obo(file, prefix, ignore_obsolete=ignore_obsolete, use_tqdm=use_tqdm)
+            graph = _read_obo(file, prefix, ignore_obsolete=ignore_obsolete, progress=progress)
 
     if prefix:
         # Make sure the graph is named properly
@@ -93,24 +94,25 @@ def from_obo_path(
         write_gzipped_graph(path=_cache_path, graph=graph)
 
     # Convert to an Obo instance and return
-    return from_obonet(graph, strict=strict, version=version, upgrade=upgrade, use_tqdm=use_tqdm)
+    return from_obonet(graph, strict=strict, version=version, upgrade=upgrade, progress=progress)
 
 
 def _read_obo(
     lines: Iterable[str],
     prefix: str | None,
     ignore_obsolete: bool,
-    use_tqdm: bool = True,
+    progress: bool = True,
+    leave: bool = False,
 ) -> nx.MultiDiGraph:
     import obonet
 
     tqdm_kwargs = {
         "unit_scale": True,
         "desc": f"[{prefix or ''}] parsing OBO",
-        "leave": True,
+        "leave": leave,
     }
     return obonet.read_obo(
-        tqdm(lines, disable=not use_tqdm, **tqdm_kwargs),
+        tqdm(lines, disable=not progress, **tqdm_kwargs),
         ignore_obsolete=ignore_obsolete,
         # TODO add include_clauses=True to get trailing modifiers
     )
@@ -130,7 +132,7 @@ def from_str(
     version: str | None = None,
     upgrade: bool = True,
     ignore_obsolete: bool = False,
-    use_tqdm: bool = False,
+    progress: bool = False,
     enrich_metadata: bool = True,
 ) -> Obo:
     """Read an ontology from a string representation."""
@@ -146,7 +148,7 @@ def from_str(
         strict=strict,
         version=version,
         upgrade=upgrade,
-        use_tqdm=use_tqdm,
+        progress=progress,
         enrich_metadata=enrich_metadata,
     )
 
@@ -157,7 +159,7 @@ def from_obonet(
     strict: bool = False,
     version: str | None = None,
     upgrade: bool = True,
-    use_tqdm: bool = False,
+    progress: bool = False,
     enrich_metadata: bool = True,
 ) -> Obo:
     """Get all the terms from a OBO graph."""
@@ -250,7 +252,7 @@ def from_obonet(
         synonym_typedefs=synonym_typedefs,
         subset_typedefs=subset_typedefs,
         macro_config=macro_config,
-        use_tqdm=use_tqdm,
+        progress=progress,
     )
 
     return build_ontology(
@@ -284,14 +286,14 @@ def _get_terms(
     subset_typedefs: SubsetTypeDefs,
     missing_typedefs: set[ReferenceTuple],
     macro_config: MacroConfig,
-    use_tqdm: bool = False,
+    progress: bool = False,
 ) -> list[Term]:
     terms = []
     for reference, data in _iter_obo_graph(
         graph=graph,
         strict=strict,
         ontology_prefix=ontology_prefix,
-        use_tqdm=use_tqdm,
+        progress=progress,
         upgrade=upgrade,
     ):
         if reference.prefix != ontology_prefix:
@@ -735,7 +737,6 @@ def _handle_xref(
 
 SUBSET_ERROR_COUNTER: Counter[tuple[str, str]] = Counter()
 
-
 SubsetTypeDefs: TypeAlias = dict[Reference, str]
 
 
@@ -782,12 +783,12 @@ def _iter_obo_graph(
     *,
     strict: bool = False,
     ontology_prefix: str,
-    use_tqdm: bool = False,
+    progress: bool = False,
     upgrade: bool,
 ) -> Iterable[tuple[Reference, dict[str, Any]]]:
     """Iterate over the nodes in the graph with the prefix stripped (if it's there)."""
     for node, data in tqdm(
-        graph.nodes(data=True), disable=not use_tqdm, unit_scale=True, desc=f"[{ontology_prefix}]"
+        graph.nodes(data=True), disable=not progress, unit_scale=True, desc=f"[{ontology_prefix}]"
     ):
         name = data.get("name")
         match _parse_str_or_curie_or_uri_helper(
@@ -851,8 +852,8 @@ def iterate_graph_synonym_typedefs(
             specificity = None
         elif specificity not in t.get_args(SynonymScope):
             if strict:
-                raise ValueError(f"invalid synonym specificty: {specificity}")
-            logger.warning("[%s] invalid synonym specificty: %s", ontology_prefix, specificity)
+                raise ValueError(f"invalid synonym specificity: {specificity}")
+            logger.warning("[%s] invalid synonym specificity: %s", ontology_prefix, specificity)
             specificity = None
 
         curie, name = line.split(" ", 1)
@@ -1254,6 +1255,10 @@ UNHANDLED_PROP_OBJECTS: Counter[tuple[str, str]] = Counter()
 
 UNHANDLED_PROPS: Counter[tuple[str, str]] = Counter()
 
+PREDICATE_TO_DATATYPE = {
+    term_tracker_item: xsd_uri,
+}
+
 
 def _handle_prop(
     prop_value_type: str,
@@ -1286,7 +1291,9 @@ def _handle_prop(
     value_type = value_type.strip()
     datatype: Reference | None
     if " " not in value_type:
-        value, datatype = value_type, None
+        value = value_type
+        # this automatically upgrades the datatype in some cases
+        datatype = PREDICATE_TO_DATATYPE.get(prop_reference)
     else:
         value, datatype_raw = (s.strip() for s in value_type.rsplit(" ", 1))
         match _parse_str_or_curie_or_uri_helper(
@@ -1319,7 +1326,7 @@ def _handle_prop(
 
     # first, special case datetimes. Whether it's quoted or not,
     # we always deal with this first
-    if datatype and datatype.curie == "xsd:dateTime":
+    if datatype == xsd_datetime:
         try:
             obo_literal = OBOLiteral.datetime(value)
         except ValueError:
@@ -1330,7 +1337,7 @@ def _handle_prop(
         else:
             return Annotation(prop_reference, obo_literal)
 
-    if datatype and datatype.curie == "xsd:anyURI":
+    if datatype == xsd_uri:
         match _parse_str_or_curie_or_uri_helper(
             value,
             node=node,
