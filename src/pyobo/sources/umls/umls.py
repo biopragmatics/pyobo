@@ -54,7 +54,7 @@ def iter_terms(version: str) -> Iterable[Term]:
     semantic_types = get_semantic_types(version=version)
     with open_mrconso_dict_reader(version=version) as reader:
         lines: Iterable[Mapping[str, str]] = tqdm(
-            reader, unit_scale=True, desc=f"[{PREFIX}] parsing", total=LENGTH
+            reader, unit_scale=True, desc=f"[{PREFIX} v{version}] parsing", total=LENGTH
         )
         lines = (
             line
@@ -106,7 +106,9 @@ def _get_term(
         term.append_synonym(
             row["STR"],
             provenance=provenance,
-            type=UMLS_TYPEDEFS[row["TTY - Term Type in Source"]].reference,
+            type=synonym_typedef.reference
+            if (synonym_typedef := UMLS_TYPEDEFS.get(row["TTY - Term Type in Source"]))
+            else None,
         )
 
     for sty_id in semantic_types.get(cui, ()):
