@@ -19,7 +19,7 @@ from pyobo.struct import (
     Term,
     TypeDef,
 )
-from pyobo.struct.functional import get_term_axioms
+from pyobo.struct.functional import get_obo_from_ofn, get_ofn_from_obo, get_term_axioms
 from pyobo.struct.obograph import assert_graph_equal, to_parsed_obograph, to_parsed_obograph_oracle
 from pyobo.struct.reference import _parse_datetime, unspecified_matching
 from pyobo.struct.struct import BioregistryError, build_ontology
@@ -101,7 +101,7 @@ class TestStruct(unittest.TestCase):
         self.assertEqual('synonymtypedef: OMO:0003012 "" EXACT', s4.to_obo(ontology_prefix="chebi"))
 
 
-class TestTerm(cases.TermMixin):
+class TestTerm(cases.TermMixin, cases.TestMixin):
     """Tests for terms."""
 
     def _assert_lines(self, text: str, lines: Iterable[str]) -> None:
@@ -129,6 +129,19 @@ class TestTerm(cases.TermMixin):
             ),
         )
         self._assert_lines(ofn, (x.to_funowl() for x in get_term_axioms(term)))
+
+        # ROUND TRIP ON OFN
+        obo_ontology = build_ontology(
+            prefix="xxx", terms=[term], enrich_metadata=False, check_bioregistry_prefix=False
+        )
+        ofn_ontology = get_ofn_from_obo(obo_ontology)
+        reconstituted_obo_ontology = get_obo_from_ofn(
+            obo_ontology.ontology,
+            ofn_ontology,
+            enrich_metadata=False,
+            check_bioregistry_prefix=False,
+        )
+        self.assert_obo_equal(obo_ontology, reconstituted_obo_ontology)
 
         if test_obographs:
             xx: set[TypeDef] = {
