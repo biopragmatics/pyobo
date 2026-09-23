@@ -2191,18 +2191,24 @@ class Obo:
         return None
 
     def get_semantic_mappings(
-        self, *, progress: bool = False
+        self,
+        *,
+        progress: bool = False,
+        calculate_hashes: bool = False,
+        converter: curies.Converter | None = None,
     ) -> Iterable[sssom_pydantic.SemanticMapping]:
         """Iterate over semantic mappings."""
         license_url = bioregistry.get_license_url(self.ontology)
         source = _get_download_source(self.ontology)
+        if converter is None:
+            converter = bioregistry.get_default_converter()
         for stanza in self._iter_stanzas(progress=progress):
             subject_type = self._get_stanza_type(stanza)
             for predicate, obj_ref, context in stanza.get_mappings(
                 include_xrefs=True, add_context=True
             ):
                 # TODO update object reference with label?
-                yield sssom_pydantic.SemanticMapping(
+                mapping = sssom_pydantic.SemanticMapping(
                     subject=stanza.reference,
                     subject_type=subject_type,
                     predicate=predicate,
@@ -2215,6 +2221,9 @@ class Obo:
                     subject_source_version=self.data_version,
                     license=license_url,
                 )
+                if calculate_hashes:
+                    mapping = mapping.with_hash(converter)
+                yield mapping
 
     def get_mappings_df(self, *, progress: bool = False) -> pd.DataFrame:
         """Get a dataframe with SSSOM extracted from the OBO document.

@@ -198,7 +198,7 @@ class TestEverything(unittest.TestCase):
         terms = [t1, t2, t3]
         ontology = build_ontology(TEST_P1, terms=terms, typedefs=[td1])
 
-        curies.Converter.from_prefix_map(
+        converter = curies.Converter.from_prefix_map(
             {
                 TEST_P1: f"https://example.org/{TEST_P1}:",
                 TEST_P2: f"https://example.org/{TEST_P2}:",
@@ -206,8 +206,11 @@ class TestEverything(unittest.TestCase):
                 "skos": "http://www.w3.org/2004/02/skos/core#",
                 "oboInOwl": "http://www.geneontology.org/formats/oboInOwl#",
                 "semapv": "https://w3id.org/semapv/vocab/",
+                "bioregistry": "https://bioregistry.io/",
             }
         )
+        converter.add_prefix_synonym("IAO", "iao")
+        converter.add_prefix_synonym("oboInOwl", "oboinowl")
 
         targets = [
             "pyobo.api.names.get_ontology",
@@ -260,6 +263,7 @@ class TestEverything(unittest.TestCase):
                     cache=False,
                     progress=False,
                     version="1.0.0",
+                    converter=converter,
                 )
             )
             self.assertEqual(3, len(semantic_mappings))
@@ -273,7 +277,7 @@ class TestEverything(unittest.TestCase):
                     justification=_v.unspecified_matching_process.without_name(),
                     source=subject_source,
                     subject_source=subject_source,
-                ),
+                ).with_hash(converter),
                 SemanticMapping(
                     subject=r1,
                     subject_type=_v.owl_class,
@@ -282,7 +286,7 @@ class TestEverything(unittest.TestCase):
                     justification=_v.unspecified_matching_process.without_name(),
                     source=subject_source,
                     subject_source=subject_source,
-                ),
+                ).with_hash(converter),
                 SemanticMapping(
                     subject=r3,
                     subject_type=_v.owl_class,
@@ -291,7 +295,7 @@ class TestEverything(unittest.TestCase):
                     justification=_v.unspecified_matching_process.without_name(),
                     source=subject_source,
                     subject_source=subject_source,
-                ),
+                ).with_hash(converter),
             ]
             for m1, m2 in zip(expected_semantic_mappings, semantic_mappings, strict=False):
                 assert_semantic_mapping_equal(self, m1, m2)

@@ -8,7 +8,7 @@ from functools import lru_cache
 import bioregistry
 import pandas as pd
 import sssom_pydantic
-from curies import ReferenceTuple
+from curies import Converter, ReferenceTuple
 from sssom_pydantic import SemanticMapping
 from sssom_pydantic.io import CachedSemanticMappings
 from typing_extensions import Unpack
@@ -113,14 +113,14 @@ def get_sssom_df(prefix: str | Obo, **kwargs: Unpack[GetOntologyKwargs]) -> pd.D
 
 
 def get_semantic_mappings(
-    prefix: str, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: str, *, converter: Converter | None = None, **kwargs: Unpack[GetOntologyKwargs]
 ) -> list[SemanticMapping]:
     """Get semantic mappings."""
-    return _get_sssom_getter(prefix, **kwargs)().mappings
+    return _get_sssom_getter(prefix, converter=converter, **kwargs)().mappings
 
 
 def _get_sssom_getter(
-    prefix: str, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: str, *, converter: Converter | None = None, **kwargs: Unpack[GetOntologyKwargs]
 ) -> Callable[[], sssom_pydantic.SemanticMappingPack]:
     """Get semantic mappings."""
     version = get_version_from_kwargs(prefix, kwargs)
@@ -134,10 +134,14 @@ def _get_sssom_getter(
         logger.info("[%s] extracting SSSOM", prefix)
         ontology = get_ontology(prefix, **kwargs)
         mapping_set = get_semantic_mapping_metadata(prefix, version=version)
-        converter = bioregistry.get_default_converter(stubs=True)
+        nonlocal converter
+        if converter is None:
+            converter = bioregistry.get_default_converter(stubs=True)
         mappings = list(
             ontology.get_semantic_mappings(
+                converter=converter,
                 progress=check_show_progress(kwargs),
+                calculate_hashes=True,
             )
         )
         return sssom_pydantic.SemanticMappingPack(
