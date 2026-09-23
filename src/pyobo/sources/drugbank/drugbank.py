@@ -8,7 +8,7 @@ import itertools as itt
 import logging
 from collections.abc import Iterable, Iterator, Mapping
 from functools import lru_cache
-from typing import Any, cast
+from typing import Any, ClassVar, cast
 from xml.etree import ElementTree
 from xml.etree.ElementTree import Element
 
@@ -33,6 +33,7 @@ PREFIX = "drugbank"
 class DrugBankGetter(Obo):
     """A getter for DrugBank."""
 
+    deprecated: ClassVar[bool] = True
     ontology = bioversions_key = PREFIX
     typedefs = [has_salt]
 

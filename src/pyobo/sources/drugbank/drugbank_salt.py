@@ -14,6 +14,7 @@ drugbank --relation obo:has_salt`` or
 
 import logging
 from collections.abc import Iterable
+from typing import ClassVar
 
 from .drugbank import iterate_drug_info
 from ...struct import Obo, Reference, Term
@@ -30,6 +31,7 @@ PREFIX = "drugbank.salt"
 class DrugBankSaltGetter(Obo):
     """A getter for DrugBank Salts."""
 
+    deprecated: ClassVar[bool] = True
     ontology = PREFIX
     bioversions_key = "drugbank"
 

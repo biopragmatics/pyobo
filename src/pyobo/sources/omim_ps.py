@@ -2,7 +2,7 @@
 
 import logging
 from collections.abc import Iterable
-from typing import cast
+from typing import ClassVar, cast
 
 from bioversions.utils import get_soup
 
@@ -21,6 +21,7 @@ class OMIMPSGetter(Obo):
     """An ontology representation of OMIM Phenotypic Series."""
 
     ontology = bioversions_key = PREFIX
+    deprecated: ClassVar[bool] = True
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over terms in the ontology."""

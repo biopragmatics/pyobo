@@ -725,6 +725,10 @@ class Obo:
     #: with the OWL exports that e.g. end up on EBI OLS
     skip_maintainers: ClassVar[bool] = False
 
+    #: True if the source used to work, but no longer does, such
+    #: as DrugBank and OMIM
+    deprecated: ClassVar[bool] = False
+
     def __post_init__(self) -> None:
         """Run post-init checks."""
         if self.ontology is None:
