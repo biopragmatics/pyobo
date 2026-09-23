@@ -810,10 +810,10 @@ class Obo:
             rv[pp] = uri_prefix
         return rv
 
-    def _get_prefixes(self) -> set[str]:
+    def _get_prefixes(self, *, progress: bool = False) -> set[str]:
         """Get all prefixes used by the ontology."""
         prefixes: set[str] = set(DEFAULT_PREFIX_MAP)
-        for stanza in self._iter_stanzas():
+        for stanza in self._iter_stanzas(desc="getting prefixes", progress=progress):
             prefixes.update(stanza._get_prefixes())
         for synonym_typedef in self.synonym_typedefs or []:
             prefixes.update(synonym_typedef._get_prefixes())
@@ -981,7 +981,12 @@ class Obo:
             except TypeError:
                 total = None
             yv = tqdm(
-                yv, desc=desc or "terms", unit_scale=True, unit="term", total=total, leave=False
+                yv,
+                desc=desc or f"[{self.ontology}] terms",
+                unit_scale=True,
+                unit="term",
+                total=total,
+                leave=False,
             )
         yield from yv
 
@@ -1575,7 +1580,7 @@ class Obo:
         links = []
         typedefs = self._index_typedefs()
         synonym_typedefs = self._index_synonym_typedefs()
-        for stanza in self._iter_stanzas(progress=progress):
+        for stanza in self._iter_stanzas(progress=progress, desc="making obonet"):
             parents = []
             for parent in stanza.parents:
                 if parent is None:
@@ -1675,9 +1680,7 @@ class Obo:
         """Get the set of obsolete identifiers."""
         return {
             stanza.identifier
-            for stanza in self._iter_stanzas(
-                progress=progress, desc=f"[{self.ontology}] getting obsolete"
-            )
+            for stanza in self._iter_stanzas(desc="getting obsolete", progress=progress)
             if stanza.is_obsolete
         }
 
@@ -1781,7 +1784,7 @@ class Obo:
 
     def iter_object_properties(self, *, progress: bool = False) -> Iterable[tuple[str, str, str]]:
         """Iterate over object property triples."""
-        for stanza in self._iter_stanzas(progress=progress):
+        for stanza in self._iter_stanzas(desc="getting object properties", progress=progress):
             for predicate, target in stanza.iterate_object_properties():
                 yield stanza.curie, predicate.curie, target.curie
 
@@ -1795,7 +1798,7 @@ class Obo:
         self, *, progress: bool = False
     ) -> Iterable[tuple[str, str, str, str, str]]:
         """Iterate over literal properties quads."""
-        for stanza in self._iter_stanzas(progress=progress):
+        for stanza in self._iter_stanzas(desc="getting literal properties", progress=progress):
             for predicate, target in stanza.iterate_literal_properties():
                 yield (
                     stanza.curie,
@@ -1815,8 +1818,9 @@ class Obo:
         self, prop: ReferenceHint, *, progress: bool = False
     ) -> Iterable[tuple[Stanza, str]]:
         """Iterate over tuples of terms and the values for the given property."""
+        # TODO consolidate with iter_literal_properties
         prop = _ensure_ref(prop)
-        for stanza in self._iter_stanzas(progress=progress):
+        for stanza in self._iter_stanzas(desc="getting properties", progress=progress):
             for t in stanza.get_property_annotations():
                 if t.predicate != prop:
                     continue
@@ -1864,7 +1868,7 @@ class Obo:
         """Iterate over triples of terms, relations, and their targets."""
         _warned: set[ReferenceTuple] = set()
         typedefs = self._index_typedefs()
-        for stanza in self._iter_stanzas(progress=progress, desc="edge"):
+        for stanza in self._iter_stanzas(desc="getting edges", progress=progress):
             for predicate, reference in stanza._iter_edges(include_xrefs=include_xrefs):
                 if td := self._get_typedef(stanza, predicate, _warned, typedefs):
                     yield stanza, td, reference
@@ -2061,7 +2065,7 @@ class Obo:
         typedef = _ensure_ref(typedef, ontology_prefix=self.ontology)
         return multidict(
             (stanza.identifier, reference)
-            for stanza in self._iter_stanzas(progress=progress, desc=f"getting {typedef.curie}")
+            for stanza in self._iter_stanzas(desc=f"getting {typedef.curie}", progress=progress)
             for reference in stanza.get_relationships(typedef)
         )
 
@@ -2130,7 +2134,9 @@ class Obo:
         """Get literal mappings in a standard data model."""
         yield from itt.chain.from_iterable(
             stanza.get_literal_mappings()
-            for stanza in self._iter_stanzas(progress=progress, require_in_ontology="loose")
+            for stanza in self._iter_stanzas(
+                desc="getting literal mappings", progress=progress, require_in_ontology="loose"
+            )
         )
 
     iter_literal_mappings = get_literal_mappings
@@ -2202,7 +2208,7 @@ class Obo:
         source = _get_download_source(self.ontology)
         if converter is None:
             converter = bioregistry.get_default_converter()
-        for stanza in self._iter_stanzas(progress=progress):
+        for stanza in self._iter_stanzas(desc="getting semantic mappings", progress=progress):
             subject_type = self._get_stanza_type(stanza)
             for predicate, obj_ref, context in stanza.get_mappings(
                 include_xrefs=True, add_context=True
@@ -2259,7 +2265,7 @@ class Obo:
 
     def iterate_alts(self) -> Iterable[tuple[Stanza, Reference]]:
         """Iterate over alternative identifiers."""
-        for stanza in self._iter_stanzas(require_in_ontology="loose"):
+        for stanza in self._iter_stanzas(desc="getting alts.", require_in_ontology="loose"):
             for alt in stanza.alt_ids:
                 yield stanza, alt
 
