@@ -188,6 +188,7 @@ ontology_resolver: ClassResolver[Obo] = ClassResolver.from_subclasses(
     base=Obo,
     suffix="Getter",
     skip={AdHocOntologyBase},
+    exclude_predicate=lambda x: x.deprecated,
 )
 for getter in list(ontology_resolver):
     ontology_resolver.synonyms[getter.ontology] = getter
