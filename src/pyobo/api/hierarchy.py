@@ -28,6 +28,8 @@ __all__ = [
     "get_subhierarchy",
     "has_ancestor",
     "is_descendent",
+    "SubsetConfiguration",
+    "hydrate_subsets",
 ]
 
 logger = logging.getLogger(__name__)
@@ -38,6 +40,10 @@ class HierarchyKwargs(GetOntologyKwargs):
 
     include_part_of: NotRequired[bool]
     include_has_member: NotRequired[bool]
+
+
+#: A type represing a subset configuration
+SubsetConfiguration: TypeAlias = Mapping[str, list[Reference]]
 
 
 def get_hierarchy(
@@ -225,3 +231,79 @@ def get_subhierarchy(
     sg = hierarchy.subgraph(descendants).copy()
     logger.info("subgraph has %d nodes/%d edges", sg.number_of_nodes(), sg.number_of_edges())
     return sg
+
+
+
+
+
+def hydrate_subsets(
+    subset_configuration: SubsetConfiguration,
+    *,
+    progress: bool = True,
+) -> SubsetConfiguration:
+    """Convert a subset configuration dictionary into a subset artifact.
+
+    :param subset_configuration: A dictionary of prefixes to sets of parent terms
+    :param progress: Should progress bars be shown?
+
+    :returns: A dictionary that uses the is-a hierarchy within the resources to get full
+        term lists
+
+    :raises ValueError: If a prefix can't be looked up with PyOBO
+
+    To get all the cells from MeSH:
+
+    .. code-block:: python
+
+        from semra.api import hydrate_subsets, filter_subsets
+
+        configuration = {
+            "mesh": ["mesh:D002477"],
+            # and so on
+        }
+        prefix_to_references = hydrate_subsets(configuration)
+
+    It's also possible to use parents outside the vocabulary, such as when search for
+    entity type in UMLS:
+
+    .. code-block:: python
+
+        from semra import Reference
+        from semra.api import hydrate_subsets, filter_subsets
+
+        configuration = {
+            "umls": [
+                # all children of https://uts.nlm.nih.gov/uts/umls/semantic-network/Pathologic%20Function
+                Reference.from_curie("sty:T049"),  # cell or molecular dysfunction
+                Reference.from_curie("sty:T047"),  # disease or syndrome
+                Reference.from_curie("sty:T191"),  # neoplastic process
+                Reference.from_curie("sty:T050"),  # experimental model of disease
+                Reference.from_curie("sty:T048"),  # mental or behavioral dysfunction
+            ],
+            # and so on
+        }
+        prefix_to_references = hydrate_subsets(configuration)
+    """
+    rv: dict[str, set[Reference]] = {}
+    # do lookup of the hierarchy and lookup of ancestors in 2 steps to allow for
+    # querying parents inside a resource that aren't defined by it (e.g., sty terms in umls)
+    for prefix, parents in tqdm(subset_configuration.items(), desc='hydrating subsets', disable=not progress):
+        try:
+            hierarchy = get_hierarchy(
+                prefix, include_part_of=False, include_has_member=False, progress=progress
+            )
+        except RuntimeError:  # e.g., no build
+            rv[prefix] = set()
+        except Exception as e:
+            raise ValueError(f"Failed on {prefix}") from e
+        else:
+            rv[prefix] = {
+                descendant
+                for parent in parents
+                for descendant in nx.ancestors(hierarchy, parent) or []
+                if descendant.prefix == prefix
+            }
+            for parent in parents:
+                if parent.prefix == prefix:
+                    rv[prefix].add(parent)
+    return {k: sorted(v) for k, v in rv.items()}
