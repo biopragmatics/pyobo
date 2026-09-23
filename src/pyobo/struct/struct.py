@@ -2208,7 +2208,7 @@ class Obo:
                 include_xrefs=True, add_context=True
             ):
                 # TODO update object reference with label?
-                yv = sssom_pydantic.SemanticMapping(
+                mapping = sssom_pydantic.SemanticMapping(
                     subject=stanza.reference,
                     subject_type=subject_type,
                     predicate=predicate,
@@ -2222,8 +2222,8 @@ class Obo:
                     license=license_url,
                 )
                 if calculate_hashes:
-                    yv = yv.with_hash(converter)
-                yield yv
+                    mapping = mapping.with_hash(converter)
+                yield mapping
 
     def get_mappings_df(self, *, progress: bool = False) -> pd.DataFrame:
         """Get a dataframe with SSSOM extracted from the OBO document.
