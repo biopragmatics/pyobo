@@ -299,6 +299,8 @@ def get_semantic_mapping_metadata(
     lookup_missing_version: bool = True,
 ) -> sssom_pydantic.MappingSet:
     """Get metadata for a resource."""
+    import datetime
+
     import bioregistry
     import sssom_pydantic
     from pydantic import AnyUrl
@@ -319,8 +321,9 @@ def get_semantic_mapping_metadata(
         license=resource.get_license_url(),
         confidence=confidence,
         version=version,
+        publication_date=datetime.date.today(),
     )
 
 
-#: The type of a typedef.
+#: The type of typedef.
 TypeDefType = Literal["object", "annotation", "data"]

@@ -134,7 +134,7 @@ def _get_sssom_getter(
         logger.info("[%s] extracting SSSOM", prefix)
         ontology = get_ontology(prefix, **kwargs)
         mapping_set = get_semantic_mapping_metadata(prefix, version=version)
-        converter = bioregistry.get_default_converter()
+        converter = bioregistry.get_default_converter(stubs=True)
         mappings = list(
             ontology.get_semantic_mappings(
                 progress=check_show_progress(kwargs),
