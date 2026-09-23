@@ -16,7 +16,7 @@ from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, S
 from dataclasses import dataclass, field
 from pathlib import Path
 from textwrap import dedent
-from typing import Annotated, Any, ClassVar, Literal, Self, TextIO, cast, overload
+from typing import IO, Annotated, Any, ClassVar, Literal, Self, cast, overload
 
 import bioregistry
 import click
@@ -1152,7 +1152,7 @@ class Obo:
 
     def write_obo(
         self,
-        file: str | TextIO | Path | None = None,
+        file: str | IO[str] | Path | None = None,
         *,
         progress: bool = False,
         emit_object_properties: bool = True,
@@ -1178,7 +1178,7 @@ class Obo:
             self._write_lines(it, file)
 
     @staticmethod
-    def _write_lines(it: Iterable[str], file: TextIO | None) -> None:
+    def _write_lines(it: Iterable[str], file: IO[str] | None) -> None:
         for line in it:
             print(line, file=file)
 

@@ -10,6 +10,7 @@ from typing import Annotated, Any, ClassVar, Concatenate, ParamSpec, TypeVar
 import bioregistry
 import click
 from bioregistry.constants import FailureReturnType
+from curies.api import URIType
 from curies.preprocessing import BlocklistError, PreprocessingConverter
 from curies_processing import get_rules
 from pydantic import ValidationError
@@ -125,7 +126,8 @@ def _is_uri(s: str) -> bool:
     return s.startswith(("http:", "https:"))
 
 
-def _preclean_uri(s: str) -> str:
+def _preclean_uri(uri: URIType) -> str:
+    s = str(uri)
     s = s.strip().removeprefix(r"url\:").removeprefix(r"uri\:")
     s = s.strip().removeprefix(r"URL\:").removeprefix(r"URI\:")
     s = s.strip().removeprefix("url:").removeprefix("uri:")
