@@ -138,7 +138,7 @@ def _get_sssom_getter(
         mappings = list(
             ontology.get_semantic_mappings(
                 progress=check_show_progress(kwargs),
-                hash=True,
+                calculate_hashes=True,
             )
         )
         return sssom_pydantic.SemanticMappingPack(

@@ -2194,12 +2194,14 @@ class Obo:
         self,
         *,
         progress: bool = False,
-        hash: bool = False,
+        calculate_hashes: bool = False,
+        converter: curies.Converter | None = None,
     ) -> Iterable[sssom_pydantic.SemanticMapping]:
         """Iterate over semantic mappings."""
         license_url = bioregistry.get_license_url(self.ontology)
         source = _get_download_source(self.ontology)
-        converter = bioregistry.get_default_converter()
+        if converter is None:
+            converter = bioregistry.get_default_converter()
         for stanza in self._iter_stanzas(progress=progress):
             subject_type = self._get_stanza_type(stanza)
             for predicate, obj_ref, context in stanza.get_mappings(
@@ -2219,7 +2221,7 @@ class Obo:
                     subject_source_version=self.data_version,
                     license=license_url,
                 )
-                if hash:
+                if calculate_hashes:
                     yv = yv.with_hash(converter)
                 yield yv
 
