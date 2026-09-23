@@ -103,10 +103,10 @@ def _get_hierarchy_helper(
         elif p in reverse_predicates:
             rv.add_edge(o, s, relation=p)
 
-    properties_ = set(properties)
-    for s, p, op in get_literal_properties(prefix, **kwargs):
-        if s in rv and p in properties_:
-            rv.nodes[s][p] = op.value
+    if properties_ := set(properties):
+        for s, p, op in get_literal_properties(prefix, **kwargs):
+            if s in rv and p in properties_:
+                rv.nodes[s][p] = op.value
 
     return rv
 
