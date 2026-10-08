@@ -85,7 +85,7 @@ def catalog_record_to_term(record: CatalogRecord) -> Term | None:
         type="Instance",
     )
     for publication_type in record.publication_types:
-        if parent := SX.get(publication_type):
+        if parent := SX.get(publication_type):  # type:ignore[call-overload]
             term.append_parent(parent)
         else:
             term.append_parent(publication_type)
