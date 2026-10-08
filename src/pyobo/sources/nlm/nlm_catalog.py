@@ -1,17 +1,37 @@
-"""Converter for NLM Providers."""
+"""Converter for NLM Providers.
+
+To ground NLM catalog entries, after installing PyOBO with
+``pip install pyobo[sources]``, do the following:
+
+.. code-block:: python
+
+    import pyobo
+
+    grounder = pyobo.get_grounder("nlm")
+    match = grounder.get_best_match("Angewandte Chemie International Edition")
+    print(match.identifier, match.score)
+"""
 
 from collections.abc import Iterable
 
 from pyobo.sources.nlm.utils import (
+    ISSN_TYPE,
     JOURNAL_TERM,
     PREFIX_CATALOG,
-    PUBLISHED_IN,
     PUBLISHER_TERM,
-    get_journals,
-    get_publishers,
+    get_catalog_terms,
 )
 from pyobo.struct import CHARLIE_TERM, HUMAN_TERM, Obo, Term
-from pyobo.struct.typedef import exact_match, has_end_date, has_start_date
+from pyobo.struct.typedef import (
+    exact_match,
+    has_comment,
+    has_creator,
+    has_end_date,
+    has_language,
+    has_publisher,
+    has_start_date,
+    has_subject,
+)
 
 __all__ = [
     "NLMCatalogGetter",
@@ -23,25 +43,25 @@ class NLMCatalogGetter(Obo):
 
     bioversions_key = ontology = PREFIX_CATALOG
     dynamic_version = True
-    typedefs = [PUBLISHED_IN, has_end_date, has_start_date, exact_match]
+    typedefs = [
+        ISSN_TYPE,
+        has_end_date,
+        has_start_date,
+        has_subject,
+        exact_match,
+        has_comment,
+        has_creator,
+        has_publisher,
+        has_language,
+    ]
     root_terms = [JOURNAL_TERM.reference, PUBLISHER_TERM.reference]
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over journal terms for NLM Catalog."""
-        yield from get_terms(force=force)
-
-
-def get_terms(*, force: bool = False) -> Iterable[Term]:
-    """Get NLM catalog terms."""
-    yield JOURNAL_TERM
-    yield PUBLISHER_TERM
-    yield CHARLIE_TERM
-    yield HUMAN_TERM
-
-    journal_id_to_publisher_key = get_publishers(force=force)
-    yield from sorted(set(journal_id_to_publisher_key.values()))
-
-    yield from get_journals(force=force, journal_id_to_publisher_key=journal_id_to_publisher_key)
+        yield JOURNAL_TERM
+        yield CHARLIE_TERM
+        yield HUMAN_TERM
+        yield from get_catalog_terms(force=force)
 
 
 if __name__ == "__main__":
