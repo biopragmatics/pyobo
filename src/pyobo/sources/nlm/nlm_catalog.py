@@ -58,19 +58,11 @@ class NLMCatalogGetter(Obo):
 
     def iter_terms(self, force: bool = False) -> Iterable[Term]:
         """Iterate over journal terms for NLM Catalog."""
-        yield from get_terms(force=force)
+        yield JOURNAL_TERM
+        yield CHARLIE_TERM
+        yield HUMAN_TERM
+        yield from get_catalog_terms(force=force)
 
-
-def get_terms(*, force: bool = False) -> Iterable[Term]:
-    """Get NLM catalog terms."""
-    yield JOURNAL_TERM
-    yield CHARLIE_TERM
-    yield HUMAN_TERM
-
-    # journal_id_to_publisher_key = get_publishers(force=force)
-    # yield from sorted(set(journal_id_to_publisher_key.values()))
-
-    yield from get_catalog_terms(force=force)
 
 
 if __name__ == "__main__":
