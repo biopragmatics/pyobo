@@ -71,6 +71,7 @@ from ..constants import (
     RELATION_PREFIX,
     TARGET_ID,
     TARGET_PREFIX,
+    Prefix,
     TypeDefType,
     get_semantic_mapping_metadata,
 )
@@ -447,16 +448,18 @@ class Term(Stanza):
 
     # docstr-coverage:excused `overload`
     @overload
-    def get_species(self, prefix: str = ..., *, strict: Literal[True] = ...) -> Reference: ...
+    def get_species(
+        self, prefix: str | Prefix | None = ..., *, strict: Literal[True] = ...
+    ) -> Reference: ...
 
     # docstr-coverage:excused `overload`
     @overload
     def get_species(
-        self, prefix: str = ..., *, strict: Literal[False] = ...
+        self, prefix: str | Prefix | None = ..., *, strict: Literal[False] = ...
     ) -> Reference | None: ...
 
     def get_species(
-        self, prefix: str = NCBITAXON_PREFIX, *, strict: bool = False
+        self, prefix: str | Prefix | None = None, *, strict: bool = False
     ) -> Reference | None:
         """Get the species if it exists.
 
@@ -466,6 +469,10 @@ class Term(Stanza):
 
         :returns: A species reference, if available
         """
+        if prefix is None:
+            prefix = NCBITAXON_PREFIX
+        else:
+            prefix = Prefix(prefix)
         for species in self.get_relationships(v.from_species):
             if species.prefix == prefix:
                 return species
