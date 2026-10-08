@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import logging
-import re
 from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal, NamedTuple, NotRequired, TypeAlias
 
 import pystow
+from bioregistry import NormalizedPrefix as Prefix
 from typing_extensions import TypedDict
 
 if TYPE_CHECKING:
@@ -18,6 +18,7 @@ if TYPE_CHECKING:
 __all__ = [
     "DATABASE_DIRECTORY",
     "DEFAULT_PREFIX_MAP",
+    "NCBITAXON_PREFIX",
     "ONTOLOGY_GETTERS",
     "PROVENANCE_PREFIXES",
     "RAW_DIRECTORY",
@@ -27,6 +28,7 @@ __all__ = [
     "IterHelperHelperDict",
     "OntologyFormat",
     "OntologyPathPack",
+    "Prefix",
     "SlimGetOntologyKwargs",
     "TypeDefType",
     "check_should_cache",
@@ -62,10 +64,6 @@ GLOBAL_SKIP = {
     "resid",  # deprecated
     "adw",  # deprecated
 }
-
-#: Default prefix
-DEFAULT_PREFIX = "debio"
-DEFAULT_PATTERN = re.compile("^\\d{7}$")
 
 SOURCE_PREFIX = "source_ns"
 SOURCE_ID = "source_id"
@@ -111,25 +109,25 @@ TYPEDEFS_FILE = "typedefs.tsv.gz"
 SPECIES_RECORD = "5334738"
 SPECIES_FILE = "species.tsv.gz"
 
-NCBITAXON_PREFIX = "ncbitaxon"
+NCBITAXON_PREFIX = Prefix("ncbitaxon")
 DATE_FORMAT = "%d:%m:%Y %H:%M"
 
 #: Prefixes for resources that are considered as provenance
-PROVENANCE_PREFIXES = {
-    "pubmed",
-    "pmc",
-    "doi",
-    "biorxiv",
-    "chemrxiv",
-    "wikipedia",
-    "google.patent",
-    "agricola",
-    "cba",
-    "ppr",
-    "citexplore",
-    "goc",
-    "isbn",
-    "issn",
+PROVENANCE_PREFIXES: set[Prefix] = {
+    Prefix("pubmed"),
+    Prefix("pmc"),
+    Prefix("doi"),
+    Prefix("biorxiv"),
+    Prefix("chemrxiv"),
+    Prefix("wikipedia"),
+    Prefix("google.patent"),
+    Prefix("agricola"),
+    Prefix("cba"),
+    Prefix("ppr"),
+    Prefix("citexplore"),
+    Prefix("goc"),
+    Prefix("isbn"),
+    Prefix("issn"),
 }
 
 
