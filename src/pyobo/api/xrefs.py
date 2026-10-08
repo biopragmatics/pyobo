@@ -120,7 +120,11 @@ def get_semantic_mappings(
 
 
 def _get_sssom_getter(
-    prefix: str, *, converter: Converter | None = None, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: str,
+    *,
+    converter: Converter | None = None,
+    chunksize: int | None = None,
+    **kwargs: Unpack[GetOntologyKwargs],
 ) -> Callable[[], sssom_pydantic.SemanticMappingPack]:
     """Get semantic mappings."""
     version = get_version_from_kwargs(prefix, kwargs)
@@ -142,6 +146,7 @@ def _get_sssom_getter(
                 converter=converter,
                 progress=check_show_progress(kwargs),
                 calculate_hashes=True,
+                chunksize=chunksize,
             )
         )
         return sssom_pydantic.SemanticMappingPack(

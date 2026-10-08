@@ -50,6 +50,13 @@ def lookup_annotate(f: Callable[P, T]) -> Callable[P, T]:
         force_process_option,
         strict_option,
         version_option,
+        click.option(
+            "--progress/--no-progress",
+            is_flag=True,
+            default=True,
+            help="Toggle progress bar",
+            show_default=True,
+        ),
     ]:
         f = decorator(f)
 
@@ -111,7 +118,10 @@ def mappings(target: str | None, prefix: str, **kwargs: Unpack[GetOntologyKwargs
     type=Path,
     help="Path to output SSSOM TSV file. If not given, defaults to STDOUT.",
 )
-def sssom(prefix: str, output: str, **kwargs: Unpack[GetOntologyKwargs]) -> None:
+@click.option("--chunksize", type=int)
+def sssom(
+    prefix: str, output: str, chunksize: int | None, **kwargs: Unpack[GetOntologyKwargs]
+) -> None:
     """Get SSSOM for the given resource."""
     import sys
 
@@ -119,13 +129,14 @@ def sssom(prefix: str, output: str, **kwargs: Unpack[GetOntologyKwargs]) -> None
 
     from ..api.xrefs import _get_sssom_getter
 
-    mapping_pack = _get_sssom_getter(prefix, **kwargs)()
+    mapping_pack = _get_sssom_getter(prefix, chunksize=chunksize, **kwargs)()
 
     sssom_pydantic.write(
         mapping_pack.mappings,
         path=output or sys.stdout,
         converter=mapping_pack.converter,
         metadata=mapping_pack.mapping_set,
+        exclude_columns={"predicate_label"},
     )
 
 

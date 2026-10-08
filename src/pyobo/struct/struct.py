@@ -14,6 +14,7 @@ import warnings
 from collections import ChainMap, defaultdict
 from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
+from functools import partial
 from pathlib import Path
 from textwrap import dedent
 from typing import IO, Annotated, Any, ClassVar, Literal, Self, cast, overload
@@ -30,6 +31,7 @@ from curies import vocabulary as _cv
 from more_click import force_option, verbose_option
 from pystow.utils import safe_open, write_pydantic_json
 from tqdm.auto import tqdm
+from tqdm.contrib.concurrent import process_map
 
 from . import vocabulary as v
 from .reference import (
@@ -2179,57 +2181,41 @@ class Obo:
         """Get a literal mappings dataframe."""
         return ssslm.literal_mappings_to_df(self.get_literal_mappings())
 
-    @staticmethod
-    def _get_stanza_type(stanza: Stanza) -> curies.Reference | None:
-        if isinstance(stanza, TypeDef):
-            if stanza.predicate_type is None or stanza.predicate_type == "object":
-                return _cv.owl_object_property
-            elif stanza.predicate_type == "annotation":
-                return _cv.owl_annotation_property
-            elif stanza.predicate_type == "data":
-                return _cv.owl_data_property
-            else:
-                raise ValueError
-        elif stanza.type == "Term":
-            return _cv.owl_class
-        elif stanza.type == "Instance":
-            return _cv.owl_named_individual
-        return None
-
     def get_semantic_mappings(
         self,
         *,
         progress: bool = False,
         calculate_hashes: bool = False,
         converter: curies.Converter | None = None,
+        chunksize: int | None = None,
     ) -> Iterable[sssom_pydantic.SemanticMapping]:
         """Iterate over semantic mappings."""
         license_url = bioregistry.get_license_url(self.ontology)
         source = _get_download_source(self.ontology)
         if converter is None:
-            converter = bioregistry.get_default_converter()
-        for stanza in self._iter_stanzas(desc="getting semantic mappings", progress=progress):
-            subject_type = self._get_stanza_type(stanza)
-            for predicate, obj_ref, context in stanza.get_mappings(
-                include_xrefs=True, add_context=True
+            converter = bioregistry.get_default_converter(stubs=True)
+        func = partial(
+            _get_stanza_semantic_mappings,
+            source=source,
+            license_url=license_url,
+            calculate_hashes=calculate_hashes,
+            converter=converter,
+            data_version=self.data_version,
+        )
+        desc = f"[{self.ontology}] getting semantic mappings"
+        if chunksize is not None:
+            for mappings in process_map(
+                func,
+                self._iter_stanzas(progress=False),
+                desc=desc,
+                chunksize=chunksize or 10_000,
+                disable=not progress,
+                unit_scale=True,
             ):
-                # TODO update object reference with label?
-                mapping = sssom_pydantic.SemanticMapping(
-                    subject=stanza.reference,
-                    subject_type=subject_type,
-                    predicate=predicate,
-                    object=obj_ref,
-                    confidence=context.confidence,
-                    justification=context.justification,
-                    authors=[context.contributor] if context.contributor else None,
-                    source=source,
-                    subject_source=source,
-                    subject_source_version=self.data_version,
-                    license=license_url,
-                )
-                if calculate_hashes:
-                    mapping = mapping.with_hash(converter)
-                yield mapping
+                yield from mappings
+        else:
+            for stanza in self._iter_stanzas(desc=desc, progress=progress):
+                yield from func(stanza)
 
     def get_mappings_df(self, *, progress: bool = False) -> pd.DataFrame:
         """Get a dataframe with SSSOM extracted from the OBO document.
@@ -2553,19 +2539,66 @@ class TypeDef(Stanza):
         yield from _boolean_tag("is_class_level", self.is_class_level)
 
     @classmethod
-    def from_triple(cls, prefix: str, identifier: str, name: str | None = None) -> TypeDef:
+    def from_triple(
+        cls, prefix: str, identifier: str, name: str | None = None, **kwargs: Any
+    ) -> TypeDef:
         """Create a typedef from a reference."""
-        return cls(reference=Reference(prefix=prefix, identifier=identifier, name=name))
+        return cls(reference=Reference(prefix=prefix, identifier=identifier, name=name), **kwargs)
 
     @classmethod
     def default(
-        cls, prefix: str, identifier: str, *, name: str | None = None, predicate_type: TypeDefType
+        cls, prefix: str, identifier: str, *, name: str | None = None, **kwargs: Any
     ) -> Self:
         """Construct a default type definition from within the OBO namespace."""
-        return cls(
-            reference=default_reference(prefix, identifier, name=name),
-            predicate_type=predicate_type,
+        return cls(reference=default_reference(prefix, identifier, name=name), **kwargs)
+
+
+def _get_stanza_semantic_mappings(
+    stanza: Stanza,
+    source: Reference | None,
+    license_url: str | None,
+    calculate_hashes: bool,
+    converter: Converter,
+    data_version: str | None,
+) -> list[sssom_pydantic.SemanticMapping]:
+    subject_type = _get_stanza_type(stanza)
+    mappings = []
+    for predicate, obj_ref, context in stanza.get_mappings(include_xrefs=True, add_context=True):
+        # TODO update object reference with label?
+        mapping = sssom_pydantic.SemanticMapping(
+            subject=stanza.reference,
+            subject_type=subject_type,
+            predicate=predicate,
+            object=obj_ref,
+            confidence=context.confidence,
+            justification=context.justification,
+            authors=[context.contributor] if context.contributor else None,
+            source=source,
+            subject_source=source,
+            subject_source_version=data_version,
+            license=license_url,
         )
+        if calculate_hashes:
+            mapping = mapping.with_hash(converter)
+        mappings.append(mapping)
+    return mappings
+
+
+def _get_stanza_type(stanza: Stanza) -> curies.Reference | None:
+    if isinstance(stanza, TypeDef):
+        if stanza.predicate_type is None or stanza.predicate_type == "object":
+            return _cv.owl_object_property
+        elif stanza.predicate_type == "annotation":
+            return _cv.owl_annotation_property
+        elif stanza.predicate_type == "data":
+            return _cv.owl_data_property
+        else:
+            raise ValueError
+    elif stanza.type == "Term":
+        return _cv.owl_class
+    elif stanza.type == "Instance":
+        return _cv.owl_named_individual
+    return None
 
 
 class AdHocOntologyBase(Obo):

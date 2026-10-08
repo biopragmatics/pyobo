@@ -788,7 +788,10 @@ def _iter_obo_graph(
 ) -> Iterable[tuple[Reference, dict[str, Any]]]:
     """Iterate over the nodes in the graph with the prefix stripped (if it's there)."""
     for node, data in tqdm(
-        graph.nodes(data=True), disable=not progress, unit_scale=True, desc=f"[{ontology_prefix}]"
+        graph.nodes(data=True),
+        disable=not progress,
+        unit_scale=True,
+        desc=f"[{ontology_prefix}] processing OBO graph",
     ):
         name = data.get("name")
         match _parse_str_or_curie_or_uri_helper(
