@@ -8,7 +8,7 @@ from functools import lru_cache
 import bioregistry
 import pandas as pd
 import sssom_pydantic
-from curies import Converter, ReferenceTuple
+from curies import Converter
 from sssom_pydantic import SemanticMapping
 from sssom_pydantic.io import CachedSemanticMappings
 from typing_extensions import Unpack
@@ -24,7 +24,7 @@ from ..constants import (
     get_semantic_mapping_metadata,
 )
 from ..getters import get_ontology
-from ..identifier_utils import wrap_norm_prefix
+from ..identifier_utils import Reference, wrap_norm_prefix
 from ..struct import Obo
 from ..utils.cache import cached_df
 from ..utils.path import CacheArtifact, get_cache_path
@@ -71,8 +71,8 @@ def get_filtered_xrefs(
 
     rv = {}
     for subject_curie, object_curie in mappings_df[["subject_id", "object_id"]].values:
-        subject_pair = ReferenceTuple.from_curie(subject_curie)
-        object_pair = ReferenceTuple.from_curie(object_curie)
+        subject_pair = Reference.from_curie(subject_curie)
+        object_pair = Reference.from_curie(object_curie)
         if object_pair.prefix == xref_prefix:
             rv[subject_pair.identifier] = object_pair.identifier
 
@@ -97,9 +97,9 @@ def get_xrefs_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFra
 
     rows = []
     for subject_curie, object_curie in mappings_df[["subject_id", "object_id"]].values:
-        subject_pair = ReferenceTuple.from_curie(subject_curie)
-        object_pair = ReferenceTuple.from_curie(object_curie)
-        rows.append((subject_pair.identifier, object_pair.prefix, object_pair.identifier))
+        subject = Reference.from_curie(subject_curie)
+        obj = Reference.from_curie(object_curie)
+        rows.append((subject.identifier, obj.prefix, obj.identifier))
 
     df = pd.DataFrame(rows, columns=[f"{prefix}_id", TARGET_PREFIX, TARGET_ID])
     df = df.drop_duplicates()
