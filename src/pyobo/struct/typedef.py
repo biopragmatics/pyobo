@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from curies import ReferenceTuple
-
 from . import vocabulary as v
 from .reference import default_reference
 from .struct import TypeDef
@@ -443,8 +441,8 @@ obo_consider = TypeDef(reference=v.obo_consider, predicate_type="annotation")
 in_subset = TypeDef(reference=v.in_subset, predicate_type="annotation")
 has_term_editor = TypeDef(reference=v.has_term_editor, predicate_type="annotation")
 
-default_typedefs: dict[ReferenceTuple, TypeDef] = {
-    v.pair: v for v in locals().values() if isinstance(v, TypeDef)
+default_typedefs: dict[Reference, TypeDef] = {
+    v.reference: v for v in locals().values() if isinstance(v, TypeDef)
 }
 
 for reference, name in load_ro().items():

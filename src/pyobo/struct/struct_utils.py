@@ -1063,11 +1063,11 @@ _TYPEDEF_WARNINGS: set[tuple[str, Reference]] = set()
 
 
 def _typedef_warn(
-    prefix: str, predicate: Reference, typedefs: Mapping[ReferenceTuple, TypeDef]
+    prefix: str, predicate: Reference, typedefs: Mapping[Reference, TypeDef]
 ) -> None:
     from pyobo.struct.typedef import default_typedefs
 
-    if predicate.pair in default_typedefs or predicate.pair in typedefs:
+    if predicate in default_typedefs or predicate in typedefs:
         return
     key = prefix, predicate
     if key not in _TYPEDEF_WARNINGS:
