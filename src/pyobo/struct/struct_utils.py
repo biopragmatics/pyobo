@@ -191,7 +191,7 @@ class Stanza(Referenced, HasReferencesMixin):
                 if isinstance(value, Reference):
                     _add(value)
                 elif isinstance(value, OBOLiteral):
-                    _add(v._c(value.datatype))
+                    _add(Reference.from_reference(value.datatype))
         for parent in itt.chain(
             self.parents,
             self.union_of,

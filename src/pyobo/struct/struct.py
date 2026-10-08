@@ -146,7 +146,7 @@ class Synonym(HasReferencesMixin):
                 case Reference():
                     rv[provenance.prefix].add(provenance)
                 case OBOLiteral(_, datatype, _language):
-                    rv[datatype.prefix].add(v._c(datatype))
+                    rv[datatype.prefix].add(Reference.from_reference(datatype))
         for prefix, references in _get_references_from_annotations(self.annotations).items():
             rv[prefix].update(references)
         return rv
@@ -238,7 +238,7 @@ class SynonymTypeDef(Referenced, HasReferencesMixin):
         if self.specificity is not None:
             # weird syntax, but this just gets the synonym scope
             # predicate as a pyobo reference
-            r = v._c(_cv.synonym_scopes[self.specificity])
+            r = Reference.from_reference(_cv.synonym_scopes[self.specificity])
             rv[r.prefix].add(r)
         return dict(rv)
 
@@ -2540,7 +2540,7 @@ class TypeDef(Stanza):
 
     @classmethod
     def from_triple(
-        cls, prefix: str, identifier: str, name: str | None = None, **kwargs: Any
+        cls, prefix: str, identifier: str, *, name: str | None = None, **kwargs: Any
     ) -> TypeDef:
         """Create a typedef from a reference."""
         return cls(reference=Reference(prefix=prefix, identifier=identifier, name=name), **kwargs)

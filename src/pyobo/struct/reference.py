@@ -316,7 +316,7 @@ class OBOLiteral(NamedTuple):
     """A tuple representing a property with a literal value."""
 
     value: str
-    datatype: curies.Reference
+    datatype: curies.NamableReference
     language: str | None
 
     @classmethod
