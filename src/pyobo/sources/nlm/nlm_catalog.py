@@ -64,6 +64,5 @@ class NLMCatalogGetter(Obo):
         yield from get_catalog_terms(force=force)
 
 
-
 if __name__ == "__main__":
     NLMCatalogGetter.cli()
