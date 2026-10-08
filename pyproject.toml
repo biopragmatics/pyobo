@@ -187,7 +187,8 @@ gilda-slim = [
 sources = [
     # keep as sum of all sources
     "psycopg2-binary",
-    "protmapper"
+    "protmapper",
+    "pubmed-downloader",
 ]
 drugcentral = [
     "psycopg2-binary",
