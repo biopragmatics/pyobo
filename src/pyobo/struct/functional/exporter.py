@@ -107,7 +107,7 @@ def get_ontology_annotations(obo_ontology: Obo) -> Iterable[f.Annotation]:
 
 
 def _oboliteral_to_literal(obo_literal: OBOLiteral) -> rdflib.Literal:
-    if obo_literal.datatype.pair == ("xsd", "string") and obo_literal.language:
+    if obo_literal.datatype.curie == "xsd:string" and obo_literal.language:
         return rdflib.Literal(obo_literal.value, lang=obo_literal.language)
     if obo_literal.datatype.prefix != "xsd":
         raise NotImplementedError(

@@ -8,9 +8,15 @@ from typing import ClassVar
 
 import networkx as nx
 import obonet
-from curies import ReferenceTuple
 
-from pyobo import Annotation, Reference, Synonym, SynonymTypeDef, default_reference, get_ontology
+from pyobo import (
+    Annotation,
+    Reference,
+    Synonym,
+    SynonymTypeDef,
+    default_reference,
+    get_ontology,
+)
 from pyobo.struct import OBOLiteral
 from pyobo.struct.obo.reader import (
     _extract_definition,
@@ -40,11 +46,11 @@ class TestParseObonet(unittest.TestCase):
 
     def test_get_graph_typedefs(self) -> None:
         """Test getting type definitions from an :mod:`obonet` graph."""
-        pairs = {
-            typedef.pair
+        references = {
+            typedef.reference
             for typedef in iterate_typedefs(self.graph, ontology_prefix="chebi", upgrade=False)
         }
-        self.assertIn(ReferenceTuple("obo", "chebi#has_major_microspecies_at_pH_7_3"), pairs)
+        self.assertIn(default_reference("chebi", "has_major_microspecies_at_pH_7_3"), references)
 
     def test_get_graph_synonym_typedefs(self) -> None:
         """Test getting synonym type definitions from an :mod:`obonet` graph."""
@@ -118,8 +124,8 @@ class TestParseObonet(unittest.TestCase):
             reference=default_reference(prefix="chebi", identifier="IUPAC_NAME", name="IUPAC NAME")
         )
         synoynym_typedefs = {
-            iupac_name.pair: iupac_name,
-            acronym.pair: acronym,
+            iupac_name.reference: iupac_name,
+            acronym.reference: acronym,
         }
 
         for expected_synonym, text in [
@@ -186,7 +192,7 @@ class TestParseObonet(unittest.TestCase):
             reference=default_reference(prefix="chebi", identifier="IUPAC_NAME", name="IUPAC NAME")
         )
         synoynym_typedefs = {
-            iupac_name.pair: iupac_name,
+            iupac_name.reference: iupac_name,
         }
         data = self.graph.nodes["CHEBI:51990"]
         synonyms = list(
@@ -268,15 +274,15 @@ class TestParseObonet(unittest.TestCase):
             )
         )
         self.assertEqual(1, len(relations))
-        typedef, target = relations[0]
+        predicate_reference, target_reference = relations[0]
 
-        self.assertIsNotNone(target)
-        self.assertIsInstance(target, Reference)
-        self.assertEqual(ReferenceTuple("chebi", "29228"), target.pair)
+        self.assertIsNotNone(target_reference)
+        self.assertIsInstance(target_reference, Reference)
+        self.assertEqual(Reference.from_curie("CHEBI:29228"), target_reference)
 
-        self.assertIsNotNone(typedef)
-        self.assertIsInstance(typedef, Reference)
-        self.assertEqual(ReferenceTuple("obo", "chebi#is_conjugate_base_of"), typedef.pair)
+        self.assertIsNotNone(predicate_reference)
+        self.assertIsInstance(predicate_reference, Reference)
+        self.assertEqual(default_reference("chebi", "is_conjugate_base_of"), predicate_reference)
 
 
 class TestGet(unittest.TestCase):
@@ -306,7 +312,7 @@ class TestGet(unittest.TestCase):
 
     def test_typedefs(self) -> None:
         """Test typedefs."""
-        xx = default_reference("chebi", "has_major_microspecies_at_pH_7_3")
+        predicate = default_reference("chebi", "has_major_microspecies_at_pH_7_3")
         td = self.ontology._index_typedefs()
-        self.assertIn(xx.pair, td)
-        self.assertIn(ReferenceTuple("ro", "0018033"), set(td))
+        self.assertIn(predicate, td)
+        self.assertIn(Reference.from_curie("RO:0018033"), set(td))

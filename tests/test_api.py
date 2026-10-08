@@ -8,7 +8,6 @@ from unittest import mock
 
 import bioregistry
 import curies
-from curies import ReferenceTuple
 from curies import vocabulary as _v
 from pydantic import ValidationError
 from ssslm import LiteralMapping
@@ -96,10 +95,10 @@ class TestAltIds(unittest.TestCase):
         primary_id = get_primary_identifier("go:0001071")
         self.assertIsNotNone(primary_id)
         self.assertEqual("0003700", primary_id)
-        self.assertIsNone(get_name(ReferenceTuple("go", "0001071"), upgrade_identifier=False))
+        self.assertIsNone(get_name(Reference.from_curie("GO:0001071"), upgrade_identifier=False))
         self.assertEqual(
             "DNA-binding transcription factor activity",
-            get_name(ReferenceTuple("go", "0001071"), upgrade_identifier=True),
+            get_name(Reference.from_curie("GO:0001071"), upgrade_identifier=True),
         )
 
     @mock_id_alts_mapping
@@ -136,16 +135,16 @@ class TestAltIds(unittest.TestCase):
     @mock_id_names_mapping
     def test_already_primary(self, _: Any, __: Any) -> None:
         """Test when you give a primary id."""
-        primary_id = get_primary_identifier(ReferenceTuple("go", "0003700"))
+        primary_id = get_primary_identifier(Reference.from_curie("GO:0003700"))
         self.assertIsNotNone(primary_id)
         self.assertEqual("0003700", primary_id)
-        name = get_name(ReferenceTuple("go", "0003700"))
+        name = get_name(Reference.from_curie("GO:0003700"))
         self.assertEqual("DNA-binding transcription factor activity", name)
 
-        name = get_name(ReferenceTuple("go", "0003700"))
+        name = get_name(Reference.from_curie("GO:0003700"))
         self.assertEqual("DNA-binding transcription factor activity", name)
 
-        name = get_name(curies.Reference(prefix="go", identifier="0003700"))
+        name = get_name(curies.Reference.from_curie("GO:0003700"))
         self.assertEqual("DNA-binding transcription factor activity", name)
 
     @mock_id_alts_mapping
@@ -170,9 +169,9 @@ class TestAltIds(unittest.TestCase):
     @mock_id_names_mapping
     def test_no_alts(self, _: Any, __: Any) -> None:
         """Test alternate behavior for nomenclature source with no alts."""
-        primary_id = get_primary_identifier(ReferenceTuple("ncbitaxon", "52818"))
+        primary_id = get_primary_identifier(Reference.from_curie("ncbitaxon:52818"))
         self.assertEqual("52818", primary_id)
-        self.assertEqual("Allamanda cathartica", get_name(ReferenceTuple("ncbitaxon", "52818")))
+        self.assertEqual("Allamanda cathartica", get_name(Reference.from_curie("ncbitaxon:52818")))
 
 
 class TestEverything(unittest.TestCase):

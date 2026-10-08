@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, TypeAlias, Union, cast
 
 import bioregistry
-import curies
 import numpy as np
 import pandas as pd
 from pystow import get_sentence_transformer
@@ -18,7 +17,7 @@ from typing_extensions import Unpack
 
 from pyobo.api.edges import get_edges_df
 from pyobo.api.names import get_definition, get_id_definition_mapping, get_id_name_mapping, get_name
-from pyobo.api.utils import get_version_from_kwargs
+from pyobo.api.utils import SimpleReferenceHint, get_version_from_kwargs
 from pyobo.constants import GetOntologyKwargs, check_should_force
 from pyobo.identifier_utils import wrap_norm_prefix
 from pyobo.utils.path import CacheArtifact, get_cache_path
@@ -35,7 +34,7 @@ __all__ = [
 
 
 def _get_text(
-    reference: str | curies.Reference | curies.ReferenceTuple,
+    reference: SimpleReferenceHint,
     /,
     *,
     name: str | None = None,
@@ -191,9 +190,7 @@ def _id_to_text(
 
 
 def get_text_embedding(
-    reference: str | curies.Reference | curies.ReferenceTuple,
-    *,
-    model: TransformerHint = None,
+    reference: SimpleReferenceHint, *, model: TransformerHint = None
 ) -> np.ndarray[tuple[int], np.dtype[np.float64]] | None:
     """Get a text embedding for an entity, or return none if no text is available.
 
@@ -230,8 +227,8 @@ def get_text_embedding(
 
 
 def get_text_embedding_similarity(
-    reference_1: str | curies.Reference | curies.ReferenceTuple,
-    reference_2: str | curies.Reference | curies.ReferenceTuple,
+    reference_1: SimpleReferenceHint,
+    reference_2: SimpleReferenceHint,
     *,
     model: TransformerHint = None,
 ) -> float | None:

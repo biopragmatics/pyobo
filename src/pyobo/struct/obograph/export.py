@@ -6,11 +6,11 @@ from pathlib import Path
 import bioregistry
 import curies
 import obographs as og
-from curies import Converter, ReferenceTuple
+from curies import Converter
 from curies import vocabulary as v
 from pystow.utils import safe_open
 
-from pyobo.identifier_utils.api import get_converter
+from pyobo.identifier_utils.api import Reference, get_converter
 from pyobo.struct import Obo, OBOLiteral, Stanza, Term, TypeDef
 from pyobo.struct import typedef as tdv
 from pyobo.struct.obograph.utils import PROPERTY_TYPE_MAP
@@ -20,6 +20,8 @@ __all__ = [
     "to_parsed_obograph",
     "write_obograph",
 ]
+
+HAS_OBO_FORMAT_VERSION = Reference(prefix="oboinowl", identifier="hasOBOFormatVersion")
 
 
 def write_obograph(obo: Obo, path: str | Path, *, converter: Converter | None = None) -> None:
@@ -50,10 +52,7 @@ def to_parsed_obograph_oracle(
     for graph in rv.graphs:
         if graph.meta and graph.meta.properties:
             graph.meta.properties = [
-                p
-                for p in graph.meta.properties
-                if p.predicate.pair
-                != ReferenceTuple(prefix="oboinowl", identifier="hasOBOFormatVersion")
+                p for p in graph.meta.properties if p.predicate != HAS_OBO_FORMAT_VERSION
             ] or None
     return rv
 

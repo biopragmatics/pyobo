@@ -57,7 +57,7 @@ def get_terms(*, force: bool = False) -> Iterable[Term]:
 
     # since the output here is only cities, we can slice this down
     for term in get_feature_terms(force=force):
-        if term.identifier.startswith("P.") or term.pair == P_CATEGORY.pair or term == FEATURE_TERM:
+        if term.identifier.startswith("P.") or term.reference == P_CATEGORY or term == FEATURE_TERM:
             yield term
 
     code_to_country = get_code_to_country(force=force)

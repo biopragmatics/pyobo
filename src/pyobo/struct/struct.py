@@ -26,7 +26,7 @@ import networkx as nx
 import pandas as pd
 import ssslm
 import sssom_pydantic
-from curies import Converter, ReferenceTuple
+from curies import Converter
 from curies import vocabulary as _cv
 from more_click import force_option, verbose_option
 from pystow.utils import safe_open, write_pydantic_json
@@ -166,7 +166,7 @@ class Synonym(HasReferencesMixin):
     def to_obo(
         self,
         ontology_prefix: str,
-        synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef] | None = None,
+        synonym_typedefs: Mapping[Reference, SynonymTypeDef] | None = None,
     ) -> str:
         """Write this synonym as an OBO line to appear in a [Term] stanza."""
         return f"synonym: {self._fp(ontology_prefix, synonym_typedefs)}"
@@ -174,7 +174,7 @@ class Synonym(HasReferencesMixin):
     def _fp(
         self,
         ontology_prefix: str,
-        synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef] | None = None,
+        synonym_typedefs: Mapping[Reference, SynonymTypeDef] | None = None,
     ) -> str:
         if synonym_typedefs is None:
             synonym_typedefs = {}
@@ -263,10 +263,10 @@ gene_symbol_synonym = SynonymTypeDef(
     reference=Reference(prefix="omo", identifier="0003016", name="gene symbol synonym")
 )
 
-default_synonym_typedefs: dict[ReferenceTuple, SynonymTypeDef] = {
-    abbreviation.pair: abbreviation,
-    acronym.pair: acronym,
-    uk_spelling.pair: uk_spelling,
+default_synonym_typedefs: dict[Reference, SynonymTypeDef] = {
+    abbreviation.reference: abbreviation,
+    acronym.reference: acronym,
+    uk_spelling.reference: uk_spelling,
 }
 
 
@@ -485,8 +485,8 @@ class Term(Stanza):
         self,
         *,
         ontology_prefix: str,
-        typedefs: Mapping[ReferenceTuple, TypeDef],
-        synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef] | None = None,
+        typedefs: Mapping[Reference, TypeDef],
+        synonym_typedefs: Mapping[Reference, SynonymTypeDef] | None = None,
         emit_object_properties: bool = True,
         emit_annotation_properties: bool = True,
     ) -> Iterable[str]:
@@ -575,14 +575,14 @@ _SYNONYM_TYPEDEF_WARNINGS: set[tuple[str, Reference]] = set()
 def _synonym_typedef_warn(
     prefix: str,
     predicate: Reference | None,
-    synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef],
+    synonym_typedefs: Mapping[Reference, SynonymTypeDef],
 ) -> SynonymTypeDef | None:
-    if predicate is None or predicate.pair == DEFAULT_SYNONYM_TYPE.pair:
+    if predicate is None or predicate == DEFAULT_SYNONYM_TYPE.reference:
         return None
-    if predicate.pair in default_synonym_typedefs:
-        return default_synonym_typedefs[predicate.pair]
-    if predicate.pair in synonym_typedefs:
-        return synonym_typedefs[predicate.pair]
+    if predicate in default_synonym_typedefs:
+        return default_synonym_typedefs[predicate]
+    if predicate in synonym_typedefs:
+        return synonym_typedefs[predicate]
     key = prefix, predicate
     if key not in _SYNONYM_TYPEDEF_WARNINGS:
         _SYNONYM_TYPEDEF_WARNINGS.add(key)
@@ -1143,17 +1143,17 @@ class Obo:
         if self.property_values:
             yield from self.property_values
 
-    def _index_typedefs(self) -> Mapping[ReferenceTuple, TypeDef]:
+    def _index_typedefs(self) -> Mapping[Reference, TypeDef]:
         from .typedef import default_typedefs
 
         return ChainMap(
-            {t.pair: t for t in self.typedefs or []},
+            {t.reference: t for t in self.typedefs or []},
             default_typedefs,
         )
 
-    def _index_synonym_typedefs(self) -> Mapping[ReferenceTuple, SynonymTypeDef]:
+    def _index_synonym_typedefs(self) -> Mapping[Reference, SynonymTypeDef]:
         return ChainMap(
-            {t.pair: t for t in self.synonym_typedefs or []},
+            {t.reference: t for t in self.synonym_typedefs or []},
             default_synonym_typedefs,
         )
 
@@ -1416,7 +1416,7 @@ class Obo:
 
         typedefs = self._index_typedefs()
         for relation in (v.is_a, v.has_part, v.part_of, v.from_species, v.orthologous):
-            if relation is not v.is_a and relation.pair not in typedefs:
+            if relation is not v.is_a and relation not in typedefs:
                 continue
             relations_path = get_relation_cache_path(
                 self.ontology, reference=relation, version=self.data_version
@@ -1868,7 +1868,7 @@ class Obo:
         self, *, progress: bool = False, include_xrefs: bool = True
     ) -> Iterable[tuple[Stanza, TypeDef, Reference]]:
         """Iterate over triples of terms, relations, and their targets."""
-        _warned: set[ReferenceTuple] = set()
+        _warned: set[Reference] = set()
         typedefs = self._index_typedefs()
         for stanza in self._iter_stanzas(desc="getting edges", progress=progress):
             for predicate, reference in stanza._iter_edges(include_xrefs=include_xrefs):
@@ -1888,7 +1888,7 @@ class Obo:
         This only outputs stuff from the `relationship:` tag, not all possible triples.
         For that, see :func:`iterate_edges`.
         """
-        _warned: set[ReferenceTuple] = set()
+        _warned: set[Reference] = set()
         typedefs = self._index_typedefs()
         for stanza in self._iter_stanzas(progress=progress, desc="getting relations"):
             for predicate, reference in stanza.iterate_relations():
@@ -1908,18 +1908,17 @@ class Obo:
         self,
         term: Stanza,
         predicate: Reference,
-        _warned: set[ReferenceTuple],
-        typedefs: Mapping[ReferenceTuple, TypeDef],
+        _warned: set[Reference],
+        typedefs: Mapping[Reference, TypeDef],
     ) -> TypeDef | None:
-        pp = predicate.pair
-        if pp in typedefs:
-            return typedefs[pp]
-        if pp not in _warned:
-            _warn_string = f"[{term.curie}] undefined typedef: {pp.curie}"
+        if predicate in typedefs:
+            return typedefs[predicate]
+        if predicate not in _warned:
+            _warn_string = f"[{term.curie}] undefined typedef: {predicate.curie}"
             if predicate.name:
                 _warn_string += f" ({predicate.name})"
             logger.debug(_warn_string)
-            _warned.add(pp)
+            _warned.add(predicate)
         return None
 
     def iter_relation_rows(
@@ -1942,9 +1941,9 @@ class Obo:
         progress: bool = False,
     ) -> Iterable[tuple[Stanza, Reference]]:
         """Iterate over tuples of terms and ther targets for the given relation."""
-        _pair = _ensure_ref(relation, ontology_prefix=self.ontology).pair
+        relation = _ensure_ref(relation, ontology_prefix=self.ontology)
         for term, predicate, reference in self.iterate_relations(progress=progress):
-            if _pair == predicate.pair:
+            if predicate == relation:
                 yield term, reference
 
     @property
@@ -2371,8 +2370,8 @@ class TypeDef(Stanza):
     def iterate_obo_lines(
         self,
         ontology_prefix: str,
-        synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef] | None = None,
-        typedefs: Mapping[ReferenceTuple, TypeDef] | None = None,
+        synonym_typedefs: Mapping[Reference, SynonymTypeDef] | None = None,
+        typedefs: Mapping[Reference, TypeDef] | None = None,
     ) -> Iterable[str]:
         """Iterate over the lines to write in an OBO file.
 

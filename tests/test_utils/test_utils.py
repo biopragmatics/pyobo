@@ -6,10 +6,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-import curies
-
 from pyobo.identifier_utils import (
     NotCURIEError,
+    Reference,
     UnregisteredPrefixError,
     _parse_str_or_curie_or_uri_helper,
 )
@@ -26,9 +25,9 @@ class TestStringUtils(unittest.TestCase):
     ) -> None:
         """Test a pair is parsed properly."""
         xx = _parse_str_or_curie_or_uri_helper(curie, ontology_prefix=ontology_prefix)
-        if not isinstance(xx, curies.Reference):
+        if not isinstance(xx, Reference):
             raise self.fail()
-        self.assertEqual(expected, xx.pair)
+        self.assertEqual(Reference(prefix=expected[0], identifier=expected[1]), xx)
 
     def test_strip_prefix(self) -> None:
         """Test stripping prefixes works."""

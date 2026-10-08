@@ -8,7 +8,6 @@ from collections.abc import Callable, Mapping
 from functools import lru_cache
 from typing import TypeVar
 
-import curies
 import pandas as pd
 import ssslm
 from pystow.cache import Cached
@@ -17,11 +16,7 @@ from typing_extensions import Unpack
 
 from .alts import get_primary_identifier
 from .utils import SimpleReferenceHint, _get_pi, get_version_from_kwargs
-from ..constants import (
-    GetOntologyKwargs,
-    check_should_cache,
-    check_should_force,
-)
+from ..constants import GetOntologyKwargs, check_should_cache, check_should_force
 from ..getters import NoBuildError, get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..struct import Reference
@@ -118,7 +113,7 @@ def _help_get(
 
 
 def get_name(
-    reference: str | curies.Reference | curies.ReferenceTuple,
+    reference: SimpleReferenceHint,
     /,
     *,
     upgrade_identifier: bool | None = None,
@@ -206,10 +201,7 @@ def get_references(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> set[Refe
 
 @lru_cache
 @wrap_norm_prefix
-def get_id_name_mapping(
-    prefix: str,
-    **kwargs: Unpack[GetOntologyKwargs],
-) -> Mapping[str, str]:
+def get_id_name_mapping(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> Mapping[str, str]:
     """Get an identifier to name mapping for the OBO file."""
     if prefix == "ncbigene":
         from ..sources.ncbi.ncbigene import get_ncbigene_id_to_name_mapping
@@ -244,19 +236,14 @@ def get_id_name_mapping(
 
 @lru_cache
 @wrap_norm_prefix
-def get_name_id_mapping(
-    prefix: str,
-    **kwargs: Unpack[GetOntologyKwargs],
-) -> Mapping[str, str]:
+def get_name_id_mapping(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> Mapping[str, str]:
     """Get a name to identifier mapping for the OBO file."""
     id_name = get_id_name_mapping(prefix, **kwargs)
     return {v: k for k, v in id_name.items()}
 
 
 def get_definition(
-    reference: str | curies.Reference | curies.ReferenceTuple,
-    /,
-    **kwargs: Unpack[GetOntologyKwargs],
+    reference: SimpleReferenceHint, /, **kwargs: Unpack[GetOntologyKwargs]
 ) -> str | None:
     """Get the definition for an entity."""
     return _help_get(get_id_definition_mapping, reference, **kwargs)
@@ -314,9 +301,7 @@ def get_obsolete_references(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) ->
 
 
 def get_synonyms(
-    reference: str | curies.Reference | curies.ReferenceTuple,
-    /,
-    **kwargs: Unpack[GetOntologyKwargs],
+    reference: SimpleReferenceHint, /, **kwargs: Unpack[GetOntologyKwargs]
 ) -> list[str] | None:
     """Get the synonyms for an entity."""
     return _help_get(get_id_synonyms_mapping, reference, **kwargs)
@@ -350,10 +335,7 @@ def get_literal_mappings(
 
 
 @wrap_norm_prefix
-def get_literal_mappings_df(
-    prefix: str,
-    **kwargs: Unpack[GetOntologyKwargs],
-) -> pd.DataFrame:
+def get_literal_mappings_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFrame:
     """Get a literal mappings dataframe."""
     version = get_version_from_kwargs(prefix, kwargs)
     path = get_cache_path(prefix, CacheArtifact.literal_mappings, version=version)
