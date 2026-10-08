@@ -11,7 +11,6 @@ from collections.abc import Iterable, Mapping, Sequence
 from typing import TYPE_CHECKING, Literal, NamedTuple, Self, TypeAlias, overload
 
 import curies
-from curies import ReferenceTuple
 from curies import vocabulary as _v
 from curies.vocabulary import SynonymScope
 from pydantic import BaseModel, ConfigDict
@@ -408,7 +407,7 @@ class Stanza(Referenced, HasReferencesMixin):
     ) -> Reference | OBOLiteral | None:
         ap_norm = _ensure_ref(ap)
         for annotation in self._get_annotations(p, o):
-            if annotation.predicate.pair == ap_norm.pair:
+            if annotation.predicate == ap_norm:
                 return annotation.value
         return None
 
@@ -520,7 +519,7 @@ class Stanza(Referenced, HasReferencesMixin):
         ontology_prefix: str,
         skip_predicate_objects: Iterable[Reference] | None = None,
         skip_predicate_literals: Iterable[Reference] | None = None,
-        typedefs: Mapping[ReferenceTuple, TypeDef],
+        typedefs: Mapping[Reference, TypeDef],
     ) -> Iterable[str]:
         for line in _iterate_obo_relations(
             self.properties,
@@ -533,7 +532,7 @@ class Stanza(Referenced, HasReferencesMixin):
             yield f"property_value: {line}"
 
     def _iterate_obo_relations(
-        self, *, ontology_prefix: str, typedefs: Mapping[ReferenceTuple, TypeDef]
+        self, *, ontology_prefix: str, typedefs: Mapping[Reference, TypeDef]
     ) -> Iterable[str]:
         for line in _iterate_obo_relations(
             self.relationships,
@@ -875,7 +874,7 @@ class Stanza(Referenced, HasReferencesMixin):
         return [
             annotation.value
             for annotation in self._get_annotations(v.has_description, self.definition)
-            if annotation.predicate.pair == v.has_dbxref.pair
+            if annotation.predicate == v.has_dbxref
         ]
 
     @property
@@ -889,7 +888,7 @@ class Stanza(Referenced, HasReferencesMixin):
             *(
                 annotation.value
                 for annotation in itt.chain.from_iterable(self._axioms.values())
-                if annotation.predicate.pair == v.has_dbxref.pair
+                if annotation.predicate == v.has_dbxref
             ),
         )
 
@@ -969,7 +968,7 @@ def _iterate_obo_relations(
     ontology_prefix: str,
     skip_predicate_objects: Iterable[Reference] | None = None,
     skip_predicate_literals: Iterable[Reference] | None = None,
-    typedefs: Mapping[ReferenceTuple, TypeDef],
+    typedefs: Mapping[Reference, TypeDef],
 ) -> Iterable[str]:
     """Iterate over relations/property values for OBO."""
     skip_predicate_objects = set(skip_predicate_objects or [])
@@ -1062,9 +1061,7 @@ def _format_obo_trailing_modifiers(
 _TYPEDEF_WARNINGS: set[tuple[str, Reference]] = set()
 
 
-def _typedef_warn(
-    prefix: str, predicate: Reference, typedefs: Mapping[Reference, TypeDef]
-) -> None:
+def _typedef_warn(prefix: str, predicate: Reference, typedefs: Mapping[Reference, TypeDef]) -> None:
     from pyobo.struct.typedef import default_typedefs
 
     if predicate in default_typedefs or predicate in typedefs:

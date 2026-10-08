@@ -8,7 +8,6 @@ from collections import Counter
 from collections.abc import Mapping, Sequence
 
 import click
-from curies import ReferenceTuple
 from curies import vocabulary as v
 
 from pyobo.identifier_utils import Reference
@@ -36,7 +35,7 @@ def _chomp_specificity(s: str) -> tuple[v.SynonymScope | None, str]:
 def _chomp_typedef(
     s: str,
     *,
-    synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef],
+    synonym_typedefs: Mapping[Reference, SynonymTypeDef],
     strict: bool = False,
     node: Reference,
     ontology_prefix: str,

@@ -14,7 +14,6 @@ import bioregistry
 import curies
 import dateutil.parser
 import pytz
-from curies import ReferenceTuple
 from curies import vocabulary as v
 from curies.preprocessing import BlocklistError
 
@@ -116,11 +115,6 @@ class Referenced:
     def curie(self) -> str:
         """The CURIE for this typedef."""
         return self.reference.curie
-
-    @property
-    def pair(self) -> ReferenceTuple:
-        """The pair of namespace/identifier."""
-        return self.reference.pair
 
 
 def get_preferred_prefix(

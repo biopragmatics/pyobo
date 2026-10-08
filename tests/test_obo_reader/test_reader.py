@@ -273,7 +273,7 @@ class TestReaderTerm(cases.TestMixin, TermMixin):
             1, len(annotations), msg=f"Wrong annotations, see all axioms:\n\n{dict(term._axioms)}"
         )
         annotation = annotations[0]
-        self.assertEqual(has_dbxref.pair, annotation.predicate.pair)
+        self.assertEqual(has_dbxref, annotation.predicate)
         self.assertIsInstance(annotation.value, OBOLiteral)
         self.assertEqual(OBOLiteral.uri("https://example.org/test"), annotation.value)
 
@@ -678,15 +678,12 @@ class TestReaderTerm(cases.TestMixin, TermMixin):
         """)
         term = self.get_only_term(ontology)
         self.assertEqual(
-            {(has_dbxref.pair, Reference(prefix="cas", identifier="389-08-2").pair)},
-            {(a.pair, b.pair) for a, b in term.get_mappings(include_xrefs=True, add_context=False)},
+            {(has_dbxref, Reference(prefix="cas", identifier="389-08-2"))},
+            {(a, b) for a, b in term.get_mappings(include_xrefs=True, add_context=False)},
         )
         self.assertEqual(
             set(),
-            {
-                (a.pair, b.pair)
-                for a, b in term.get_mappings(include_xrefs=False, add_context=False)
-            },
+            set(term.get_mappings(include_xrefs=False, add_context=False)),
         )
 
         ontology = from_str("""\
@@ -699,18 +696,15 @@ class TestReaderTerm(cases.TestMixin, TermMixin):
         """)
         term = self.get_only_term(ontology)
         self.assertEqual(
-            {(exact_match.pair, Reference(prefix="drugbank", identifier="DB00779").pair)},
-            {
-                (a.pair, b.pair)
-                for a, b in term.get_mappings(include_xrefs=False, add_context=False)
-            },
+            {(exact_match, Reference(prefix="drugbank", identifier="DB00779"))},
+            set(term.get_mappings(include_xrefs=False, add_context=False)),
         )
         self.assertEqual(
             {
-                (exact_match.pair, Reference(prefix="drugbank", identifier="DB00779").pair),
-                (has_dbxref.pair, Reference(prefix="cas", identifier="389-08-2").pair),
+                (exact_match, Reference(prefix="drugbank", identifier="DB00779")),
+                (has_dbxref, Reference(prefix="cas", identifier="389-08-2")),
             },
-            {(a.pair, b.pair) for a, b in term.get_mappings(include_xrefs=True)},
+            set(term.get_mappings(include_xrefs=True)),
         )
 
     def test_10_xrefs_with_provenance_object(self) -> None:
@@ -729,10 +723,10 @@ class TestReaderTerm(cases.TestMixin, TermMixin):
         axiom = axioms[0]
         self.assertIsInstance(axiom, Annotation)
         self.assertIsInstance(axiom.predicate, Reference)
-        self.assertEqual(has_dbxref.pair, axiom.predicate.pair)
+        self.assertEqual(has_dbxref, axiom.predicate)
         if not isinstance(axiom.value, Reference):
             raise self.fail()
-        self.assertEqual(CHARLIE.pair, axiom.value.pair)
+        self.assertEqual(CHARLIE, axiom.value)
 
     def test_10_xrefs_with_provenance_object_comment(self) -> None:
         """Test a xref, same as before but with a comment text."""
@@ -750,10 +744,10 @@ class TestReaderTerm(cases.TestMixin, TermMixin):
         axiom = axioms[0]
         self.assertIsInstance(axiom, Annotation)
         self.assertIsInstance(axiom.predicate, Reference)
-        self.assertEqual(has_dbxref.pair, axiom.predicate.pair)
+        self.assertEqual(has_dbxref, axiom.predicate)
         if not isinstance(axiom.value, Reference):
             raise self.fail()
-        self.assertEqual(CHARLIE.pair, axiom.value.pair)
+        self.assertEqual(CHARLIE, axiom.value)
 
     def test_10_xrefs_with_provenance_uri(self) -> None:
         """Test getting mappings."""
@@ -772,7 +766,7 @@ class TestReaderTerm(cases.TestMixin, TermMixin):
         self.assertIsInstance(axiom, Annotation)
         self.assertIsInstance(axiom.predicate, Reference)
         self.assertIsInstance(axiom.value, OBOLiteral)
-        self.assertEqual(has_dbxref.pair, axiom.predicate.pair)
+        self.assertEqual(has_dbxref, axiom.predicate)
         self.assertEqual(OBOLiteral.uri("https://example.org/test"), axiom.value)
 
     def test_11_builtin(self) -> None:

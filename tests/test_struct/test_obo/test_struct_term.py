@@ -5,7 +5,6 @@ from collections.abc import Iterable
 from textwrap import dedent
 
 import bioregistry
-from curies import ReferenceTuple
 from curies import vocabulary as cv
 from sssom_pydantic import SemanticMapping
 from sssom_pydantic.testing import assert_semantic_mapping_equal
@@ -115,8 +114,8 @@ class TestTerm(cases.TermMixin):
         obo: str,
         ofn: str,
         ontology_prefix: str = ONTOLOGY_PREFIX,
-        typedefs: dict[ReferenceTuple, TypeDef] | None = None,
-        synonym_typedefs: dict[ReferenceTuple, SynonymTypeDef] | None = None,
+        typedefs: dict[Reference, TypeDef] | None = None,
+        synonym_typedefs: dict[Reference, SynonymTypeDef] | None = None,
         test_obographs: bool = False,
     ) -> None:
         """Assert the typedef text."""
@@ -206,7 +205,7 @@ class TestTerm(cases.TermMixin):
                 Declaration(NamedIndividual(obo:go#example))
                 ClassAssertion(GO:0050069 obo:go#example)
             """,
-            # iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.pair: RO_DUMMY}),
+            # iterate_obo_lines(ontology_prefix="go", typedefs={RO_DUMMY.reference: RO_DUMMY}),
         )
 
     def test_1_id(self) -> None:
@@ -453,7 +452,7 @@ class TestTerm(cases.TermMixin):
         )
         self.assert_obo_stanza(
             term,
-            synonym_typedefs={omo_dummy.pair: omo_dummy},
+            synonym_typedefs={omo_dummy.reference: omo_dummy},
             obo="""\
                 [Term]
                 id: GO:0050069
@@ -574,8 +573,8 @@ class TestTerm(cases.TermMixin):
                 AnnotationAssertion(Annotation(sssom:confidence "0.99"^^xsd:float) oboInOwl:hasDbXref GO:0050069 EC:1.4.1.15)
             """,
             typedefs={
-                mapping_has_confidence.pair: mapping_has_confidence,
-                mapping_has_justification.pair: mapping_has_justification,
+                mapping_has_confidence.reference: mapping_has_confidence,
+                mapping_has_justification.reference: mapping_has_justification,
             },
         )
 
@@ -632,7 +631,7 @@ class TestTerm(cases.TermMixin):
         term.annotate_object(r, Reference(prefix="GO", identifier="1234569", name="dummy"))
         self.assert_obo_stanza(
             term,
-            typedefs={r.pair: TypeDef(reference=r)},
+            typedefs={r: TypeDef(reference=r)},
             obo="""\
                 [Term]
                 id: GO:0050069
@@ -658,7 +657,7 @@ class TestTerm(cases.TermMixin):
                 name: lysine dehydrogenase activity
                 property_value: RO:1234567 "value" xsd:string
             """,
-            typedefs={RO_DUMMY.pair: RO_DUMMY},
+            typedefs={RO_DUMMY.reference: RO_DUMMY},
             ofn="""\
                 Declaration(Class(GO:0050069))
                 AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
@@ -679,7 +678,7 @@ class TestTerm(cases.TermMixin):
                 name: lysine dehydrogenase activity
                 property_value: RO:1234567 "value" xsd:string
             """,
-            typedefs={RO_DUMMY.pair: RO_DUMMY},
+            typedefs={RO_DUMMY.reference: RO_DUMMY},
             ofn="""\
                 Declaration(Class(GO:0050069))
                 AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
@@ -701,7 +700,7 @@ class TestTerm(cases.TermMixin):
                 name: lysine dehydrogenase activity
                 property_value: RO:1234567 "\\"value\\" added" xsd:string
             """,
-            typedefs={RO_DUMMY.pair: RO_DUMMY},
+            typedefs={RO_DUMMY.reference: RO_DUMMY},
             ofn="""\
                 Declaration(Class(GO:0050069))
                 AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
@@ -726,7 +725,7 @@ class TestTerm(cases.TermMixin):
                 AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
                 AnnotationAssertion(RO:1234567 GO:0050069 "1234"^^xsd:integer)
             """,
-            typedefs={RO_DUMMY.pair: RO_DUMMY},
+            typedefs={RO_DUMMY.reference: RO_DUMMY},
         )
 
     def test_12_property_bool(self) -> None:
@@ -741,7 +740,7 @@ class TestTerm(cases.TermMixin):
                 name: lysine dehydrogenase activity
                 property_value: RO:1234567 "true" xsd:boolean
             """,
-            typedefs={RO_DUMMY.pair: RO_DUMMY},
+            typedefs={RO_DUMMY.reference: RO_DUMMY},
             ofn="""\
                 Declaration(Class(GO:0050069))
                 AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
@@ -766,7 +765,7 @@ class TestTerm(cases.TermMixin):
                 AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
                 AnnotationAssertion(RO:1234567 GO:0050069 "1993"^^xsd:gYear)
             """,
-            typedefs={RO_DUMMY.pair: RO_DUMMY},
+            typedefs={RO_DUMMY.reference: RO_DUMMY},
         )
 
     def test_12_property_date(self) -> None:
@@ -786,7 +785,7 @@ class TestTerm(cases.TermMixin):
                 AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
                 AnnotationAssertion(RO:1234567 GO:0050069 "1993-01-01"^^xsd:date)
             """,
-            typedefs={RO_DUMMY.pair: RO_DUMMY},
+            typedefs={RO_DUMMY.reference: RO_DUMMY},
         )
 
     def test_12_property_object(self) -> None:
@@ -806,7 +805,7 @@ class TestTerm(cases.TermMixin):
                 AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
                 AnnotationAssertion(RO:1234567 GO:0050069 hgnc:123)
             """,
-            typedefs={RO_DUMMY.pair: RO_DUMMY},
+            typedefs={RO_DUMMY.reference: RO_DUMMY},
         )
 
     def test_12_property_datetime(self) -> None:
@@ -826,7 +825,7 @@ class TestTerm(cases.TermMixin):
                 AnnotationAssertion(rdfs:label GO:0050069 "lysine dehydrogenase activity")
                 AnnotationAssertion(RO:1234567 GO:0050069 "2022-07-26T19:27:20+00:00"^^xsd:dateTime)
             """,
-            typedefs={RO_DUMMY.pair: RO_DUMMY},
+            typedefs={RO_DUMMY.reference: RO_DUMMY},
         )
 
     def test_13_parent(self) -> None:
@@ -835,7 +834,7 @@ class TestTerm(cases.TermMixin):
         term.append_parent(Reference(prefix="GO", identifier="1234568"))
         self.assert_obo_stanza(
             term,
-            typedefs={RO_DUMMY.pair: RO_DUMMY},
+            typedefs={RO_DUMMY.reference: RO_DUMMY},
             obo="""\
                 [Term]
                 id: GO:0050069
@@ -977,7 +976,7 @@ class TestTerm(cases.TermMixin):
         term.append_relationship(RO_DUMMY, Reference(prefix="eccode", identifier="1.4.1.15"))
         self.assert_obo_stanza(
             term,
-            typedefs={RO_DUMMY.pair: RO_DUMMY},
+            typedefs={RO_DUMMY.reference: RO_DUMMY},
             obo="""\
                 [Term]
                 id: GO:0050069
@@ -998,7 +997,7 @@ class TestTerm(cases.TermMixin):
         term.append_exact_match(target)
         self.assert_obo_stanza(
             term,
-            typedefs={RO_DUMMY.pair: RO_DUMMY},
+            typedefs={RO_DUMMY.reference: RO_DUMMY},
             obo="""\
                 [Term]
                 id: GO:0050069
@@ -1037,7 +1036,7 @@ class TestTerm(cases.TermMixin):
         )
         self.assert_obo_stanza(
             term,
-            typedefs={RO_DUMMY.pair: RO_DUMMY},
+            typedefs={RO_DUMMY.reference: RO_DUMMY},
             obo="""\
                 [Term]
                 id: GO:0050069
@@ -1058,7 +1057,7 @@ class TestTerm(cases.TermMixin):
         )
         self.assert_obo_stanza(
             term,
-            typedefs={RO_DUMMY.pair: RO_DUMMY},
+            typedefs={RO_DUMMY.reference: RO_DUMMY},
             obo="""\
                 [Term]
                 id: GO:0050069
@@ -1115,10 +1114,10 @@ class TestTerm(cases.TermMixin):
         self.assert_obo_stanza(
             term,
             typedefs={
-                RO_DUMMY.pair: RO_DUMMY,
-                mapping_has_confidence.pair: mapping_has_confidence,
-                mapping_has_justification.pair: mapping_has_justification,
-                has_contributor.pair: has_contributor,
+                RO_DUMMY.reference: RO_DUMMY,
+                mapping_has_confidence.reference: mapping_has_confidence,
+                mapping_has_justification.reference: mapping_has_justification,
+                has_contributor.reference: has_contributor,
             },
             obo="""\
                 [Term]
@@ -1172,7 +1171,7 @@ sssom:mapping_justification=semapv:UnspecifiedMatching} ! exact match lysine deh
         )
         self.assert_obo_stanza(
             term,
-            typedefs={RO_DUMMY.pair: RO_DUMMY},
+            typedefs={RO_DUMMY.reference: RO_DUMMY},
             obo="""\
                 [Term]
                 id: GO:0050069

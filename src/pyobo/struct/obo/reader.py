@@ -14,7 +14,6 @@ from typing import Any, TypeAlias
 
 import bioregistry
 import networkx as nx
-from curies import ReferenceTuple
 from curies.preprocessing import BlocklistError
 from curies.vocabulary import SynonymScope, xsd_datetime
 from more_itertools import pairwise
@@ -184,7 +183,7 @@ def from_obonet(
             f"[{ontology_prefix}] slashes not allowed in data versions because of filesystem usage: {data_version}"
         )
 
-    missing_typedefs: set[ReferenceTuple] = set()
+    missing_typedefs: set[Reference] = set()
 
     subset_typedefs = _get_subsetdefs(graph.graph, ontology_prefix=ontology_prefix, strict=strict)
 
@@ -198,7 +197,7 @@ def from_obonet(
         strict=strict,
         context="graph property",
     ):
-        if ann.predicate.pair == has_ontology_root_term.pair:
+        if ann.predicate == has_ontology_root_term.reference:
             match ann.value:
                 case OBOLiteral():
                     logger.warning(
@@ -221,8 +220,8 @@ def from_obonet(
         idspaces[prefix] = uri_prefix
 
     #: CURIEs to typedefs
-    typedefs: Mapping[ReferenceTuple, TypeDef] = {
-        typedef.pair: typedef
+    typedefs: Mapping[Reference, TypeDef] = {
+        typedef.reference: typedef
         for typedef in iterate_typedefs(
             graph,
             ontology_prefix=ontology_prefix,
@@ -232,8 +231,8 @@ def from_obonet(
         )
     }
 
-    synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef] = {
-        synonym_typedef.pair: synonym_typedef
+    synonym_typedefs: Mapping[Reference, SynonymTypeDef] = {
+        synonym_typedef.reference: synonym_typedef
         for synonym_typedef in iterate_graph_synonym_typedefs(
             graph,
             ontology_prefix=ontology_prefix,
@@ -281,10 +280,10 @@ def _get_terms(
     strict: bool,
     ontology_prefix: str,
     upgrade: bool,
-    typedefs: Mapping[ReferenceTuple, TypeDef],
-    synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef],
+    typedefs: Mapping[Reference, TypeDef],
+    synonym_typedefs: Mapping[Reference, SynonymTypeDef],
     subset_typedefs: SubsetTypeDefs,
-    missing_typedefs: set[ReferenceTuple],
+    missing_typedefs: set[Reference],
     macro_config: MacroConfig,
     progress: bool = False,
 ) -> list[Term]:
@@ -468,7 +467,7 @@ def _process_synonyms(
     ontology_prefix: str,
     strict: bool,
     upgrade: bool,
-    synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef],
+    synonym_typedefs: Mapping[Reference, SynonymTypeDef],
 ) -> None:
     synonyms = list(
         iterate_node_synonyms(
@@ -510,7 +509,7 @@ def _process_properties(
     ontology_prefix: str,
     strict: bool,
     upgrade: bool,
-    typedefs: Mapping[ReferenceTuple, TypeDef],
+    typedefs: Mapping[Reference, TypeDef],
 ) -> None:
     for ann in iterate_node_properties(
         data,
@@ -520,7 +519,7 @@ def _process_properties(
         upgrade=upgrade,
         context="stanza property",
     ):
-        if ann.predicate.pair not in typedefs:
+        if ann.predicate not in typedefs:
             pass  # TODO logging
         # TODO parse axioms
         term.append_property(ann)
@@ -533,8 +532,8 @@ def _process_relations(
     ontology_prefix: str,
     strict: bool,
     upgrade: bool,
-    typedefs: Mapping[ReferenceTuple, TypeDef],
-    missing_typedefs: set[ReferenceTuple],
+    typedefs: Mapping[Reference, TypeDef],
+    missing_typedefs: set[Reference],
 ) -> None:
     relations_references = list(
         iterate_node_relationships(
@@ -547,11 +546,11 @@ def _process_relations(
     )
     for relation, reference in relations_references:
         if (
-            relation.pair not in typedefs
-            and relation.pair not in default_typedefs
-            and relation.pair not in missing_typedefs
+            relation not in typedefs
+            and relation not in default_typedefs
+            and relation not in missing_typedefs
         ):
-            missing_typedefs.add(relation.pair)
+            missing_typedefs.add(relation)
             logger.warning("[%s] has no typedef for %s", ontology_prefix, relation.curie)
             logger.debug("[%s] available typedefs: %s", ontology_prefix, set(typedefs))
         # TODO parse axioms
@@ -888,10 +887,10 @@ def iterate_typedefs(
     if macro_config is None:
         macro_config = MacroConfig(strict=strict, ontology_prefix=ontology_prefix)
     # can't really have a pre-defined set of synonym typedefs here!
-    synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef] = {}
-    typedefs: Mapping[ReferenceTuple, TypeDef] = {}
+    synonym_typedefs: Mapping[Reference, SynonymTypeDef] = {}
+    typedefs: Mapping[Reference, TypeDef] = {}
     subset_typedefs: SubsetTypeDefs = {}  # FIXME
-    missing_typedefs: set[ReferenceTuple] = set()
+    missing_typedefs: set[Reference] = set()
     for data in graph.graph.get("typedefs", []):
         if "id" in data:
             typedef_id = data["id"]
@@ -1154,7 +1153,7 @@ def _clean_definition(s: str) -> str:
 
 def _extract_synonym(
     s: str,
-    synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef],
+    synonym_typedefs: Mapping[Reference, SynonymTypeDef],
     *,
     node: Reference,
     strict: bool = False,
@@ -1201,7 +1200,7 @@ DEFINITION_PROVENANCE_COUNTER: Counter[tuple[str, str]] = Counter()
 
 def iterate_node_synonyms(
     data: dict[str, Any],
-    synonym_typedefs: Mapping[ReferenceTuple, SynonymTypeDef],
+    synonym_typedefs: Mapping[Reference, SynonymTypeDef],
     *,
     node: Reference,
     strict: bool = False,

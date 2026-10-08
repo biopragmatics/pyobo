@@ -210,7 +210,7 @@ def _parse_dblinks(
             tqdm.write(f"[{term.curie}] could not validate xref - {prefix}:{identifier}")
             continue
         # don't add self-reference
-        if reference.pair == term.pair:
+        if reference == term.reference:
             continue
 
         if reference in seen:

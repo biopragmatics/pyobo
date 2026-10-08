@@ -124,8 +124,8 @@ class TestParseObonet(unittest.TestCase):
             reference=default_reference(prefix="chebi", identifier="IUPAC_NAME", name="IUPAC NAME")
         )
         synoynym_typedefs = {
-            iupac_name.pair: iupac_name,
-            acronym.pair: acronym,
+            iupac_name.reference: iupac_name,
+            acronym.reference: acronym,
         }
 
         for expected_synonym, text in [
@@ -192,7 +192,7 @@ class TestParseObonet(unittest.TestCase):
             reference=default_reference(prefix="chebi", identifier="IUPAC_NAME", name="IUPAC NAME")
         )
         synoynym_typedefs = {
-            iupac_name.pair: iupac_name,
+            iupac_name.reference: iupac_name,
         }
         data = self.graph.nodes["CHEBI:51990"]
         synonyms = list(
@@ -312,7 +312,7 @@ class TestGet(unittest.TestCase):
 
     def test_typedefs(self) -> None:
         """Test typedefs."""
-        xx = default_reference("chebi", "has_major_microspecies_at_pH_7_3")
+        predicate = default_reference("chebi", "has_major_microspecies_at_pH_7_3")
         td = self.ontology._index_typedefs()
-        self.assertIn(xx.pair, td)
-        self.assertIn(Reference.from_curie("RO:0018033").pair, set(td))
+        self.assertIn(predicate, td)
+        self.assertIn(Reference.from_curie("RO:0018033"), set(td))

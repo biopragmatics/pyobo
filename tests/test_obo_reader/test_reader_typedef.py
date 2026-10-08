@@ -135,7 +135,7 @@ class TestReaderTypedef(cases.TestMixin):
         if ontology.typedefs is None:
             raise self.fail()
         self.assertEqual(1, len(ontology.typedefs))
-        self.assertEqual(is_conjugate_base_of.pair, ontology.typedefs[0].pair)
+        self.assertEqual(is_conjugate_base_of.reference, ontology.typedefs[0].reference)
 
     def test_11_property_value(self) -> None:
         """Test the ``property_value`` tag."""

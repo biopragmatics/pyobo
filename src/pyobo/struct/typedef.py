@@ -445,11 +445,9 @@ default_typedefs: dict[Reference, TypeDef] = {
     v.reference: v for v in locals().values() if isinstance(v, TypeDef)
 }
 
-for reference, name in load_ro().items():
+for reference in load_ro():
     if reference not in default_typedefs:
-        default_typedefs[reference] = TypeDef.from_triple(
-            reference.prefix, reference.identifier, name=name
-        )
+        default_typedefs[reference] = TypeDef(reference=reference)
 
 #: SSSOM-compliant match type definitions
 #: .. seealso:: https://mapping-commons.github.io/sssom/spec-model/
