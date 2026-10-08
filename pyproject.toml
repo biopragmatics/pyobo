@@ -362,6 +362,3 @@ replace = "release = \"{new_version}\""
 filename = "src/pyobo/version.py"
 search = "VERSION = \"{current_version}\""
 replace = "VERSION = \"{new_version}\""
-
-[tool.uv.sources]
-curies = { path = "../curies", editable = true }
