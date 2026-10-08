@@ -57,7 +57,7 @@ def to_skos(obo: Obo, *, converter: Converter | None = None, iri_: str | None = 
     if converter is None:
         import bioregistry
 
-        converter = bioregistry.get_default_converter()
+        converter = bioregistry.get_default_converter(stubs=True)
 
     iri_, _ = get_iris(obo, extension=".ttl", iri=iri_)
     concept_scheme_node = rdflib.URIRef(iri_)

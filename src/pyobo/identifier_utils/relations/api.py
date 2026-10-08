@@ -119,7 +119,7 @@ def main() -> None:
     from bioregistry import get_default_converter
     from obographs import guess_primary_graph
 
-    converter = get_default_converter()
+    converter = get_default_converter(stubs=True)
 
     rows = []
     for source_prefix, url in URLS:

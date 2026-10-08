@@ -1403,7 +1403,7 @@ class Obo:
             self.ontology, version=self.data_version, lookup_missing_version=False
         )
         semantic_mappings = self.get_semantic_mappings()
-        converter = bioregistry.get_default_converter()
+        converter = bioregistry.get_default_converter(stubs=True)
         semantic_mappings_path = self._get_cache_path(CacheArtifact.mappings)
         sssom_pydantic.write(
             semantic_mappings,
