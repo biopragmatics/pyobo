@@ -188,7 +188,7 @@ sources = [
     # keep as sum of all sources
     "psycopg2-binary",
     "protmapper",
-    "pubmed-downloader",
+    "pubmed-downloader>=0.1.0",
 ]
 drugcentral = [
     "psycopg2-binary",
