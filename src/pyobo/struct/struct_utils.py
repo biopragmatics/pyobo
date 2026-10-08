@@ -930,12 +930,8 @@ def _ensure_ref(
         return Reference(prefix=reference[0], identifier=reference[1])
     if isinstance(reference, Reference):
         return reference
-    if isinstance(reference, curies.NamedReference):
-        return Reference(
-            prefix=reference.prefix, identifier=reference.identifier, name=reference.name
-        )
     if isinstance(reference, curies.Reference):
-        return Reference(prefix=reference.prefix, identifier=reference.identifier)
+        return Reference.from_reference(reference)
 
     match _parse_str_or_curie_or_uri_helper(reference, ontology_prefix=ontology_prefix):
         case Reference() as parsed_reference:
