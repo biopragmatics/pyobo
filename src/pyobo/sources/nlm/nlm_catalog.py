@@ -1,4 +1,16 @@
-"""Converter for NLM Providers."""
+"""Converter for NLM Providers.
+
+To ground NLM catalog entries, after installing PyOBO with
+``pip install pyobo[sources]``, do the following:
+
+.. code-block:: python
+
+    import pyobo
+
+    grounder = pyobo.get_grounder("nlm")
+    match = grounder.get_best_match("Angewandte Chemie International Edition")
+    print(match.identifier, match.score)
+"""
 
 from collections.abc import Iterable
 

@@ -71,101 +71,9 @@ def get_catalog_terms(*, force: bool = False, refresh_index: bool = True) -> Ite
             yield term
 
 
-"""
--------------  ------
-D020492        207102 Periodical
-D020500         18127
-D016435         11697
-D016423          9406
-D020504          8028
-D020501          6076
-D016417          5239
-D019494          2938
-D020481          2551
-D020470          1971
-D016454          1605
-D019487          1430
-D020485          1378
-D020479           984
-D020496           605
-D002363           515
-D020475           420
-D020488           201
-D019215           190
-D019542           159
-D019482           153
-D000078922        152
-D020484           120
-D020502           118
-D002382           115
-D016431           111
-D017065           108
-D020507            86
-D019991            80
-D016437            71
-D020466            67
-D020490            65
-D000078903         63
-D019539            62
-D016418            61
-D022921            60
-D020474            35
-D002378            34
-D020503            34
-D020489            33
-D019525            33
-D000078925         31
-D000078929         30
-D016427            28
-D020467            28
-D020478            27
-D020463            26
-D020495            26
-D020468            23
-D019500            23
-D023362            21
-D020498            20
-D020497            17
-D019532            15
-D020469            14
-D000077202         13
-D020465            13
-D000078984         12
-D000077823         12
-D020505            12
-D017418             9
-D016453             9
-D018486             8
-D019531             8
-D055824             7
-D019493             7
-D062210             7
-D019509             7
-D057405             6
-D029282             6
-D020476             6
-D019497             6
-D017203             6
-D016447             5
-D019480             5
-D055821             5
-D018848             4
-D020471             4
-D000078182          4
-D020480             4
-D022922             4
-D064886             3
-D000078928          3
-D019492             3
-(DNLM)D020492       3
-D020482             2
-D019484             2
-
-"""
-
 # TODO when do we classify as a journal?
 #  use record.publication_type_mesh_ids
-SX: dict[str, Reference] = {}
+SX: dict[Reference, Reference] = {}
 
 
 def catalog_record_to_term(record: CatalogRecord) -> Term | None:
@@ -176,11 +84,11 @@ def catalog_record_to_term(record: CatalogRecord) -> Term | None:
         ),
         type="Instance",
     )
-    for mesh_id in record.publication_type_mesh_ids:
-        if parent := SX.get(mesh_id):
+    for publication_type in record.publication_types:
+        if parent := SX.get(publication_type):
             term.append_parent(parent)
         else:
-            term.append_parent(Reference(prefix="mesh", identifier=mesh_id))
+            term.append_parent(publication_type)
     # TODO title sort?
     if record.medline_short_title:
         term.append_exact_synonym(record.medline_short_title, type=abbreviation)
