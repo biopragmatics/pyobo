@@ -2089,7 +2089,7 @@ class Obo:
         """Get a mapping from identifiers to a list of sorted synonym strings."""
         return multidict(self.iterate_synonym_rows(progress=progress))
 
-    def get_grounder(self) -> ssslm.Grounder[Reference]:
+    def get_grounder(self, *, progress: bool = False, **kwargs: Any) -> ssslm.Grounder[Reference]:
         """Get a grounder from this ontology.
 
         :returns: An object that can be used for named entity recognition and named
@@ -2127,7 +2127,8 @@ class Obo:
             It's required to tell PyOBO the prefix for a custom ontology when using
             :func:`pyobo.from_obo_path`, and it must be registered in the Bioregistry
         """
-        return ssslm.make_grounder(self.get_literal_mappings())
+        literal_mappings = self.get_literal_mappings(progress=progress)
+        return ssslm.make_grounder(progress=progress, literal_mappings=literal_mappings, **kwargs)
 
     def get_literal_mappings(
         self, *, progress: bool = False

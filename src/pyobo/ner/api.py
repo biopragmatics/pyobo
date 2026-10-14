@@ -64,7 +64,10 @@ def get_grounder(
             tqdm.write(f"- {failure}")
 
     return ssslm.make_grounder(
-        all_literal_mappings, implementation="gilda", grounder_cls=grounder_cls
+        all_literal_mappings,
+        implementation="gilda",
+        grounder_cls=grounder_cls,
+        progress=kwargs.get("progress", False),
     )
 
 
