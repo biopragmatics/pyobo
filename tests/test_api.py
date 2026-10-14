@@ -8,6 +8,7 @@ from unittest import mock
 
 import bioregistry
 import curies
+from curies import Converter
 from curies import vocabulary as _v
 from pydantic import ValidationError
 from ssslm import LiteralMapping
@@ -152,7 +153,7 @@ class TestAltIds(unittest.TestCase):
     def test_get_primary_on_reference(self, _: Any, __: Any) -> None:
         """Test when you give a primary id."""
         self.assertEqual(
-            "0003700", get_primary_identifier(curies.Reference(prefix="go", identifier="0001071"))
+            "0003700", get_primary_identifier(curies.Reference.from_curie("GO:0001071"))
         )
 
     @mock_id_alts_mapping
@@ -197,7 +198,7 @@ class TestEverything(unittest.TestCase):
         terms = [t1, t2, t3]
         ontology = build_ontology(TEST_P1, terms=terms, typedefs=[td1])
 
-        converter = curies.Converter.from_prefix_map(
+        converter = Converter.from_prefix_map(
             {
                 TEST_P1: f"https://example.org/{TEST_P1}:",
                 TEST_P2: f"https://example.org/{TEST_P2}:",
