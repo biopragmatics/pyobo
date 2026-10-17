@@ -71,6 +71,7 @@ from ..constants import (
     RELATION_PREFIX,
     TARGET_ID,
     TARGET_PREFIX,
+    Prefix,
     TypeDefType,
     get_semantic_mapping_metadata,
 )
@@ -135,9 +136,9 @@ class Synonym(HasReferencesMixin):
         """Sort lexically by name."""
         return self._sort_key() < other._sort_key()
 
-    def _get_references(self) -> defaultdict[str, set[Reference]]:
+    def _get_references(self) -> defaultdict[Prefix, set[Reference]]:
         """Get all prefixes used by the typedef."""
-        rv: defaultdict[str, set[Reference]] = defaultdict(set)
+        rv: defaultdict[Prefix, set[Reference]] = defaultdict(set)
         rv[v.has_dbxref.prefix].add(v.has_dbxref)
         if self.type is not None:
             rv[self.type.prefix].add(self.type)
@@ -231,9 +232,9 @@ class SynonymTypeDef(Referenced, HasReferencesMixin):
             rv = f"{rv} {self.specificity}"
         return rv
 
-    def _get_references(self) -> dict[str, set[Reference]]:
+    def _get_references(self) -> dict[Prefix, set[Reference]]:
         """Get all references used by the typedef."""
-        rv: defaultdict[str, set[Reference]] = defaultdict(set)
+        rv: defaultdict[Prefix, set[Reference]] = defaultdict(set)
         rv[self.reference.prefix].add(self.reference)
         if self.specificity is not None:
             # weird syntax, but this just gets the synonym scope
@@ -812,9 +813,9 @@ class Obo:
             rv[pp] = uri_prefix
         return rv
 
-    def _get_prefixes(self, *, progress: bool = False) -> set[str]:
+    def _get_prefixes(self, *, progress: bool = False) -> set[Prefix]:
         """Get all prefixes used by the ontology."""
-        prefixes: set[str] = set(DEFAULT_PREFIX_MAP)
+        prefixes: set[Prefix] = {Prefix(p) for p in DEFAULT_PREFIX_MAP}
         for stanza in self._iter_stanzas(desc="getting prefixes", progress=progress):
             prefixes.update(stanza._get_prefixes())
         for synonym_typedef in self.synonym_typedefs or []:
@@ -824,7 +825,7 @@ class Obo:
         # and properties in self.property_values
         prefixes.update(_get_prefixes_from_annotations(self._iterate_property_pairs()))
         if self.auto_generated_by:
-            prefixes.add("oboInOwl")
+            prefixes.add(Prefix("oboInOwl"))
         return prefixes
 
     def _get_references(self) -> dict[str, set[Reference]]:
@@ -2347,7 +2348,7 @@ class TypeDef(Stanza):
         # have to re-define hash because of the @dataclass
         return hash((self.__class__, self.prefix, self.identifier))
 
-    def _get_references(self) -> dict[str, set[Reference]]:
+    def _get_references(self) -> dict[Prefix, set[Reference]]:
         rv = super()._get_references()
 
         def _add(r: Reference) -> None:
