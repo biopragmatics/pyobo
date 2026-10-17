@@ -28,6 +28,7 @@ import ssslm
 import sssom_pydantic
 from curies import Converter
 from curies import vocabulary as _cv
+from functional_owl import DEFAULT_PREFIX_MAP
 from more_click import force_option, verbose_option
 from pystow.utils import safe_open, write_pydantic_json
 from tqdm.auto import tqdm
@@ -65,7 +66,6 @@ from .utils import _boolean_tag, obo_escape_slim
 from ..constants import (
     BUILD_SUBDIRECTORY_NAME,
     DATE_FORMAT,
-    DEFAULT_PREFIX_MAP,
     NCBITAXON_PREFIX,
     RELATION_ID,
     RELATION_PREFIX,
