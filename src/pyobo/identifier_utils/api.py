@@ -18,6 +18,7 @@ from typing_extensions import Doc
 
 from .reference import Reference
 from .relations import ground_relation
+from ..constants import Prefix, get_prefix
 
 __all__ = [
     "DefaultCoercionError",
@@ -271,15 +272,14 @@ def _parse_str_or_curie_or_uri_helper(
         return rv
 
 
-def wrap_norm_prefix(f: Callable[Concatenate[str, P], T]) -> Callable[Concatenate[str, P], T]:
+def wrap_norm_prefix(f: Callable[Concatenate[Prefix, P], T]) -> Callable[Concatenate[str, P], T]:
     """Decorate a function that take in a prefix to auto-normalize, or return None if it can't be normalized."""
 
     @wraps(f)
-    def _wrapped(prefix: str, *args: P.args, **kwargs: P.kwargs) -> T:
-        norm_prefix = bioregistry.normalize_prefix(prefix, strict=True)
-        return f(norm_prefix, *args, **kwargs)
+    def _wrapped(prefix: str, /, *args: P.args, **kwargs: P.kwargs) -> T:
+        return f(get_prefix(prefix), *args, **kwargs)
 
-    return _wrapped  # type:ignore[return-value]
+    return _wrapped
 
 
 def standardize_ec(ec: str) -> str:

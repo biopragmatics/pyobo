@@ -8,12 +8,12 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal, NamedTuple, NotRequired, TypeAlias
 
+import bioregistry
 import pystow
 from curies import Prefix
 from typing_extensions import TypedDict
 
 if TYPE_CHECKING:
-    import bioregistry
     import sssom_pydantic
     from bioregistry.schema import AnnotatedURL
 
@@ -118,7 +118,12 @@ NCBITAXON_PREFIX = Prefix("ncbitaxon")
 DATE_FORMAT = "%d:%m:%Y %H:%M"
 
 
-def get_prefix(resource: bioregistry.Resource) -> Prefix:
+def get_prefix(prefix: str) -> Prefix:
+    """Get a prefix."""
+    return Prefix(bioregistry.normalize_prefix(prefix, strict=True))
+
+
+def get_prefix_from_resource(resource: bioregistry.Resource) -> Prefix:
     """Get the prefix from a resource."""
     return Prefix(resource.prefix)
 

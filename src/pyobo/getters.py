@@ -38,7 +38,7 @@ from .constants import (
     OntologyPathPack,
     Prefix,
     SlimGetOntologyKwargs,
-    get_prefix,
+    get_prefix_from_resource,
 )
 from .identifier_utils import ParseError, wrap_norm_prefix
 from .plugins import has_nomenclature_plugin, run_nomenclature_plugin
@@ -339,7 +339,7 @@ def _prefixes(
     for resource in bioregistry.resources():
         if resource.no_own_terms:
             continue
-        prefix = get_prefix(resource)
+        prefix = get_prefix_from_resource(resource)
         if prefix in SKIP:
             tqdm.write(f"skipping {prefix} because {SKIP[prefix]}")
             continue

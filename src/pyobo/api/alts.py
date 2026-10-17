@@ -8,7 +8,7 @@ from pydantic import ValidationError
 from typing_extensions import Unpack
 
 from .utils import SimpleReferenceHint, _get_pi, get_version_from_kwargs
-from ..constants import GetOntologyKwargs, check_should_cache, check_should_force
+from ..constants import GetOntologyKwargs, Prefix, check_should_cache, check_should_force
 from ..getters import get_ontology
 from ..identifier_utils import Reference, wrap_norm_prefix
 from ..utils.cache import cached_multidict
@@ -24,14 +24,16 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
-NO_ALTS = {
-    "ncbigene",
+NO_ALTS: set[Prefix] = {
+    Prefix("ncbigene"),
 }
 
 
 @lru_cache
 @wrap_norm_prefix
-def get_id_to_alts(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> Mapping[str, list[str]]:
+def get_id_to_alts(
+    prefix: Prefix, /, **kwargs: Unpack[GetOntologyKwargs]
+) -> Mapping[str, list[str]]:
     """Get alternate identifiers."""
     if prefix in NO_ALTS:
         return {}
@@ -54,7 +56,7 @@ def get_id_to_alts(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> Mapping[
 
 @lru_cache
 @wrap_norm_prefix
-def get_alts_to_id(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> Mapping[str, str]:
+def get_alts_to_id(prefix: Prefix, /, **kwargs: Unpack[GetOntologyKwargs]) -> Mapping[str, str]:
     """Get alternative id to primary id mapping."""
     return {
         alt: primary for primary, alts in get_id_to_alts(prefix, **kwargs).items() for alt in alts

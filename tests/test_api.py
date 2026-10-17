@@ -327,7 +327,7 @@ class TestEverything(unittest.TestCase):
 
             # Properties
 
-            value = pyobo.get_property(r1, prop=v.comment, cache=False, progress=False)
+            value = pyobo.get_property(r1, v.comment, cache=False, progress=False)
             self.assertEqual("test comment", value)
 
             edges = pyobo.get_edges(TEST_P1, cache=False, progress=False)

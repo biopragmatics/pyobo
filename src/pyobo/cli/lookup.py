@@ -271,7 +271,7 @@ def relations(
     if relation is None:
         relations_df = get_relations_df(prefix, **kwargs)
     else:
-        relations_df = get_filtered_relations_df(prefix, relation=relation, **kwargs)
+        relations_df = get_filtered_relations_df(prefix, relation, **kwargs)
     if summarize:
         click.echo(relations_df[relations_df.columns[2]].value_counts())
     else:
@@ -337,7 +337,7 @@ def _list_curies(
 
 @lookup_annotate
 @prefix_argument
-@click.option("-k", "--key")
+@click.option("-k", "--key", help="The CURIE for the predicate to filter to")
 def properties(
     prefix: Prefix,
     key: str | None,
@@ -349,7 +349,7 @@ def properties(
     if key is None:
         properties_df = get_properties_df(prefix, **kwargs)
     else:
-        properties_df = get_filtered_properties_df(prefix, prop=key, **kwargs)
+        properties_df = get_filtered_properties_df(prefix, key, **kwargs)
     echo_df(properties_df)
 
 
