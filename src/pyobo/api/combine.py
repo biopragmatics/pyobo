@@ -8,7 +8,8 @@ from typing_extensions import Unpack
 
 from pyobo.api.hierarchy import get_descendants
 from pyobo.api.names import get_literal_mappings
-from pyobo.constants import GetOntologyKwargs
+from pyobo.constants import GetOntologyKwargs, Prefix
+from pyobo.identifier_utils import wrap_norm_prefix
 from pyobo.struct import Reference
 
 __all__ = [
@@ -16,8 +17,9 @@ __all__ = [
 ]
 
 
+@wrap_norm_prefix
 def get_literal_mappings_subset(
-    prefix: str,
+    prefix: Prefix,
     ancestors: curies.Reference | Sequence[curies.Reference],
     *,
     skip_obsolete: bool = False,

@@ -16,7 +16,7 @@ from typing_extensions import Unpack
 
 from .alts import get_primary_identifier
 from .utils import SimpleReferenceHint, _get_pi, get_version_from_kwargs
-from ..constants import GetOntologyKwargs, check_should_cache, check_should_force
+from ..constants import GetOntologyKwargs, Prefix, check_should_cache, check_should_force
 from ..getters import NoBuildError, get_ontology
 from ..identifier_utils import wrap_norm_prefix
 from ..struct import Reference
@@ -61,7 +61,7 @@ NO_BUILD_PREFIXES: set[str] = set()
 
 
 def _help_get(
-    f: Callable[[str, Unpack[GetOntologyKwargs]], Mapping[str, X]],
+    f: Callable[[Prefix, Unpack[GetOntologyKwargs]], Mapping[str, X]],
     reference: SimpleReferenceHint,
     upgrade_identifier: bool | None = None,
     **kwargs: Unpack[GetOntologyKwargs],
@@ -127,7 +127,7 @@ def get_name(
 
 @lru_cache
 @wrap_norm_prefix
-def get_ids(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> set[str]:
+def get_ids(prefix: Prefix, /, **kwargs: Unpack[GetOntologyKwargs]) -> set[str]:
     """Get the set of identifiers for this prefix."""
     if prefix == "ncbigene":
         from ..sources.ncbi.ncbigene import get_ncbigene_ids
@@ -166,7 +166,7 @@ class CachedReferences(Cached[list[Reference]]):
 
 
 @wrap_norm_prefix
-def get_references(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> set[Reference]:
+def get_references(prefix: Prefix, /, **kwargs: Unpack[GetOntologyKwargs]) -> set[Reference]:
     """Get the set of identifiers for this prefix."""
     if prefix == "ncbigene":
         from ..sources.ncbi.ncbigene import get_ncbigene_ids
@@ -201,7 +201,9 @@ def get_references(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> set[Refe
 
 @lru_cache
 @wrap_norm_prefix
-def get_id_name_mapping(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> Mapping[str, str]:
+def get_id_name_mapping(
+    prefix: Prefix, /, **kwargs: Unpack[GetOntologyKwargs]
+) -> Mapping[str, str]:
     """Get an identifier to name mapping for the OBO file."""
     if prefix == "ncbigene":
         from ..sources.ncbi.ncbigene import get_ncbigene_id_to_name_mapping
@@ -236,7 +238,9 @@ def get_id_name_mapping(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> Map
 
 @lru_cache
 @wrap_norm_prefix
-def get_name_id_mapping(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> Mapping[str, str]:
+def get_name_id_mapping(
+    prefix: Prefix, /, **kwargs: Unpack[GetOntologyKwargs]
+) -> Mapping[str, str]:
     """Get a name to identifier mapping for the OBO file."""
     id_name = get_id_name_mapping(prefix, **kwargs)
     return {v: k for k, v in id_name.items()}
@@ -249,8 +253,9 @@ def get_definition(
     return _help_get(get_id_definition_mapping, reference, **kwargs)
 
 
+@wrap_norm_prefix
 def get_id_definition_mapping(
-    prefix: str, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: Prefix, /, **kwargs: Unpack[GetOntologyKwargs]
 ) -> Mapping[str, str]:
     """Get a mapping of descriptions."""
     version = get_version_from_kwargs(prefix, kwargs)
@@ -273,7 +278,7 @@ def get_id_definition_mapping(
 
 
 @wrap_norm_prefix
-def get_obsolete(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> set[str]:
+def get_obsolete(prefix: Prefix, **kwargs: Unpack[GetOntologyKwargs]) -> set[str]:
     """Get the set of obsolete local unique identifiers."""
     version = get_version_from_kwargs(prefix, kwargs)
     # TODO pre-cache these!
@@ -292,7 +297,9 @@ def get_obsolete(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> set[str]:
 
 
 @wrap_norm_prefix
-def get_obsolete_references(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> set[Reference]:
+def get_obsolete_references(
+    prefix: Prefix, /, **kwargs: Unpack[GetOntologyKwargs]
+) -> set[Reference]:
     """Get the set of obsolete references."""
     return {
         Reference(prefix=prefix, identifier=identifier)
@@ -309,7 +316,7 @@ def get_synonyms(
 
 @wrap_norm_prefix
 def get_id_synonyms_mapping(
-    prefix: str, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: Prefix, /, **kwargs: Unpack[GetOntologyKwargs]
 ) -> Mapping[str, list[str]]:
     """Get the OBO file and output a synonym dictionary."""
     df = get_literal_mappings_df(prefix, **kwargs)
@@ -322,8 +329,9 @@ def get_id_synonyms_mapping(
     )
 
 
+@wrap_norm_prefix
 def get_literal_mappings(
-    prefix: str, *, skip_obsolete: bool = False, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: Prefix, /, *, skip_obsolete: bool = False, **kwargs: Unpack[GetOntologyKwargs]
 ) -> list[LiteralMapping[Reference]]:
     """Get literal mappings."""
     df = get_literal_mappings_df(prefix, **kwargs)
@@ -335,7 +343,7 @@ def get_literal_mappings(
 
 
 @wrap_norm_prefix
-def get_literal_mappings_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFrame:
+def get_literal_mappings_df(prefix: Prefix, /, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFrame:
     """Get a literal mappings dataframe."""
     version = get_version_from_kwargs(prefix, kwargs)
     path = get_cache_path(prefix, CacheArtifact.literal_mappings, version=version)

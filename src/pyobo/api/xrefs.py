@@ -18,6 +18,7 @@ from ..constants import (
     TARGET_ID,
     TARGET_PREFIX,
     GetOntologyKwargs,
+    Prefix,
     check_should_cache,
     check_should_force,
     check_show_progress,
@@ -60,7 +61,7 @@ def get_xref(
 @lru_cache
 @wrap_norm_prefix
 def get_filtered_xrefs(
-    prefix: str,
+    prefix: Prefix,
     xref_prefix: str,
     *,
     flip: bool = False,
@@ -85,7 +86,7 @@ get_xrefs = get_filtered_xrefs
 
 
 @wrap_norm_prefix
-def get_xrefs_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFrame:
+def get_xrefs_df(prefix: Prefix, /, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFrame:
     """Get all xrefs."""
     warnings.warn(
         "use pyobo.get_mappings_df instead of pyobo.get_xrefs_df.",
@@ -109,18 +110,19 @@ def get_xrefs_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFra
 def get_sssom_df(prefix: str | Obo, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFrame:
     """Get an SSSOM dataframe, replaced by :func:`get_mappings_df`."""
     warnings.warn("get_sssom_df was renamed to get_mappings_df", DeprecationWarning, stacklevel=2)
-    return get_mappings_df(prefix=prefix, **kwargs)
+    return get_mappings_df(prefix, **kwargs)
 
 
+@wrap_norm_prefix
 def get_semantic_mappings(
-    prefix: str, *, converter: Converter | None = None, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: Prefix, /, *, converter: Converter | None = None, **kwargs: Unpack[GetOntologyKwargs]
 ) -> list[SemanticMapping]:
     """Get semantic mappings."""
     return _get_sssom_getter(prefix, converter=converter, **kwargs)().mappings
 
 
 def _get_sssom_getter(
-    prefix: str,
+    prefix: Prefix,
     *,
     converter: Converter | None = None,
     chunksize: int | None = None,
@@ -158,6 +160,7 @@ def _get_sssom_getter(
 
 def get_mappings_df(
     prefix: str | Obo,
+    /,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> pd.DataFrame:
     r"""Get semantic mappings from a source as an SSSOM dataframe.
@@ -190,23 +193,19 @@ def get_mappings_df(
         This assumes the Bioregistry as the prefix map
     """
     if isinstance(prefix, Obo):
-        df = prefix.get_mappings_df(
+        return prefix.get_mappings_df(
             progress=check_show_progress(kwargs),
         )
-        prefix = prefix.ontology
 
-    else:
-        version = get_version_from_kwargs(prefix, kwargs)
-        path = get_cache_path(prefix, CacheArtifact.mappings, version=version)
+    version = get_version_from_kwargs(prefix, kwargs)
+    path = get_cache_path(prefix, CacheArtifact.mappings, version=version)
 
-        @cached_df(
-            path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)
-        )
-        def _df_getter() -> pd.DataFrame:
-            logger.info("[%s] rebuilding SSSOM", prefix)
-            ontology = get_ontology(prefix, **kwargs)
-            return ontology.get_mappings_df(progress=check_show_progress(kwargs))
+    @cached_df(
+        path=path, dtype=str, force=check_should_force(kwargs), cache=check_should_cache(kwargs)
+    )
+    def _df_getter() -> pd.DataFrame:
+        logger.info("[%s] rebuilding SSSOM", prefix)
+        ontology = get_ontology(prefix, **kwargs)
+        return ontology.get_mappings_df(progress=check_show_progress(kwargs))
 
-        df = _df_getter()
-
-    return df
+    return _df_getter()

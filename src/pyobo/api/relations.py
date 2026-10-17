@@ -17,6 +17,7 @@ from ..constants import (
     TARGET_ID,
     TARGET_PREFIX,
     GetOntologyKwargs,
+    Prefix,
     check_should_cache,
     check_should_force,
     check_show_progress,
@@ -41,7 +42,7 @@ logger = logging.getLogger(__name__)
 
 @wrap_norm_prefix
 def get_relations(
-    prefix: str, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: Prefix, /, **kwargs: Unpack[GetOntologyKwargs]
 ) -> list[tuple[Reference, Reference, Reference]]:
     """Get relations."""
     df = get_relations_df(prefix, wide=False, **kwargs)
@@ -57,7 +58,7 @@ def get_relations(
 
 @wrap_norm_prefix
 def get_relations_df(
-    prefix: str, *, wide: bool = False, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: Prefix, /, *, wide: bool = False, **kwargs: Unpack[GetOntologyKwargs]
 ) -> pd.DataFrame:
     """Get all relations from the OBO."""
     version = get_version_from_kwargs(prefix, kwargs)
@@ -82,8 +83,9 @@ def get_relations_df(
 
 @wrap_norm_prefix
 def get_filtered_relations_df(
-    prefix: str,
+    prefix: Prefix,
     relation: ReferenceHint,
+    /,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> pd.DataFrame:
     """Get all the given relation."""
@@ -112,8 +114,9 @@ def get_filtered_relations_df(
 
 @wrap_norm_prefix
 def get_id_multirelations_mapping(
-    prefix: str,
+    prefix: Prefix,
     typedef: ReferenceHint,
+    /,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> Mapping[str, list[Reference]]:
     """Get the OBO file and output a synonym dictionary."""
@@ -127,7 +130,7 @@ def get_id_multirelations_mapping(
 @lru_cache
 @wrap_norm_prefix
 def get_relation_mapping(
-    prefix: str,
+    prefix: Prefix,
     relation: ReferenceHint,
     target_prefix: str,
     **kwargs: Unpack[GetOntologyKwargs],
@@ -154,7 +157,7 @@ def get_relation_mapping(
 
 @wrap_norm_prefix
 def get_relation(
-    prefix: str,
+    prefix: Prefix,
     source_identifier: str,
     relation: ReferenceHint,
     target_prefix: str,

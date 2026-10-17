@@ -29,6 +29,7 @@ from .reference import (
     unspecified_matching,
 )
 from .utils import obo_escape_slim
+from ..constants import Prefix
 from ..identifier_utils import (
     NotCURIEError,
     ParseError,
@@ -123,11 +124,11 @@ stanza_type_to_eq_prop: dict[StanzaType, Reference] = {
 class HasReferencesMixin(ABC):
     """A class that can report on the references it contains."""
 
-    def _get_prefixes(self) -> set[str]:
+    def _get_prefixes(self) -> set[Prefix]:
         return set(self._get_references())
 
     @abstractmethod
-    def _get_references(self) -> dict[str, set[Reference]]:
+    def _get_references(self) -> dict[Prefix, set[Reference]]:
         raise NotImplementedError
 
 
@@ -164,12 +165,12 @@ class Stanza(Referenced, HasReferencesMixin):
             reference, ontology_prefix=ontology_prefix, add_name_comment=add_name_comment
         )
 
-    def _get_prefixes(self) -> set[str]:
+    def _get_prefixes(self) -> set[Prefix]:
         return set(self._get_references())
 
-    def _get_references(self) -> dict[str, set[Reference]]:
+    def _get_references(self) -> dict[Prefix, set[Reference]]:
         """Get all prefixes used by the typedef."""
-        rv: defaultdict[str, set[Reference]] = defaultdict(set)
+        rv: defaultdict[Prefix, set[Reference]] = defaultdict(set)
 
         def _add(r: Reference) -> None:
             rv[r.prefix].add(r)
@@ -1093,14 +1094,14 @@ class MappingContext(BaseModel):
     )
 
 
-def _get_prefixes_from_annotations(annotations: Iterable[Annotation]) -> set[str]:
+def _get_prefixes_from_annotations(annotations: Iterable[Annotation]) -> set[Prefix]:
     return set(_get_references_from_annotations(annotations))
 
 
 def _get_references_from_annotations(
     annotations: Iterable[Annotation],
-) -> dict[str, set[Reference]]:
-    rv: defaultdict[str, set[Reference]] = defaultdict(set)
+) -> dict[Prefix, set[Reference]]:
+    rv: defaultdict[Prefix, set[Reference]] = defaultdict(set)
     for left, right in annotations:
         rv[left.prefix].add(left)
         if isinstance(right, Reference):

@@ -17,6 +17,7 @@ from sssom_pydantic.testing import assert_semantic_mapping_equal
 
 import pyobo
 from pyobo import (
+    Prefix,
     Reference,
     default_reference,
     get_name,
@@ -32,7 +33,7 @@ from pyobo.struct.struct import Obo, Term, TypeDef, build_ontology
 
 mock_id_alts_mapping = get_mock_id_alts_mapping(
     {
-        "go": {
+        Prefix("go"): {
             "0003700": ["0001071"],
         },
     }
@@ -40,10 +41,10 @@ mock_id_alts_mapping = get_mock_id_alts_mapping(
 
 mock_id_names_mapping = get_mock_id_name_mapping(
     {
-        "go": {
+        Prefix("go"): {
             "0003700": "DNA-binding transcription factor activity",
         },
-        "ncbitaxon": {
+        Prefix("ncbitaxon"): {
             "52818": "Allamanda cathartica",
         },
     }
@@ -326,7 +327,7 @@ class TestEverything(unittest.TestCase):
 
             # Properties
 
-            value = pyobo.get_property(r1, prop=v.comment, cache=False, progress=False)
+            value = pyobo.get_property(r1, v.comment, cache=False, progress=False)
             self.assertEqual("test comment", value)
 
             edges = pyobo.get_edges(TEST_P1, cache=False, progress=False)

@@ -15,8 +15,8 @@ from .edges import get_edges
 from .names import get_name, get_references
 from .properties import get_literal_properties
 from .utils import SimpleReferenceHint, _get_pi
-from ..constants import GetOntologyKwargs
-from ..identifier_utils import Reference
+from ..constants import GetOntologyKwargs, Prefix
+from ..identifier_utils import Reference, wrap_norm_prefix
 from ..struct import has_member, has_part, is_a, member_of, part_of
 from ..struct.struct_utils import ReferenceHint, _ensure_ref
 
@@ -40,8 +40,10 @@ class HierarchyKwargs(GetOntologyKwargs):
     include_has_member: NotRequired[bool]
 
 
+@wrap_norm_prefix
 def get_hierarchy(
-    prefix: str,
+    prefix: Prefix,
+    /,
     *,
     extra_relations: Iterable[ReferenceHint] | None = None,
     properties: Iterable[ReferenceHint] | None = None,
@@ -67,14 +69,14 @@ def get_hierarchy(
     with the lru_cache mechanism.
     """
     return _get_hierarchy_helper(
-        prefix=prefix,
+        prefix,
         extra_relations=_tp(prefix, extra_relations),
         properties=_tp(prefix, properties),
         **kwargs,
     )
 
 
-def _tp(prefix: str, references: Iterable[ReferenceHint] | None) -> tuple[Reference, ...]:
+def _tp(prefix: Prefix, references: Iterable[ReferenceHint] | None) -> tuple[Reference, ...]:
     return tuple(
         sorted(_ensure_ref(reference, ontology_prefix=prefix) for reference in references or [])
     )
@@ -82,7 +84,8 @@ def _tp(prefix: str, references: Iterable[ReferenceHint] | None) -> tuple[Refere
 
 @lru_cache
 def _get_hierarchy_helper(
-    prefix: str,
+    prefix: Prefix,
+    /,
     *,
     extra_relations: tuple[Reference, ...],
     properties: tuple[Reference, ...],
@@ -142,7 +145,7 @@ def get_descendants(
 ) -> set[Reference] | None:
     """Get all the descendants (children) of the term as CURIEs."""
     reference = _get_pi(reference)
-    hierarchy = get_hierarchy(prefix=reference.prefix, **kwargs)
+    hierarchy = get_hierarchy(reference.prefix, **kwargs)
     if reference not in hierarchy:
         return None
     return cast(set[Reference], nx.ancestors(hierarchy, reference))  # note this is backwards
@@ -154,7 +157,7 @@ def get_children(
 ) -> set[Reference] | None:
     """Get all the descendants (children) of the term as CURIEs."""
     reference = _get_pi(reference)
-    hierarchy = get_hierarchy(prefix=reference.prefix, **kwargs)
+    hierarchy = get_hierarchy(reference.prefix, **kwargs)
     if reference not in hierarchy:
         return None
     return set(hierarchy.predecessors(reference))
@@ -207,7 +210,7 @@ def get_ancestors(
 ) -> set[Reference] | None:
     """Get all the ancestors (parents) of the term as CURIEs."""
     reference = _get_pi(reference)
-    hierarchy = get_hierarchy(prefix=reference.prefix, **kwargs)
+    hierarchy = get_hierarchy(reference.prefix, **kwargs)
     if reference not in hierarchy:
         return None
     return cast(set[Reference], nx.descendants(hierarchy, reference))  # note this is backwards
@@ -218,7 +221,7 @@ def get_subhierarchy(
 ) -> nx.DiGraph:
     """Get the subhierarchy for a given node."""
     t = _get_pi(reference)
-    hierarchy = get_hierarchy(prefix=t.prefix, **kwargs)
+    hierarchy = get_hierarchy(t.prefix, **kwargs)
     logger.info("getting descendants of %s ! %s", t.curie, get_name(t))
     descendants = set(nx.ancestors(hierarchy, t)) | {t}  # note this is backwards
     logger.info("inducing subgraph")

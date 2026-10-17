@@ -14,7 +14,7 @@ from pydantic import BaseModel, BeforeValidator
 from pystow.utils import read_pydantic_json
 
 from .path import CacheArtifact, prefix_directory_join
-from ..constants import GetOntologyKwargs
+from ..constants import GetOntologyKwargs, Prefix
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +53,8 @@ def get_version(prefix: str, *, strict: bool = False) -> str | None:
 
     :raises VersionError: if the version is not available and strict mode is enabled
     """
+    prefix = Prefix(prefix)
+
     # Prioritize loaded environment variable PYOBO_VERSION_PINS dictionary
     if version := get_version_pins().get(prefix):
         return version
@@ -86,11 +88,11 @@ def get_version_from_kwargs(prefix: str, kwargs: GetOntologyKwargs) -> str | Non
 
 def pin_version(prefix: str, version: str) -> None:
     """Pin the version."""
-    get_version_pins()[prefix] = version
+    get_version_pins()[Prefix(prefix)] = version
 
 
 @lru_cache(1)
-def get_version_pins() -> dict[str, str]:
+def get_version_pins() -> dict[Prefix, str]:
     """Retrieve user-defined resource version pins.
 
     To set your own resource pins, set your machine's environmental variable
@@ -129,7 +131,7 @@ def get_version_pins() -> dict[str, str]:
         f"variable which is a JSON string to include a prefix and version "
         f"name."
     )
-    return version_pins
+    return {Prefix(p): v for p, v in version_pins.items()}
 
 
 def _ensure_date(value: Any) -> Any:

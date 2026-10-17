@@ -14,7 +14,7 @@ from pystow import VersionHint
 from pystow.utils.download import DownloadKwargs
 from typing_extensions import Unpack
 
-from ..constants import CACHE_SUBDIRECTORY_NAME, RAW_MODULE, RELATION_SUBDIRECTORY_NAME
+from ..constants import CACHE_SUBDIRECTORY_NAME, RAW_MODULE, RELATION_SUBDIRECTORY_NAME, Prefix
 
 if TYPE_CHECKING:
     from pandas._typing import DtypeArg
@@ -41,6 +41,7 @@ def prefix_directory_join(
     ensure_exists: bool = True,
 ) -> Path:
     """Join in the prefix directory."""
+    prefix = Prefix(prefix)
     return RAW_MODULE.module(prefix).join(
         *parts,
         name=name,
@@ -56,6 +57,7 @@ def join_path(
     name: str | None = None,
 ) -> Path:
     """Download a file if it doesn't exist."""
+    prefix = Prefix(prefix)
     return RAW_MODULE.module(prefix).join(*parts, name=name, version=version)
 
 
@@ -153,24 +155,24 @@ class CacheArtifact(enum.Enum):
 
 
 def get_cache_path(
-    ontology: str,
+    prefix: str,
     name: CacheArtifact,
     *args: str,
     version: str | None = None,
 ) -> Path:
     """Get a cache path."""
     return prefix_directory_join(
-        ontology, CACHE_SUBDIRECTORY_NAME, *args, name=name.value, version=version
+        prefix, CACHE_SUBDIRECTORY_NAME, *args, name=name.value, version=version
     )
 
 
 def get_relation_cache_path(
-    ontology: str,
+    prefix: str,
     reference: curies.Reference,
     *,
     version: str | None = None,
 ) -> Path:
     """Get a relation cache path."""
     return prefix_directory_join(
-        ontology, RELATION_SUBDIRECTORY_NAME, name=f"{reference.curie}.tsv", version=version
+        prefix, RELATION_SUBDIRECTORY_NAME, name=f"{reference.curie}.tsv", version=version
     )

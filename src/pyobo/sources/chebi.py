@@ -33,5 +33,5 @@ def get_chebi_smiles_id_mapping() -> Mapping[str, str]:
 
 def get_chebi_role_to_children() -> Mapping[str, set[tuple[str, str]]]:
     """Get the ChEBI role to children mapping."""
-    df = get_filtered_relations_df("chebi", relation=has_role)
+    df = get_filtered_relations_df("chebi", has_role)
     return multisetdict((role_id, ("chebi", chemical_id)) for chemical_id, _, role_id in df.values)
