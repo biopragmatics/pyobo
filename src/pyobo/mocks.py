@@ -9,7 +9,7 @@ from unittest import mock
 
 import pandas as pd
 
-from pyobo.constants import XREF_COLUMNS
+from pyobo.constants import XREF_COLUMNS, Prefix
 
 __all__ = [
     "get_mock_get_xrefs_df",
@@ -21,7 +21,7 @@ __all__ = [
 Patch: TypeAlias = "unittest.mock._patch[Any]"
 
 
-def get_mock_id_name_mapping(data: Mapping[str, Mapping[str, str]]) -> Patch:
+def get_mock_id_name_mapping(data: Mapping[Prefix, Mapping[str, str]]) -> Patch:
     """Mock the :func:`pyobo.extract.get_id_name_mapping` function.
 
     :param data: A mapping from prefix to mappings of identifier to names.
@@ -29,7 +29,7 @@ def get_mock_id_name_mapping(data: Mapping[str, Mapping[str, str]]) -> Patch:
     return _replace_mapping_getter("pyobo.api.names.get_id_name_mapping", data)
 
 
-def get_mock_id_synonyms_mapping(data: Mapping[str, Mapping[str, list[str]]]) -> Patch:
+def get_mock_id_synonyms_mapping(data: Mapping[Prefix, Mapping[str, list[str]]]) -> Patch:
     """Mock the :func:`pyobo.extract.get_id_synonyms_mapping` function.
 
     :param data: A mapping from prefix to mappings of identifier to lists of synonyms.
@@ -37,7 +37,7 @@ def get_mock_id_synonyms_mapping(data: Mapping[str, Mapping[str, list[str]]]) ->
     return _replace_mapping_getter("pyobo.api.names.get_id_synonyms_mapping", data)
 
 
-def get_mock_id_alts_mapping(data: Mapping[str, Mapping[str, list[str]]]) -> Patch:
+def get_mock_id_alts_mapping(data: Mapping[Prefix, Mapping[str, list[str]]]) -> Patch:
     """Mock the :func:`pyobo.extract.get_id_to_alts` function.
 
     :param data: A mapping from prefix to mappings of identifier to lists of alternative
@@ -49,8 +49,8 @@ def get_mock_id_alts_mapping(data: Mapping[str, Mapping[str, list[str]]]) -> Pat
 X = TypeVar("X")
 
 
-def _replace_mapping_getter(name: str, data: Mapping[str, Mapping[str, X]]) -> Patch:
-    def _mock_get_data(prefix: str, **_kwargs: Any) -> Mapping[str, X]:
+def _replace_mapping_getter(name: str, data: Mapping[Prefix, Mapping[str, X]]) -> Patch:
+    def _mock_get_data(prefix: Prefix, **_kwargs: Any) -> Mapping[str, X]:
         return data.get(prefix, {})
 
     return mock.patch(name, side_effect=_mock_get_data)
@@ -74,8 +74,8 @@ def get_mock_get_xrefs_df(
     )
 
 
-def _make_mock_get_name(name: str, data: Mapping[str, Mapping[str, X]]) -> Patch:
-    def _get_name(prefix: str, identifier: str) -> X | None:
+def _make_mock_get_name(name: str, data: Mapping[Prefix, Mapping[str, X]]) -> Patch:
+    def _get_name(prefix: Prefix, identifier: str) -> X | None:
         return data.get(prefix, {}).get(identifier)
 
     return mock.patch(name, side_effect=_get_name)

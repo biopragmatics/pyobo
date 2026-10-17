@@ -9,9 +9,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Literal, NamedTuple, NotRequired, TypeAlias
 
 import pystow
+from curies import Prefix
 from typing_extensions import TypedDict
 
 if TYPE_CHECKING:
+    import bioregistry
     import sssom_pydantic
     from bioregistry.schema import AnnotatedURL
 
@@ -27,6 +29,7 @@ __all__ = [
     "IterHelperHelperDict",
     "OntologyFormat",
     "OntologyPathPack",
+    "Prefix",
     "SlimGetOntologyKwargs",
     "TypeDefType",
     "check_should_cache",
@@ -57,10 +60,10 @@ SPECIES_REMAPPING = {
 }
 
 GLOBAL_SKIP = {
-    "rnao",
-    "mo",  # deprecated
-    "resid",  # deprecated
-    "adw",  # deprecated
+    Prefix("rnao"),
+    Prefix("mo"),  # deprecated
+    Prefix("resid"),  # deprecated
+    Prefix("adw"),  # deprecated
 }
 
 #: Default prefix
@@ -111,25 +114,31 @@ TYPEDEFS_FILE = "typedefs.tsv.gz"
 SPECIES_RECORD = "5334738"
 SPECIES_FILE = "species.tsv.gz"
 
-NCBITAXON_PREFIX = "ncbitaxon"
+NCBITAXON_PREFIX = Prefix("ncbitaxon")
 DATE_FORMAT = "%d:%m:%Y %H:%M"
+
+
+def get_prefix(resource: bioregistry.Resource) -> Prefix:
+    """Get the prefix from a resource."""
+    return Prefix(resource.prefix)
+
 
 #: Prefixes for resources that are considered as provenance
 PROVENANCE_PREFIXES = {
-    "pubmed",
-    "pmc",
-    "doi",
-    "biorxiv",
-    "chemrxiv",
-    "wikipedia",
-    "google.patent",
-    "agricola",
-    "cba",
-    "ppr",
-    "citexplore",
-    "goc",
-    "isbn",
-    "issn",
+    Prefix("pubmed"),
+    Prefix("pmc"),
+    Prefix("doi"),
+    Prefix("biorxiv"),
+    Prefix("chemrxiv"),
+    Prefix("wikipedia"),
+    Prefix("google.patent"),
+    Prefix("agricola"),
+    Prefix("cba"),
+    Prefix("ppr"),
+    Prefix("citexplore"),
+    Prefix("goc"),
+    Prefix("isbn"),
+    Prefix("issn"),
 }
 
 
