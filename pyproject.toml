@@ -95,7 +95,7 @@ dependencies = [
     "robot-obo-tool>=0.1.0",
     "pyperclip",
     "lxml",
-    "functional-owl>=0.1.6",
+    "functional-owl>=0.2.0",
 ]
 
 # see https://peps.python.org/pep-0735/ and https://docs.astral.sh/uv/concepts/dependencies/#dependency-groups

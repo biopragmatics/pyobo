@@ -17,7 +17,6 @@ if TYPE_CHECKING:
 
 __all__ = [
     "DATABASE_DIRECTORY",
-    "DEFAULT_PREFIX_MAP",
     "ONTOLOGY_GETTERS",
     "PROVENANCE_PREFIXES",
     "RAW_DIRECTORY",
@@ -227,15 +226,6 @@ OntologyFormat: TypeAlias = Literal[
     "rdf",
     "skos",
 ]
-
-#: from table 2 of the Functional OWL syntax definition
-#: at https://www.w3.org/TR/owl2-syntax/#IRIs
-DEFAULT_PREFIX_MAP = {
-    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
-    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
-    "xsd": "http://www.w3.org/2001/XMLSchema#",
-    "owl": "http://www.w3.org/2002/07/owl#",
-}
 
 
 class OntologyPathPack(NamedTuple):
