@@ -5,13 +5,23 @@ from __future__ import annotations
 import logging
 import re
 from collections.abc import Callable
+from functools import wraps
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal, NamedTuple, NotRequired, TypeAlias
+from typing import (
+    TYPE_CHECKING,
+    Concatenate,
+    Literal,
+    NamedTuple,
+    NotRequired,
+    ParamSpec,
+    TypeAlias,
+    TypedDict,
+    TypeVar,
+)
 
 import bioregistry
 import pystow
 from curies import Prefix
-from typing_extensions import TypedDict
 
 if TYPE_CHECKING:
     import sssom_pydantic
@@ -331,3 +341,17 @@ def get_semantic_mapping_metadata(
 
 #: The type of typedef.
 TypeDefType = Literal["object", "annotation", "data"]
+
+
+P = ParamSpec("P")
+T = TypeVar("T")
+
+
+def wrap_norm_prefix(f: Callable[Concatenate[Prefix, P], T]) -> Callable[Concatenate[str, P], T]:
+    """Decorate a function that take in a prefix to auto-normalize, or return None if it can't be normalized."""
+
+    @wraps(f)
+    def _wrapped(prefix: str, /, *args: P.args, **kwargs: P.kwargs) -> T:
+        return f(get_prefix(prefix), *args, **kwargs)
+
+    return _wrapped

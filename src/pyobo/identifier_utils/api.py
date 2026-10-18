@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
-from functools import lru_cache, wraps
-from typing import Annotated, Any, ClassVar, Concatenate, ParamSpec, TypeVar
+from functools import lru_cache
+from typing import Annotated, Any, ClassVar, ParamSpec, TypeVar
 
 import bioregistry
 import click
@@ -18,7 +17,7 @@ from typing_extensions import Doc
 
 from .reference import Reference
 from .relations import ground_relation
-from ..constants import Prefix, get_prefix
+from ..constants import wrap_norm_prefix
 
 __all__ = [
     "DefaultCoercionError",
@@ -270,16 +269,6 @@ def _parse_str_or_curie_or_uri_helper(
         )
     else:
         return rv
-
-
-def wrap_norm_prefix(f: Callable[Concatenate[Prefix, P], T]) -> Callable[Concatenate[str, P], T]:
-    """Decorate a function that take in a prefix to auto-normalize, or return None if it can't be normalized."""
-
-    @wraps(f)
-    def _wrapped(prefix: str, /, *args: P.args, **kwargs: P.kwargs) -> T:
-        return f(get_prefix(prefix), *args, **kwargs)
-
-    return _wrapped
 
 
 def standardize_ec(ec: str) -> str:
