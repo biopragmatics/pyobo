@@ -7,3 +7,4 @@
 
 .. automodapi:: pyobo.constants
     :no-heading:
+    :noindex: Prefix
