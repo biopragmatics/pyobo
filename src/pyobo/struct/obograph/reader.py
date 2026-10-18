@@ -140,7 +140,7 @@ def from_standardized_graph(prefix: str, graph: StandardizedGraph) -> Obo:
         pass  # TODO
 
     return build_ontology(
-        prefix=prefix,
+        prefix,
         name=graph.name,
         terms=list(terms.values()),
         typedefs=list(typedefs.values()),

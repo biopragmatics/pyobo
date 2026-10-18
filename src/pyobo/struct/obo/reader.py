@@ -255,7 +255,7 @@ def from_obonet(
     )
 
     return build_ontology(
-        prefix=ontology_prefix,
+        ontology_prefix,
         name=name,
         auto_generated_by=graph.graph.get("auto-generated-by"),
         typedefs=list(typedefs.values()),

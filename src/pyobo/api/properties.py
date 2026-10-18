@@ -72,7 +72,7 @@ def get_object_properties(
 
 @wrap_norm_prefix
 def get_literal_properties(
-    prefix: str, /, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: Prefix, /, **kwargs: Unpack[GetOntologyKwargs]
 ) -> list[tuple[Reference, Reference, OBOLiteral]]:
     """Get a list of literal property triples."""
     df = get_literal_properties_df(prefix, **kwargs)
@@ -204,7 +204,7 @@ def get_properties(
 
 @wrap_norm_prefix
 def get_filtered_properties_df(
-    prefix: str, prop: ReferenceHint, /, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: Prefix, prop: ReferenceHint, /, **kwargs: Unpack[GetOntologyKwargs]
 ) -> pd.DataFrame:
     """Extract a single property for each term.
 

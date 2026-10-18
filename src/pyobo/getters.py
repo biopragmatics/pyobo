@@ -94,7 +94,7 @@ def _convert_to_obo(path: Path) -> Path:
 
 @wrap_norm_prefix
 def get_ontology(
-    prefix: str,
+    prefix: Prefix,
     *,
     force: bool = False,
     force_process: bool = False,
@@ -243,8 +243,9 @@ def _name_from_url(
     return name
 
 
+@wrap_norm_prefix
 def _ensure_ontology_path(
-    prefix: str, *, force: bool, version: str | None
+    prefix: Prefix, *, force: bool, version: str | None
 ) -> OntologyPathPack | None:
     rdf_format: RDFFormat | None
     for ontology_format, getter in ONTOLOGY_GETTERS:

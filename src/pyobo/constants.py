@@ -137,6 +137,20 @@ def get_prefix_from_resource(resource: bioregistry.Resource) -> Prefix:
     return Prefix(resource.prefix)
 
 
+P = ParamSpec("P")
+T = TypeVar("T")
+
+
+def wrap_norm_prefix(f: Callable[Concatenate[Prefix, P], T]) -> Callable[Concatenate[str, P], T]:
+    """Decorate a function that take in a prefix to auto-normalize, or return None if it can't be normalized."""
+
+    @wraps(f)
+    def _wrapped(prefix: str, /, *args: P.args, **kwargs: P.kwargs) -> T:
+        return f(get_prefix(prefix), *args, **kwargs)
+
+    return _wrapped
+
+
 #: Prefixes for resources that are considered as provenance
 PROVENANCE_PREFIXES = {
     Prefix("pubmed"),
@@ -263,25 +277,25 @@ class OntologyPathPack(NamedTuple):
     rdf_format: str | None
 
 
-def _get_obo_download(prefix: str) -> str | None:
+def _get_obo_download(prefix: Prefix) -> str | None:
     import bioregistry
 
     return bioregistry.get_obo_download(prefix)
 
 
-def _get_owl_download(prefix: str) -> str | None:
+def _get_owl_download(prefix: Prefix) -> str | None:
     import bioregistry
 
     return bioregistry.get_owl_download(prefix)
 
 
-def _get_json_download(prefix: str) -> str | None:
+def _get_json_download(prefix: Prefix) -> str | None:
     import bioregistry
 
     return bioregistry.get_json_download(prefix)
 
 
-def _get_rdf_download(prefix: str) -> str | None:
+def _get_rdf_download(prefix: Prefix) -> str | None:
     import bioregistry
 
     return bioregistry.get_rdf_download(prefix, get_format=False)
@@ -295,7 +309,7 @@ def _get_skos_download(prefix: str) -> str | AnnotatedURL | None:
 
 #: Functions that get ontology files. Order matters in this list,
 #: since order implicitly defines priority
-ONTOLOGY_GETTERS: list[tuple[OntologyFormat, Callable[[str], str | AnnotatedURL | None]]] = [
+ONTOLOGY_GETTERS: list[tuple[OntologyFormat, Callable[[Prefix], str | AnnotatedURL | None]]] = [
     ("obo", _get_obo_download),
     ("owl", _get_owl_download),
     ("json", _get_json_download),
@@ -304,8 +318,9 @@ ONTOLOGY_GETTERS: list[tuple[OntologyFormat, Callable[[str], str | AnnotatedURL 
 ]
 
 
+@wrap_norm_prefix
 def get_semantic_mapping_metadata(
-    prefix: str,
+    prefix: Prefix,
     *,
     id: str | None = None,
     confidence: float | None = None,
@@ -341,17 +356,3 @@ def get_semantic_mapping_metadata(
 
 #: The type of typedef.
 TypeDefType = Literal["object", "annotation", "data"]
-
-
-P = ParamSpec("P")
-T = TypeVar("T")
-
-
-def wrap_norm_prefix(f: Callable[Concatenate[Prefix, P], T]) -> Callable[Concatenate[str, P], T]:
-    """Decorate a function that take in a prefix to auto-normalize, or return None if it can't be normalized."""
-
-    @wraps(f)
-    def _wrapped(prefix: str, /, *args: P.args, **kwargs: P.kwargs) -> T:
-        return f(get_prefix(prefix), *args, **kwargs)
-
-    return _wrapped

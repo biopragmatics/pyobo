@@ -771,14 +771,14 @@ class Obo:
                 _enrich_obo_metadata(self.ontology, skip_maintainers=self.skip_maintainers)
             )
 
-    def _get_clean_idspaces(self) -> dict[str, str]:
+    def _get_clean_idspaces(self) -> dict[Prefix, str]:
         """Get normalized idspace dictionary."""
         rv = dict(
             ChainMap(
                 # Add reasonable defaults, most of which are
                 # mandated by the OWL spec anyway (except skos?)
-                DEFAULT_PREFIX_MAP,
-                dict(self.idspaces or {}),
+                {Prefix(k): v for k, v in DEFAULT_PREFIX_MAP.items()},
+                {Prefix(k): v for k, v in self.idspaces.items()} if self.idspaces else {},
                 # automatically detect all prefixes in reference in the ontology,
                 # then look up Bioregistry-approved URI prefixes
                 self._infer_prefix_map(),
@@ -786,7 +786,7 @@ class Obo:
         )
         return rv
 
-    def _infer_prefix_map(self) -> dict[str, str]:
+    def _infer_prefix_map(self) -> dict[Prefix, str]:
         """Get a prefix map including all prefixes used in the ontology."""
         rv = {}
         for prefix in sorted(self._get_prefixes(), key=str.casefold):
@@ -809,7 +809,7 @@ class Obo:
                         uri_prefix,
                     )
 
-            pp = bioregistry.get_preferred_prefix(prefix) or str(prefix)
+            pp = Prefix(bioregistry.get_preferred_prefix(prefix) or prefix)
             rv[pp] = uri_prefix
         return rv
 

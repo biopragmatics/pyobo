@@ -10,7 +10,7 @@ from typing import TypeAlias
 import bioversions.utils
 from bioregistry.schema import AnnotatedURL
 
-from ..constants import ONTOLOGY_GETTERS, OntologyFormat
+from ..constants import ONTOLOGY_GETTERS, OntologyFormat, Prefix, wrap_norm_prefix
 
 __all__ = [
     "VERSION_GETTERS",
@@ -117,35 +117,35 @@ def cleanup_version(data_version: str, prefix: str) -> str:
     return data_version
 
 
-def _get_obo_version(prefix: str, url: str, *, max_lines: int = 200) -> str | None:
+def _get_obo_version(prefix: Prefix, url: str, *, max_lines: int = 200) -> str | None:
     rv = bioversions.utils.get_obo_version(url, max_lines=max_lines)
     if rv is None:
         return None
     return cleanup_version(rv, prefix)
 
 
-def _get_owl_version(prefix: str, url: str, *, max_lines: int = 200) -> str | None:
+def _get_owl_version(prefix: Prefix, url: str, *, max_lines: int = 200) -> str | None:
     rv = bioversions.utils.get_owl_xml_version(url, max_lines=max_lines)
     if rv is None:
         return None
     return cleanup_version(rv, prefix)
 
 
-def _get_obograph_json_version(prefix: str, url: str) -> str | None:
+def _get_obograph_json_version(prefix: Prefix, url: str) -> str | None:
     rv = bioversions.utils.get_obograph_json_version(url)
     if rv is None:
         return None
     return cleanup_version(rv, prefix)
 
 
-def _get_skos_version(prefix: str, url: str) -> str | None:
+def _get_skos_version(prefix: Prefix, url: str) -> str | None:
     # TODO add implementation
     return None
 
 
-VersionGetter: TypeAlias = Callable[[str, str], str | None]
+VersionGetter: TypeAlias = Callable[[Prefix, str], str | None]
 
-#: A mapping from data type to gersion getter function
+#: A mapping from data type to version getter function
 VERSION_GETTERS: dict[OntologyFormat, VersionGetter] = {
     "obo": _get_obo_version,
     "owl": _get_owl_version,
@@ -214,7 +214,8 @@ def _prioritize_version(
     return None
 
 
-def _get_getter_urls(prefix: str) -> Iterable[tuple[OntologyFormat, str | AnnotatedURL]]:
+@wrap_norm_prefix
+def _get_getter_urls(prefix: Prefix) -> Iterable[tuple[OntologyFormat, str | AnnotatedURL]]:
     # assume that all possible files that can be downloaded
     # are in sync and have the same version
     for ontology_format, get_url_func in ONTOLOGY_GETTERS:
@@ -224,7 +225,8 @@ def _get_getter_urls(prefix: str) -> Iterable[tuple[OntologyFormat, str | Annota
         yield ontology_format, url
 
 
-def _get_version_from_artifact(prefix: str) -> str | None:
+@wrap_norm_prefix
+def _get_version_from_artifact(prefix: Prefix) -> str | None:
     for ontology_format, url in _get_getter_urls(prefix):
         # Try to peak into the file to get the version without fully downloading
         get_version_func = VERSION_GETTERS.get(ontology_format)
