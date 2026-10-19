@@ -60,7 +60,7 @@ class TestFull(unittest.TestCase):
             predicate_type="object",
         )
         ontology = build_ontology(
-            prefix="test",
+            "test",
             typedefs=[td],
             idspaces=prefix_map,
             enrich_metadata=False,

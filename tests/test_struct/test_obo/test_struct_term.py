@@ -10,7 +10,7 @@ from sssom_pydantic import SemanticMapping
 from sssom_pydantic.testing import assert_semantic_mapping_equal
 
 from pyobo import Obo, Reference, default_reference
-from pyobo.constants import NCBITAXON_PREFIX
+from pyobo.constants import NCBITAXON_PREFIX, Prefix, wrap_norm_prefix
 from pyobo.identifier_utils import NotCURIEError
 from pyobo.struct import (
     Annotation,
@@ -53,8 +53,9 @@ class Nope(Obo):
         yield from iter([])
 
 
+@wrap_norm_prefix
 def _ontology_from_term(
-    prefix: str,
+    prefix: Prefix,
     term: Term,
     *,
     typedefs: list[TypeDef] | None = None,
@@ -62,7 +63,7 @@ def _ontology_from_term(
 ) -> Obo:
     name = bioregistry.get_name(prefix)
     return build_ontology(
-        prefix=prefix,
+        prefix,
         name=name,
         terms=[term],
         typedefs=typedefs,
@@ -137,7 +138,7 @@ class TestTerm(cases.TermMixin):
             if typedefs:
                 xx.update(typedefs.values())
             ont = _ontology_from_term(
-                prefix=term.prefix,
+                term.prefix,
                 term=term,
                 typedefs=list(xx),
                 synonym_typedefs=list(synonym_typedefs.values()) if synonym_typedefs else None,

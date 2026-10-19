@@ -19,7 +19,7 @@ from .utils import (
     strict_option,
     version_option,
 )
-from ..constants import GetOntologyKwargs
+from ..constants import GetOntologyKwargs, Prefix
 
 if TYPE_CHECKING:
     import curies
@@ -76,7 +76,7 @@ identifier_option = click.option("-i", "--identifier")
 @lookup_annotate
 @prefix_argument
 @click.option("-t", "--target")
-def xrefs(target: str, *, prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> None:
+def xrefs(prefix: Prefix, target: str, **kwargs: Unpack[GetOntologyKwargs]) -> None:
     """Page through xrefs for the given namespace to the second given namespace."""
     import bioregistry
 
@@ -96,7 +96,7 @@ def xrefs(target: str, *, prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> N
 @lookup_annotate
 @prefix_argument
 @click.option("-t", "--target", help="A prefix for filtering the object of mappings")
-def mappings(target: str | None, prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> None:
+def mappings(target: str | None, prefix: Prefix, **kwargs: Unpack[GetOntologyKwargs]) -> None:
     """Page through mappings for the given namespace."""
     import bioregistry
     from curies.dataframe import filter_df_by_prefixes
@@ -120,7 +120,7 @@ def mappings(target: str | None, prefix: str, **kwargs: Unpack[GetOntologyKwargs
 )
 @click.option("--chunksize", type=int)
 def sssom(
-    prefix: str, output: str, chunksize: int | None, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: Prefix, output: str, chunksize: int | None, **kwargs: Unpack[GetOntologyKwargs]
 ) -> None:
     """Get SSSOM for the given resource."""
     import sys
@@ -142,7 +142,7 @@ def sssom(
 
 @lookup_annotate
 @prefix_argument
-def metadata(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> None:
+def metadata(prefix: Prefix, **kwargs: Unpack[GetOntologyKwargs]) -> None:
     """Print the metadata for the given namespace."""
     from ..api import get_metadata
 
@@ -152,7 +152,7 @@ def metadata(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> None:
 
 @lookup_annotate
 @prefix_argument
-def ids(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> None:
+def ids(prefix: Prefix, **kwargs: Unpack[GetOntologyKwargs]) -> None:
     """Page through the identifiers of entities in the given namespace."""
     from ..api import get_ids
 
@@ -166,7 +166,7 @@ def ids(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> None:
 @lookup_annotate
 @prefix_argument
 @identifier_option
-def names(prefix: str, identifier: str | None, **kwargs: Unpack[GetOntologyKwargs]) -> None:
+def names(prefix: Prefix, identifier: str | None, **kwargs: Unpack[GetOntologyKwargs]) -> None:
     """Page through the identifiers and names of entities in the given namespace."""
     from ..api import get_id_name_mapping
 
@@ -176,7 +176,7 @@ def names(prefix: str, identifier: str | None, **kwargs: Unpack[GetOntologyKwarg
 
 @lookup_annotate
 @identifier_option
-def species(prefix: str, identifier: str | None, **kwargs: Unpack[GetOntologyKwargs]) -> None:
+def species(prefix: Prefix, identifier: str | None, **kwargs: Unpack[GetOntologyKwargs]) -> None:
     """Page through the identifiers and species of entities in the given namespace."""
     from ..api import get_id_species_mapping
 
@@ -197,7 +197,7 @@ def definitions(prefix: str, identifier: str | None, **kwargs: Unpack[GetOntolog
 
 @lookup_annotate
 @prefix_argument
-def typedefs(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> None:
+def typedefs(prefix: Prefix, **kwargs: Unpack[GetOntologyKwargs]) -> None:
     """Page through the identifiers and names of typedefs in the given namespace."""
     from ..api import get_typedef_df
 
@@ -231,7 +231,7 @@ def _help_page_mapping(
 @lookup_annotate
 @prefix_argument
 @identifier_option
-def synonyms(identifier: str | None, prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> None:
+def synonyms(prefix: Prefix, identifier: str | None, **kwargs: Unpack[GetOntologyKwargs]) -> None:
     """Page through the synonyms for entities in the given namespace."""
     from ..api import get_id_synonyms_mapping
 
@@ -259,10 +259,10 @@ def synonyms(identifier: str | None, prefix: str, **kwargs: Unpack[GetOntologyKw
 )
 @click.option("--summarize", is_flag=True)
 def relations(
+    prefix: Prefix,
     relation: str,
     target: str | None,
     summarize: bool,
-    prefix: str,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> None:
     """Page through the relations for entities in the given namespace."""
@@ -271,7 +271,7 @@ def relations(
     if relation is None:
         relations_df = get_relations_df(prefix, **kwargs)
     else:
-        relations_df = get_filtered_relations_df(prefix, relation=relation, **kwargs)
+        relations_df = get_filtered_relations_df(prefix, relation, **kwargs)
     if summarize:
         click.echo(relations_df[relations_df.columns[2]].value_counts())
     else:
@@ -283,9 +283,9 @@ def relations(
 @click.option("--include-part-of", is_flag=True)
 @click.option("--include-has-member", is_flag=True)
 def hierarchy(
+    prefix: Prefix,
     include_part_of: bool,
     include_has_member: bool,
-    prefix: str,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> None:
     """Page through the hierarchy for entities in the namespace."""
@@ -337,10 +337,10 @@ def _list_curies(
 
 @lookup_annotate
 @prefix_argument
-@click.option("-k", "--key")
+@click.option("-k", "--key", help="The CURIE for the predicate to filter to")
 def properties(
+    prefix: Prefix,
     key: str | None,
-    prefix: str,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> None:
     """Page through the properties for entities in the given namespace."""
@@ -349,7 +349,7 @@ def properties(
     if key is None:
         properties_df = get_properties_df(prefix, **kwargs)
     else:
-        properties_df = get_filtered_properties_df(prefix, prop=key, **kwargs)
+        properties_df = get_filtered_properties_df(prefix, key, **kwargs)
     echo_df(properties_df)
 
 
@@ -357,7 +357,7 @@ def properties(
 @prefix_argument
 @identifier_option
 def alts(
-    prefix: str,
+    prefix: Prefix,
     identifier: str | None,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> None:
@@ -370,7 +370,7 @@ def alts(
 
 @lookup_annotate
 @prefix_argument
-def prefixes(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> None:
+def prefixes(prefix: Prefix, **kwargs: Unpack[GetOntologyKwargs]) -> None:
     """Page through prefixes appearing in an ontology."""
     from ..getters import get_ontology
 

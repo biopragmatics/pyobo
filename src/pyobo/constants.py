@@ -5,11 +5,23 @@ from __future__ import annotations
 import logging
 import re
 from collections.abc import Callable
+from functools import wraps
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal, NamedTuple, NotRequired, TypeAlias
+from typing import (
+    TYPE_CHECKING,
+    Concatenate,
+    Literal,
+    NamedTuple,
+    NotRequired,
+    ParamSpec,
+    TypeAlias,
+    TypedDict,
+    TypeVar,
+)
 
+import bioregistry
 import pystow
-from typing_extensions import TypedDict
+from curies import Prefix
 
 if TYPE_CHECKING:
     import sssom_pydantic
@@ -26,6 +38,7 @@ __all__ = [
     "IterHelperHelperDict",
     "OntologyFormat",
     "OntologyPathPack",
+    "Prefix",
     "SlimGetOntologyKwargs",
     "TypeDefType",
     "check_should_cache",
@@ -56,10 +69,10 @@ SPECIES_REMAPPING = {
 }
 
 GLOBAL_SKIP = {
-    "rnao",
-    "mo",  # deprecated
-    "resid",  # deprecated
-    "adw",  # deprecated
+    Prefix("rnao"),
+    Prefix("mo"),  # deprecated
+    Prefix("resid"),  # deprecated
+    Prefix("adw"),  # deprecated
 }
 
 #: Default prefix
@@ -110,25 +123,50 @@ TYPEDEFS_FILE = "typedefs.tsv.gz"
 SPECIES_RECORD = "5334738"
 SPECIES_FILE = "species.tsv.gz"
 
-NCBITAXON_PREFIX = "ncbitaxon"
+NCBITAXON_PREFIX = Prefix("ncbitaxon")
 DATE_FORMAT = "%d:%m:%Y %H:%M"
+
+
+def get_prefix(prefix: str) -> Prefix:
+    """Get a prefix."""
+    return Prefix(bioregistry.normalize_prefix(prefix, strict=True))
+
+
+def get_prefix_from_resource(resource: bioregistry.Resource) -> Prefix:
+    """Get the prefix from a resource."""
+    return Prefix(resource.prefix)
+
+
+P = ParamSpec("P")
+T = TypeVar("T")
+
+
+def wrap_norm_prefix(f: Callable[Concatenate[Prefix, P], T]) -> Callable[Concatenate[str, P], T]:
+    """Decorate a function that take in a prefix to auto-normalize, or return None if it can't be normalized."""
+
+    @wraps(f)
+    def _wrapped(prefix: str, /, *args: P.args, **kwargs: P.kwargs) -> T:
+        return f(get_prefix(prefix), *args, **kwargs)
+
+    return _wrapped
+
 
 #: Prefixes for resources that are considered as provenance
 PROVENANCE_PREFIXES = {
-    "pubmed",
-    "pmc",
-    "doi",
-    "biorxiv",
-    "chemrxiv",
-    "wikipedia",
-    "google.patent",
-    "agricola",
-    "cba",
-    "ppr",
-    "citexplore",
-    "goc",
-    "isbn",
-    "issn",
+    Prefix("pubmed"),
+    Prefix("pmc"),
+    Prefix("doi"),
+    Prefix("biorxiv"),
+    Prefix("chemrxiv"),
+    Prefix("wikipedia"),
+    Prefix("google.patent"),
+    Prefix("agricola"),
+    Prefix("cba"),
+    Prefix("ppr"),
+    Prefix("citexplore"),
+    Prefix("goc"),
+    Prefix("isbn"),
+    Prefix("issn"),
 }
 
 
@@ -239,25 +277,25 @@ class OntologyPathPack(NamedTuple):
     rdf_format: str | None
 
 
-def _get_obo_download(prefix: str) -> str | None:
+def _get_obo_download(prefix: Prefix) -> str | None:
     import bioregistry
 
     return bioregistry.get_obo_download(prefix)
 
 
-def _get_owl_download(prefix: str) -> str | None:
+def _get_owl_download(prefix: Prefix) -> str | None:
     import bioregistry
 
     return bioregistry.get_owl_download(prefix)
 
 
-def _get_json_download(prefix: str) -> str | None:
+def _get_json_download(prefix: Prefix) -> str | None:
     import bioregistry
 
     return bioregistry.get_json_download(prefix)
 
 
-def _get_rdf_download(prefix: str) -> str | None:
+def _get_rdf_download(prefix: Prefix) -> str | None:
     import bioregistry
 
     return bioregistry.get_rdf_download(prefix, get_format=False)
@@ -271,7 +309,7 @@ def _get_skos_download(prefix: str) -> str | AnnotatedURL | None:
 
 #: Functions that get ontology files. Order matters in this list,
 #: since order implicitly defines priority
-ONTOLOGY_GETTERS: list[tuple[OntologyFormat, Callable[[str], str | AnnotatedURL | None]]] = [
+ONTOLOGY_GETTERS: list[tuple[OntologyFormat, Callable[[Prefix], str | AnnotatedURL | None]]] = [
     ("obo", _get_obo_download),
     ("owl", _get_owl_download),
     ("json", _get_json_download),
@@ -280,8 +318,9 @@ ONTOLOGY_GETTERS: list[tuple[OntologyFormat, Callable[[str], str | AnnotatedURL 
 ]
 
 
+@wrap_norm_prefix
 def get_semantic_mapping_metadata(
-    prefix: str,
+    prefix: Prefix,
     *,
     id: str | None = None,
     confidence: float | None = None,

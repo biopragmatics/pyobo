@@ -36,7 +36,9 @@ from .constants import (
     IterHelperHelperDict,
     OntologyFormat,
     OntologyPathPack,
+    Prefix,
     SlimGetOntologyKwargs,
+    get_prefix_from_resource,
 )
 from .identifier_utils import ParseError, wrap_norm_prefix
 from .plugins import has_nomenclature_plugin, run_nomenclature_plugin
@@ -92,7 +94,7 @@ def _convert_to_obo(path: Path) -> Path:
 
 @wrap_norm_prefix
 def get_ontology(
-    prefix: str,
+    prefix: Prefix,
     *,
     force: bool = False,
     force_process: bool = False,
@@ -241,8 +243,9 @@ def _name_from_url(
     return name
 
 
+@wrap_norm_prefix
 def _ensure_ontology_path(
-    prefix: str, *, force: bool, version: str | None
+    prefix: Prefix, *, force: bool, version: str | None
 ) -> OntologyPathPack | None:
     rdf_format: RDFFormat | None
     for ontology_format, getter in ONTOLOGY_GETTERS:
@@ -310,7 +313,7 @@ def iter_helper(
     f: Callable[[str, Unpack[GetOntologyKwargs]], Mapping[str, X]],
     leave: bool = False,
     **kwargs: Unpack[IterHelperHelperDict],
-) -> Iterable[tuple[str, str, X]]:
+) -> Iterable[tuple[Prefix, str, X]]:
     """Yield all mappings extracted from each database given."""
     for prefix, mapping in iter_helper_helper(f, **kwargs):
         it = tqdm(
@@ -333,10 +336,11 @@ def _prefixes(
     skip_below_inclusive: bool = True,
     skip_pyobo: bool = False,
     skip_set: set[str] | None = None,
-) -> Iterable[str]:
-    for prefix, resource in sorted(bioregistry.read_registry().items()):
+) -> Iterable[Prefix]:
+    for resource in bioregistry.resources():
         if resource.no_own_terms:
             continue
+        prefix = get_prefix_from_resource(resource)
         if prefix in SKIP:
             tqdm.write(f"skipping {prefix} because {SKIP[prefix]}")
             continue
@@ -366,7 +370,7 @@ def iter_helper_helper(
     skip_pyobo: bool = False,
     skip_set: set[str] | None = None,
     **kwargs: Unpack[SlimGetOntologyKwargs],
-) -> Iterable[tuple[str, X]]:
+) -> Iterable[tuple[Prefix, X]]:
     """Yield all mappings extracted from each database given.
 
     :param f: A function that takes a prefix and gives back something that will be used

@@ -17,7 +17,7 @@ class TestOBOHeader(cases.TestMixin):
     def test_2_data_version(self) -> None:
         """Test ontology definition."""
         ontology = build_ontology(
-            prefix="xxx",
+            "xxx",
             version="1.0",
             enrich_metadata=False,
             check_bioregistry_prefix=False,
@@ -40,7 +40,7 @@ class TestOBOHeader(cases.TestMixin):
     def test_5_data_version(self) -> None:
         """Test ontology definition."""
         ontology = build_ontology(
-            prefix="xxx",
+            "xxx",
             auto_generated_by="test",
             check_bioregistry_prefix=False,
         )
@@ -59,7 +59,7 @@ class TestOBOHeader(cases.TestMixin):
     def test_7_subsets(self) -> None:
         """Test ontology definition."""
         ontology = build_ontology(
-            prefix="xxx",
+            "xxx",
             subsetdefs={default_reference("xxx", "HELLO"): "test"},
             enrich_metadata=False,
             check_bioregistry_prefix=False,
@@ -74,7 +74,7 @@ class TestOBOHeader(cases.TestMixin):
         )
 
         ontology = build_ontology(
-            prefix="xxx",
+            "xxx",
             subsetdefs={default_reference("go", "HELLO"): "test"},
             enrich_metadata=False,
             check_bioregistry_prefix=False,
@@ -100,7 +100,7 @@ class TestOBOHeader(cases.TestMixin):
     def test_11_idspace(self) -> None:
         """Test idspace definitions."""
         ontology = build_ontology(
-            prefix="xxx",
+            "xxx",
             idspaces={
                 "go": "http://purl.obolibrary.org/obo/GO_",
             },
@@ -144,7 +144,7 @@ class TestOBOHeader(cases.TestMixin):
     def test_18_properties(self) -> None:
         """Test properties."""
         ontology = build_ontology(
-            prefix="xxx",
+            "xxx",
             root_terms=[default_reference("xxx", "ROOT1")],
             enrich_metadata=False,
             check_bioregistry_prefix=False,
@@ -185,7 +185,7 @@ class TestOBOHeader(cases.TestMixin):
     def test_18_properties_escapes(self) -> None:
         """Test escapes in property values, like for parentheses."""
         ontology = build_ontology(
-            prefix="xxx",
+            "xxx",
             description="MeSH (Medical Subject Headings)",
             enrich_metadata=False,
             check_bioregistry_prefix=False,
@@ -254,7 +254,7 @@ class TestOBOHeader(cases.TestMixin):
     def test_18_properties_escape_quotes(self) -> None:
         """Test escapes in property values, like for parentheses."""
         ontology = build_ontology(
-            prefix="xxx",
+            "xxx",
             description='Something "Like This"',
             enrich_metadata=False,
             check_bioregistry_prefix=False,
@@ -432,7 +432,7 @@ class TestOBOHeader(cases.TestMixin):
     def test_18_properties_external(self) -> None:
         """Test properties."""
         ontology = build_ontology(
-            prefix="xxx",
+            "xxx",
             properties=[
                 Annotation(has_license.reference, OBOLiteral.string("CC0")),
             ],
@@ -452,7 +452,7 @@ class TestOBOHeader(cases.TestMixin):
     def test_ontology_iri(self) -> None:
         """Test adding an ontology IRI."""
         ontology = build_ontology(
-            prefix="xxx",
+            "xxx",
             ontology_iri="https://example.org/xxx.owl",
             enrich_metadata=False,
             check_bioregistry_prefix=False,

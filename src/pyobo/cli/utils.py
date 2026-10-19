@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 import click
 
-from ..constants import DATABASE_DIRECTORY
+from ..constants import DATABASE_DIRECTORY, Prefix
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -49,7 +49,7 @@ strict_option = click.option(
     show_default=True,
     help="Turn on or off failure on unparsable CURIEs",
 )
-prefix_argument = click.argument("prefix")
+prefix_argument = click.argument("prefix", type=Prefix)
 force_option = click.option(
     "-f", "--force", is_flag=True, help="Force re-downloading and re-processing"
 )

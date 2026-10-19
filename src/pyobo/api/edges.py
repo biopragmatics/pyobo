@@ -9,12 +9,14 @@ from pyobo.api.names import get_ids
 from pyobo.api.utils import get_version_from_kwargs
 from pyobo.constants import (
     GetOntologyKwargs,
+    Prefix,
     check_should_cache,
     check_should_force,
     check_show_progress,
 )
 from pyobo.getters import get_ontology
 
+from ..identifier_utils import wrap_norm_prefix
 from ..struct import Reference
 from ..utils.cache import cached_df
 from ..utils.path import CacheArtifact, get_cache_path
@@ -26,18 +28,20 @@ __all__ = [
 ]
 
 
-def get_graph(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> nx.DiGraph:
+@wrap_norm_prefix
+def get_graph(prefix: Prefix, /, **kwargs: Unpack[GetOntologyKwargs]) -> nx.DiGraph:
     """Get the relation graph."""
     rv = nx.MultiDiGraph()
     for s in get_ids(prefix, **kwargs):
         rv.add_node(f"{prefix}:{s}")
-    df = get_edges_df(prefix=prefix, **kwargs)
+    df = get_edges_df(prefix, **kwargs)
     for s, p, o in df.values:
         rv.add_edge(s, p, key=o)
     return rv
 
 
-def get_edges_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFrame:
+@wrap_norm_prefix
+def get_edges_df(prefix: Prefix, /, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFrame:
     """Get a dataframe of edges triples."""
     version = get_version_from_kwargs(prefix, kwargs)
     path = get_cache_path(prefix, CacheArtifact.edges, version=version)
@@ -51,8 +55,9 @@ def get_edges_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFra
     return _df_getter()
 
 
+@wrap_norm_prefix
 def get_edges(
-    prefix: str, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: Prefix, /, **kwargs: Unpack[GetOntologyKwargs]
 ) -> list[tuple[Reference, Reference, Reference]]:
     """Get a list of edge triples."""
     df = get_edges_df(prefix, **kwargs)

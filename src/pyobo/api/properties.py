@@ -10,6 +10,7 @@ from typing_extensions import Unpack
 from .utils import SimpleReferenceHint, _get_pi, get_version_from_kwargs
 from ..constants import (
     GetOntologyKwargs,
+    Prefix,
     check_should_cache,
     check_should_force,
     check_show_progress,
@@ -38,7 +39,10 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-def get_object_properties_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFrame:
+@wrap_norm_prefix
+def get_object_properties_df(
+    prefix: Prefix, /, **kwargs: Unpack[GetOntologyKwargs]
+) -> pd.DataFrame:
     """Get a dataframe of object property triples."""
     version = get_version_from_kwargs(prefix, kwargs)
     path = get_cache_path(prefix, CacheArtifact.object_properties, version=version)
@@ -54,8 +58,9 @@ def get_object_properties_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -
     return _df_getter()
 
 
+@wrap_norm_prefix
 def get_object_properties(
-    prefix: str, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: Prefix, /, **kwargs: Unpack[GetOntologyKwargs]
 ) -> list[tuple[Reference, Reference, Reference]]:
     """Get a list of object property triples."""
     df = get_object_properties_df(prefix, **kwargs)
@@ -65,8 +70,9 @@ def get_object_properties(
     ]
 
 
+@wrap_norm_prefix
 def get_literal_properties(
-    prefix: str, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: Prefix, /, **kwargs: Unpack[GetOntologyKwargs]
 ) -> list[tuple[Reference, Reference, OBOLiteral]]:
     """Get a list of literal property triples."""
     df = get_literal_properties_df(prefix, **kwargs)
@@ -90,7 +96,10 @@ def get_literal_properties(
     ]
 
 
-def get_literal_properties_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFrame:
+@wrap_norm_prefix
+def get_literal_properties_df(
+    prefix: Prefix, /, **kwargs: Unpack[GetOntologyKwargs]
+) -> pd.DataFrame:
     """Get a dataframe of literal property quads."""
     version = get_version_from_kwargs(prefix, kwargs)
     path = get_cache_path(prefix, CacheArtifact.literal_properties, version=version)
@@ -107,7 +116,7 @@ def get_literal_properties_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) 
 
 
 @wrap_norm_prefix
-def get_properties_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFrame:
+def get_properties_df(prefix: Prefix, /, **kwargs: Unpack[GetOntologyKwargs]) -> pd.DataFrame:
     """Extract properties.
 
     :param prefix: the resource to load
@@ -126,7 +135,7 @@ def get_properties_df(prefix: str, **kwargs: Unpack[GetOntologyKwargs]) -> pd.Da
 
 @wrap_norm_prefix
 def get_filtered_properties_mapping(
-    prefix: str, prop: ReferenceHint, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: Prefix, prop: ReferenceHint, /, **kwargs: Unpack[GetOntologyKwargs]
 ) -> dict[str, str]:
     """Extract a single property for each term as a dictionary.
 
@@ -141,7 +150,7 @@ def get_filtered_properties_mapping(
 
 @wrap_norm_prefix
 def get_filtered_properties_multimapping(
-    prefix: str, prop: ReferenceHint, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: Prefix, prop: ReferenceHint, /, **kwargs: Unpack[GetOntologyKwargs]
 ) -> Mapping[str, list[str]]:
     """Extract multiple properties for each term as a dictionary.
 
@@ -155,7 +164,7 @@ def get_filtered_properties_multimapping(
 
 
 def get_property(
-    reference: SimpleReferenceHint, /, prop: ReferenceHint, **kwargs: Unpack[GetOntologyKwargs]
+    reference: SimpleReferenceHint, prop: ReferenceHint, /, **kwargs: Unpack[GetOntologyKwargs]
 ) -> str | None:
     """Extract a single property for the given entity.
 
@@ -170,14 +179,12 @@ def get_property(
     "C1(=CC=C(N=C1)OC2=CC=C(C=C2)O[C@@H](C(OCCCC)=O)C)C(F)(F)F"
     """
     reference = _get_pi(reference)
-    filtered_properties_mapping = get_filtered_properties_mapping(
-        reference.prefix, prop=prop, **kwargs
-    )
+    filtered_properties_mapping = get_filtered_properties_mapping(reference.prefix, prop, **kwargs)
     return filtered_properties_mapping.get(reference.identifier)
 
 
 def get_properties(
-    reference: SimpleReferenceHint, /, prop: ReferenceHint, **kwargs: Unpack[GetOntologyKwargs]
+    reference: SimpleReferenceHint, prop: ReferenceHint, /, **kwargs: Unpack[GetOntologyKwargs]
 ) -> list[str] | None:
     """Extract a set of properties for the given entity.
 
@@ -190,14 +197,14 @@ def get_properties(
     """
     reference = _get_pi(reference)
     filtered_properties_multimapping = get_filtered_properties_multimapping(
-        reference.prefix, prop=prop, **kwargs
+        reference.prefix, prop, **kwargs
     )
     return filtered_properties_multimapping.get(reference.identifier)
 
 
 @wrap_norm_prefix
 def get_filtered_properties_df(
-    prefix: str, prop: ReferenceHint, **kwargs: Unpack[GetOntologyKwargs]
+    prefix: Prefix, prop: ReferenceHint, /, **kwargs: Unpack[GetOntologyKwargs]
 ) -> pd.DataFrame:
     """Extract a single property for each term.
 

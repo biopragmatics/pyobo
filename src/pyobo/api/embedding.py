@@ -18,7 +18,7 @@ from typing_extensions import Unpack
 from pyobo.api.edges import get_edges_df
 from pyobo.api.names import get_definition, get_id_definition_mapping, get_id_name_mapping, get_name
 from pyobo.api.utils import SimpleReferenceHint, get_version_from_kwargs
-from pyobo.constants import GetOntologyKwargs, check_should_force
+from pyobo.constants import GetOntologyKwargs, Prefix, check_should_force
 from pyobo.identifier_utils import wrap_norm_prefix
 from pyobo.utils.path import CacheArtifact, get_cache_path
 
@@ -51,7 +51,7 @@ def _get_text(
 
 
 def get_graph_embeddings_df(
-    prefix: str,
+    prefix: Prefix,
     *,
     method: Literal["pykeen", "grape"] | None = None,
     epochs: int = 30,
@@ -122,7 +122,8 @@ TransformerHint: TypeAlias = Union[str, "SentenceTransformer", None]
 
 @wrap_norm_prefix
 def get_text_embeddings_df(
-    prefix: str,
+    prefix: Prefix,
+    /,
     *,
     model: TransformerHint = None,
     encode_kwargs: dict[str, Any] | None = None,

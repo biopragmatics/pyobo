@@ -61,7 +61,7 @@ from .api import (
     has_ancestor,
     is_descendent,
 )
-from .constants import get_semantic_mapping_metadata
+from .constants import Prefix, get_semantic_mapping_metadata
 from .getters import get_ontology
 from .ner import (
     get_grounder,
@@ -94,6 +94,7 @@ from .version import get_version
 __all__ = [
     "Annotation",
     "Obo",
+    "Prefix",
     "Reference",
     "StanzaType",
     "Synonym",

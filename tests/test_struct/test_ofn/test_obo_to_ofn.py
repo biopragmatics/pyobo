@@ -24,7 +24,7 @@ class TestConversion(cases.TestMixin):
         """Test a term."""
         self.maxDiff = None
         term = Term(reference=Reference.from_reference(R1.without_name()))
-        obo = build_ontology(prefix="go", terms=[term], enrich_metadata=False)
+        obo = build_ontology("go", terms=[term], enrich_metadata=False)
         self.assert_ontology_ofn(
             obo,
             """\
@@ -55,7 +55,7 @@ class TestConversion(cases.TestMixin):
         term.append_synonym("test-synonym-4", type=synonym_typedef, language="en")
 
         obo_ontology = build_ontology(
-            prefix="go",
+            "go",
             name="Gene Ontology",
             version="30",
             auto_generated_by="PyOBO",

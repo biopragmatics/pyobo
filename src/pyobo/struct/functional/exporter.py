@@ -47,7 +47,8 @@ def get_ofn_from_obo(
     )
     document = Document(
         ofn_ontology,
-        obo_ontology._get_clean_idspaces(),
+        # TODO upstream using prefixes
+        {str(k): v for k, v in obo_ontology._get_clean_idspaces().items()},
     )
     return document
 

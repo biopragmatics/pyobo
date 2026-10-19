@@ -114,7 +114,7 @@ def get_skos_from_rdflib(
     }
 
     return build_ontology(
-        prefix=prefix,
+        prefix,
         terms=list(terms.values()),
         root_terms=root_terms,
         idspaces=prefix_map,
