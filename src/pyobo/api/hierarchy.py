@@ -13,7 +13,7 @@ from curies.subsetting import Descendants, Expression, SubsetEvaluator
 from typing_extensions import Unpack
 
 from .edges import get_edges
-from .names import get_name, get_references
+from .names import get_name, get_references, tabulate_references
 from .properties import get_literal_properties
 from .utils import SimpleReferenceHint, _get_pi
 from ..constants import GetOntologyKwargs, Prefix
@@ -151,11 +151,15 @@ def is_descendent(
 
 @lru_cache
 def get_descendants(
-    reference: SimpleReferenceHint, /, inclusive: bool = False, **kwargs: Unpack[HierarchyKwargs]
+    reference: SimpleReferenceHint,
+    /,
+    inclusive: bool = False,
+    ontology: str | None = None,
+    **kwargs: Unpack[HierarchyKwargs],
 ) -> set[Reference] | None:
     """Get all the descendants (children) of the term as CURIEs."""
     reference = _get_pi(reference)
-    hierarchy = get_hierarchy(reference.prefix, **kwargs)
+    hierarchy = get_hierarchy(ontology or reference.prefix, **kwargs)
     if reference not in hierarchy:
         return None
     rv = cast(set[Reference], nx.ancestors(hierarchy, reference))  # note this is backwards
@@ -243,7 +247,7 @@ def get_subhierarchy(
     return sg
 
 
-class PyOBOSubsetEvaluator(SubsetEvaluator):
+class PyOBOSubsetEvaluator(SubsetEvaluator[Reference]):
     """Evaluate an expression using PyOBO functions."""
 
     def __init__(self, **kwargs: Unpack[HierarchyKwargs]) -> None:
@@ -253,7 +257,12 @@ class PyOBOSubsetEvaluator(SubsetEvaluator):
     def get_descendants(self, descendants: Descendants) -> set[Reference]:
         """Get descendants with the PyOBO interface."""
         return (
-            get_descendants(descendants.reference, inclusive=descendants.inclusive, **self.kwargs)
+            get_descendants(
+                descendants.reference,
+                inclusive=descendants.inclusive,
+                ontology=descendants.get_source(),
+                **self.kwargs,
+            )
             or set()
         )
 
@@ -266,10 +275,13 @@ def evaluate(expression: Expression) -> set[Reference]:
 def _demo() -> None:
     import click
 
-    r = Descendants(reference=Reference.from_curie("A:1")) | Descendants(
-        reference=Reference.from_curie("B:1")
+    from pyobo import default_reference
+
+    expression = Descendants(reference=default_reference("mesh", "A"), source="mesh") - Descendants(
+        reference=default_reference("mesh", "A11"), source="mesh"
     )
-    click.echo(evaluate(r))
+    click.echo(repr(expression))
+    click.echo(tabulate_references(evaluate(expression)))
 
 
 if __name__ == "__main__":
