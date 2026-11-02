@@ -9,7 +9,7 @@ from functools import lru_cache
 from typing import Literal, NotRequired, cast
 
 import networkx as nx
-from curies.subsetting import Descendants, Expression, SubsetEvaluator
+from curies.subsetting import Descendants, Expression, Subsetter
 from typing_extensions import Unpack
 
 from .edges import get_edges
@@ -247,7 +247,7 @@ def get_subhierarchy(
     return sg
 
 
-class PyOBOSubsetEvaluator(SubsetEvaluator[Reference]):
+class PyOBOSubsetEvaluator(Subsetter[Reference]):
     """Evaluate an expression using PyOBO functions."""
 
     def __init__(self, **kwargs: Unpack[HierarchyKwargs]) -> None:
@@ -269,7 +269,7 @@ class PyOBOSubsetEvaluator(SubsetEvaluator[Reference]):
 
 def evaluate(expression: Expression) -> set[Reference]:
     """Evaluate an expression."""
-    return PyOBOSubsetEvaluator().evaluate(expression)
+    return PyOBOSubsetEvaluator().query(expression)
 
 
 def _demo() -> None:
