@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import subprocess
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from functools import lru_cache
 from typing import TypeVar
 
@@ -39,6 +39,7 @@ __all__ = [
     "get_obsolete_references",
     "get_references",
     "get_synonyms",
+    "tabulate_references",
 ]
 
 logger = logging.getLogger(__name__)
@@ -354,3 +355,11 @@ def get_literal_mappings_df(prefix: Prefix, /, **kwargs: Unpack[GetOntologyKwarg
         return get_ontology(prefix, **kwargs).get_literal_mappings_df()
 
     return _df_getter()
+
+
+def tabulate_references(references: Iterable[Reference], *, tablefmt: str | None = None) -> str:
+    """Construct a table for the references."""
+    from tabulate import tabulate
+
+    rows = [(reference.curie, reference.name or get_name(reference)) for reference in references]
+    return tabulate(rows, headers=["curie", "name"], tablefmt=tablefmt or "github")

@@ -1,4 +1,19 @@
-"""High-level API for hierarchies."""
+"""High-level API for hierarchies.
+
+This contains a wrapper around the :mod:`curies.subsetting` API backed by PyOBO lookup
+of ontologies that can be used like in the following to look up MeSH terms:
+
+.. code-block:: python
+
+    import click
+
+    from pyobo import default_reference
+
+    expression = Descendants(reference=default_reference("mesh", "A"), source="mesh") - Descendants(
+        reference=default_reference("mesh", "A11"), source="mesh"
+    )
+    print(tabulate_references(get_subsets(expression)))
+"""
 
 from __future__ import annotations
 
@@ -9,6 +24,7 @@ from functools import lru_cache
 from typing import Literal, NotRequired, cast
 
 import networkx as nx
+from curies.subsetting import Descendants, Expression, Subsetter
 from typing_extensions import Unpack
 
 from .edges import get_edges
@@ -21,11 +37,14 @@ from ..struct import has_member, has_part, is_a, member_of, part_of
 from ..struct.struct_utils import ReferenceHint, _ensure_ref
 
 __all__ = [
+    "HierarchyKwargs",
+    "PyOBOSubsetEvaluator",
     "get_ancestors",
     "get_children",
     "get_descendants",
     "get_hierarchy",
     "get_subhierarchy",
+    "get_subsets",
     "has_ancestor",
     "is_descendent",
 ]
@@ -36,6 +55,7 @@ logger = logging.getLogger(__name__)
 class HierarchyKwargs(GetOntologyKwargs):
     """Keyword argument hints for hierarchy getter functions."""
 
+    include_subclass_of: NotRequired[bool]
     include_part_of: NotRequired[bool]
     include_has_member: NotRequired[bool]
 
@@ -52,16 +72,11 @@ def get_hierarchy(
     """Get hierarchy of parents as a directed graph.
 
     :param prefix: The name of the namespace.
-    :param include_part_of: Add "part of" relations. Only works if the relations are
-        properly defined using bfo:0000050 ! part of or bfo:0000051 ! has part
-    :param include_has_member: Add "has member" relations. These aren't part of the BFO,
-        but are hacked into PyOBO using :data:`pyobo.struct.typedef.has_member` for
-        relationships like from protein families to their actual proteins.
     :param extra_relations: Other relations that you want to include in the hierarchy.
         For example, it might be useful to include the positively_regulates
     :param properties: Properties to include in the data part of each node. For example,
         might want to include SMILES strings with the ChEBI tree.
-    :param force: should the resources be reloaded when extracting relations?
+    :param kwargs: additional keyword arguments for getting a directed hierarchy graph
 
     :returns: A directional graph representing the hierarchy
 
@@ -89,12 +104,16 @@ def _get_hierarchy_helper(
     *,
     extra_relations: tuple[Reference, ...],
     properties: tuple[Reference, ...],
+    include_subclass_of: bool = True,
     include_part_of: bool = False,
     include_has_member: bool = False,
     **kwargs: Unpack[GetOntologyKwargs],
 ) -> nx.DiGraph:
     predicates, reverse_predicates = _get_predicate_sets(
-        extra_relations, include_part_of=include_part_of, include_has_member=include_has_member
+        extra_relations,
+        include_subclass_of=include_subclass_of,
+        include_part_of=include_part_of,
+        include_has_member=include_has_member,
     )
 
     rv = nx.DiGraph()
@@ -115,10 +134,16 @@ def _get_hierarchy_helper(
 
 
 def _get_predicate_sets(
-    extra_relations: Iterable[Reference], *, include_part_of: bool, include_has_member: bool
+    extra_relations: Iterable[Reference],
+    *,
+    include_subclass_of: bool,
+    include_part_of: bool,
+    include_has_member: bool,
 ) -> tuple[set[Reference], set[Reference]]:
-    predicates: set[Reference] = {is_a.reference, *extra_relations}
+    predicates: set[Reference] = set(extra_relations)
     reverse_predicates: set[Reference] = set()
+    if include_subclass_of:
+        predicates.add(is_a.reference)
     if include_part_of:
         predicates.add(part_of.reference)
         reverse_predicates.add(has_part.reference)
@@ -141,14 +166,21 @@ def is_descendent(
 
 @lru_cache
 def get_descendants(
-    reference: SimpleReferenceHint, /, **kwargs: Unpack[HierarchyKwargs]
+    reference: SimpleReferenceHint,
+    /,
+    inclusive: bool = False,
+    ontology: str | None = None,
+    **kwargs: Unpack[HierarchyKwargs],
 ) -> set[Reference] | None:
     """Get all the descendants (children) of the term as CURIEs."""
     reference = _get_pi(reference)
-    hierarchy = get_hierarchy(reference.prefix, **kwargs)
+    hierarchy = get_hierarchy(ontology or reference.prefix, **kwargs)
     if reference not in hierarchy:
         return None
-    return cast(set[Reference], nx.ancestors(hierarchy, reference))  # note this is backwards
+    rv = cast(set[Reference], nx.ancestors(hierarchy, reference))  # note this is backwards
+    if inclusive:
+        rv.add(reference)
+    return rv
 
 
 @lru_cache
@@ -228,3 +260,28 @@ def get_subhierarchy(
     sg = hierarchy.subgraph(descendants).copy()
     logger.info("subgraph has %d nodes/%d edges", sg.number_of_nodes(), sg.number_of_edges())
     return sg
+
+
+class PyOBOSubsetEvaluator(Subsetter[Reference]):
+    """Evaluate an expression using PyOBO functions."""
+
+    def __init__(self, **kwargs: Unpack[HierarchyKwargs]) -> None:
+        """Initialize the evaluator with PyOBO kwargs."""
+        self.kwargs = kwargs
+
+    def get_descendants(self, descendants: Descendants) -> set[Reference]:
+        """Get descendants with the PyOBO interface."""
+        return (
+            get_descendants(
+                descendants.reference,
+                inclusive=descendants.inclusive,
+                ontology=descendants.get_source(),
+                **self.kwargs,
+            )
+            or set()
+        )
+
+
+def get_subsets(expression: Expression) -> set[Reference]:
+    """Evaluate a subset expression."""
+    return PyOBOSubsetEvaluator().query(expression)
