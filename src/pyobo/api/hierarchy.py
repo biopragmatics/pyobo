@@ -24,12 +24,12 @@ from ..struct.struct_utils import ReferenceHint, _ensure_ref
 __all__ = [
     "HierarchyKwargs",
     "PyOBOSubsetEvaluator",
-    "evaluate",
     "get_ancestors",
     "get_children",
     "get_descendants",
     "get_hierarchy",
     "get_subhierarchy",
+    "get_subsets",
     "has_ancestor",
     "is_descendent",
 ]
@@ -267,8 +267,8 @@ class PyOBOSubsetEvaluator(Subsetter[Reference]):
         )
 
 
-def evaluate(expression: Expression) -> set[Reference]:
-    """Evaluate an expression."""
+def get_subsets(expression: Expression) -> set[Reference]:
+    """Evaluate a subset expression."""
     return PyOBOSubsetEvaluator().query(expression)
 
 
@@ -281,7 +281,7 @@ def _demo() -> None:
         reference=default_reference("mesh", "A11"), source="mesh"
     )
     click.echo(repr(expression))
-    click.echo(tabulate_references(evaluate(expression)))
+    click.echo(tabulate_references(get_subsets(expression)))
 
 
 if __name__ == "__main__":
