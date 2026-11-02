@@ -1,4 +1,19 @@
-"""High-level API for hierarchies."""
+"""High-level API for hierarchies.
+
+This contains a wrapper around the :mod:`curies.subsetting` API backed by PyOBO lookup
+of ontologies that can be used like in the following to look up MeSH terms:
+
+.. code-block:: python
+
+    import click
+
+    from pyobo import default_reference
+
+    expression = Descendants(reference=default_reference("mesh", "A"), source="mesh") - Descendants(
+        reference=default_reference("mesh", "A11"), source="mesh"
+    )
+    print(tabulate_references(get_subsets(expression)))
+"""
 
 from __future__ import annotations
 
@@ -13,7 +28,7 @@ from curies.subsetting import Descendants, Expression, Subsetter
 from typing_extensions import Unpack
 
 from .edges import get_edges
-from .names import get_name, get_references, tabulate_references
+from .names import get_name, get_references
 from .properties import get_literal_properties
 from .utils import SimpleReferenceHint, _get_pi
 from ..constants import GetOntologyKwargs, Prefix
@@ -270,19 +285,3 @@ class PyOBOSubsetEvaluator(Subsetter[Reference]):
 def get_subsets(expression: Expression) -> set[Reference]:
     """Evaluate a subset expression."""
     return PyOBOSubsetEvaluator().query(expression)
-
-
-def _demo() -> None:
-    import click
-
-    from pyobo import default_reference
-
-    expression = Descendants(reference=default_reference("mesh", "A"), source="mesh") - Descendants(
-        reference=default_reference("mesh", "A11"), source="mesh"
-    )
-    click.echo(repr(expression))
-    click.echo(tabulate_references(get_subsets(expression)))
-
-
-if __name__ == "__main__":
-    _demo()
