@@ -1,7 +1,7 @@
 """Converter for NLM Providers.
 
-To ground NLM catalog entries, after installing PyOBO with
-``pip install pyobo[sources]``, do the following:
+To ground NLM catalog entries, after installing PyOBO with ``pip install
+pyobo[sources]``, do the following:
 
 .. code-block:: python
 

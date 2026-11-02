@@ -50,6 +50,7 @@ def get_skos_from_rdflib(
     """Extract an ontology from a SKOS RDF graph.
 
     :param source: The URL to the SKOS document
+
     :returns: An ontology.
     """
     if converter is None:

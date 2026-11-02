@@ -70,10 +70,9 @@ def _help_get(
 
     :param f: The getter function for ID->name, ID->definition, etc.
     :param reference: The reference to get the field for
-    :param upgrade_identifier: Should the reference get upgraded using
-        non-primary identifier mappings.
-        If none, will only try and upgrade the identifier if required to
-        get a value. If true, will explicitly try upgrading. If false, will
+    :param upgrade_identifier: Should the reference get upgraded using non-primary
+        identifier mappings. If none, will only try and upgrade the identifier if
+        required to get a value. If true, will explicitly try upgrading. If false, will
         not try upgrading, even if not available.
     """
     reference = _get_pi(reference)

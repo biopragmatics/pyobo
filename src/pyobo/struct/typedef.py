@@ -257,14 +257,11 @@ has_ontology_root_term = TypeDef(reference=v.has_ontology_root_term, predicate_t
 has_ontology_hierarchy_predicate = TypeDef(
     reference=v.has_ontology_hierarchy_predicate, predicate_type="annotation"
 )
-"""
-You can annotate this into an ontology with
+"""You can annotate this into an ontology with
 
 .. code-block:: python
 
-    property_values = [
-        Annotation(has_ontology_hierarchy_predicate.reference, ...)
-    ]
+    property_values = [Annotation(has_ontology_hierarchy_predicate.reference, ...)]
 """
 definition_source = TypeDef(
     reference=Reference(prefix=IAO_PREFIX, identifier="0000119", name="definition source"),
