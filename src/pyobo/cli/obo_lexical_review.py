@@ -28,7 +28,10 @@ UPPER = {"ncit"}
 
 
 @click.command()
-@click.argument("prefix")
+@click.option(
+    "--prefix",
+    help="The optional prefix, for looking up the --location and/or --uri-prefix in the Semantic Farm/Bioregistry",
+)
 @click.option(
     "--location",
     help="Local path or URL to an OBO Graph JSON file or OWL file. If not given, will try and look up through the OBO PURL system",
@@ -55,7 +58,7 @@ UPPER = {"ncit"}
 )
 @click.option("--index-force", is_flag=True, help="if true, force re-downloading the lexical index")
 def obo_lexical_review(
-    prefix: str,
+    prefix: str | None,
     location: str | None,
     uri_prefix: str | None,
     index_url: str,
@@ -65,12 +68,12 @@ def obo_lexical_review(
 ) -> None:
     """Make a lexical review of an ontology.
 
-    Example usage for a non-OBO Foundry ontology requires giving the --uri-format and
+    Example usage for a non-OBO Foundry ontology requires giving the --uri-prefix and
     --location
 
     .. code-block:: console
 
-        $ pyobo obo-lexical-review --uri-format "http://semanticscience.org/resource/SIO_" --location http://semanticscience.org/ontology/sio/v1.59/sio-release.owl sio
+        $ pyobo obo-lexical-review --prefix sio --uri-prefix "http://semanticscience.org/resource/SIO_" --location http://semanticscience.org/ontology/sio/v1.59/sio-release.owl sio
     """
     import sys
     import time
@@ -83,7 +86,7 @@ def obo_lexical_review(
     module = pystow.module("pyobo", "obo-lexical-review")
 
     args = " ".join(sys.argv[1:])
-    output = f"Analysis of {prefix} run on {time.asctime()} with the following command:\n\n```console\n$ uvx pyobo obo-lexical-review {args}\n```\n\n"
+    output = f'Analysis run on {time.asctime()} with the following command:\n\n```console\n$ uv tool run --with "pyobo[gilda]" pyobo obo-lexical-review {args}\n```\n\n'
 
     graph_document, uri_prefix = _get_graph_document(
         prefix=prefix,
@@ -117,7 +120,9 @@ def obo_lexical_review(
             for match in matches[1:]:
                 rows.append(("", "", *_parts(match)))
         failed_table = tabulate(
-            rows, headers=[prefix, "name", "obo-curie", "obo-name", "obo-score"], tablefmt="github"
+            rows,
+            headers=[prefix or "ID", "name", "obo-curie", "obo-name", "obo-score"],
+            tablefmt="github",
         )
         failed_message = f"## Failed Nodes ({len(failed):,}/{total:,}; {len(failed) / total:.1%})\n\n{failed_table}\n\n"
         output += failed_message
