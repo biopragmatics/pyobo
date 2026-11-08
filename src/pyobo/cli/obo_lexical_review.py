@@ -27,8 +27,36 @@ INDEX_URL = "https://github.com/biopragmatics/biolexica/raw/main/lexica/obo/obo.
 UPPER = {"ncit"}
 
 
-@click.command()
-@click.argument("prefix")
+@click.command(
+    help="""\
+
+For OBO Foundry ontologies, it's sufficient to pass just --prefix, which
+automatically looks up the download location and URI prefix from the
+Bioregistry
+
+$ pyobo obo-lexical-review --prefix go
+
+For non-OBO Foundry ontologies, there isn't necessarily a URI prefix
+or location in the Bioregistry, so pass them explicitly.
+
+\b
+$ pyobo obo-lexical-review --prefix sio \\
+    --uri-prefix http://semanticscience.org/resource/SIO\\_ \\
+    --location http://semanticscience.org/ontology/sio/v1.59/sio-release.owl
+
+When being explicit about the --uri-prefix and --location, the prefix is actually optional,
+and even resources not registered in the Bioregistry can be used
+
+\b
+$ pyobo obo-lexical-review \\
+    --uri-prefix https://w3id.org/euph/ \\
+    --location https://gitlab.com/bee-life/controlled-vocabulary/-/raw/V1.4/PolOn_V.1.4_rdf-xml.owl
+"""
+)
+@click.option(
+    "--prefix",
+    help="The optional prefix, for looking up the --location and/or --uri-prefix in the Semantic Farm/Bioregistry",
+)
 @click.option(
     "--location",
     help="Local path or URL to an OBO Graph JSON file or OWL file. If not given, will try and look up through the OBO PURL system",
@@ -37,7 +65,7 @@ UPPER = {"ncit"}
     "--uri-prefix",
     help="The URI prefix to use to identify terms that belong to the graph. If not given, "
     "assumes that the URI prefix should be constructed as an OBO PURL like "
-    "`http://purl.obolibrary.org/obo/<prefix>_`. If you",
+    "`http://purl.obolibrary.org/obo/<prefix>_`.",
 )
 @click.option(
     "--index-url",
@@ -55,7 +83,7 @@ UPPER = {"ncit"}
 )
 @click.option("--index-force", is_flag=True, help="if true, force re-downloading the lexical index")
 def obo_lexical_review(
-    prefix: str,
+    prefix: str | None,
     location: str | None,
     uri_prefix: str | None,
     index_url: str,
@@ -63,15 +91,7 @@ def obo_lexical_review(
     skip_upper: bool,
     index_force: bool,
 ) -> None:
-    """Make a lexical review of an ontology.
-
-    Example usage for a non-OBO Foundry ontology requires giving the --uri-format and
-    --location
-
-    .. code-block:: console
-
-        $ pyobo obo-lexical-review --uri-format "http://semanticscience.org/resource/SIO_" --location http://semanticscience.org/ontology/sio/v1.59/sio-release.owl sio
-    """
+    """Make a lexical review of an ontology."""
     import sys
     import time
 
@@ -83,17 +103,17 @@ def obo_lexical_review(
     module = pystow.module("pyobo", "obo-lexical-review")
 
     args = " ".join(sys.argv[1:])
-    output = f"Analysis of {prefix} run on {time.asctime()} with the following command:\n\n```console\n$ uvx pyobo obo-lexical-review {args}\n```\n\n"
+    output = f'Analysis run on {time.asctime()} with the following command:\n\n```console\n$ uv tool run --with "pyobo[gilda]" pyobo obo-lexical-review {args}\n```\n\n'
 
     graph_document, uri_prefix = _get_graph_document(
         prefix=prefix,
         uri_prefix=uri_prefix,
-        ontology_path=location,
+        location=location,
     )
 
     click.echo(f"Loading lexical index from {index_url} using SSSLM")
     path = module.ensure(url=index_url, force=index_force)
-    grounder = ssslm.make_grounder(path)
+    grounder = ssslm.make_grounder(path, progress=True)
     click.echo("Done loading lexical index")
 
     passed, failed = _get_calls(
@@ -117,7 +137,9 @@ def obo_lexical_review(
             for match in matches[1:]:
                 rows.append(("", "", *_parts(match)))
         failed_table = tabulate(
-            rows, headers=[prefix, "name", "obo-curie", "obo-name", "obo-score"], tablefmt="github"
+            rows,
+            headers=[prefix or "ID", "name", "obo-curie", "obo-name", "obo-score"],
+            tablefmt="github",
         )
         failed_message = f"## Failed Nodes ({len(failed):,}/{total:,}; {len(failed) / total:.1%})\n\n{failed_table}\n\n"
         output += failed_message
@@ -136,38 +158,50 @@ def _parts(match: ssslm.Match) -> tuple[str, str, float]:
 
 
 def _get_graph_document(
-    prefix: str, uri_prefix: str | None = None, ontology_path: str | None = None
+    prefix: str | None, uri_prefix: str | None = None, location: str | None = None
 ) -> tuple[obographs.GraphDocument, str]:
-    import sys
     from pathlib import Path
 
     import obographs
     import robot_obo_tool
     from bioregistry import manager
 
-    resource = manager.get_resource(prefix, strict=True)
-    obo_prefix = resource.get_obofoundry_prefix()
-
     if uri_prefix is None:
-        if obo_prefix is None:
-            click.secho(
+        if prefix is None:
+            raise click.ClickException(
+                "either pass --uri-prefix or pass --prefix to try to automatically look it up in the Semantic Farm/Bioregistry"
+            )
+        if (resource := manager.get_resource(prefix)) is None:
+            raise click.ClickException(
+                f"can't automatically look up URI prefix unregistered resource: {prefix}. pass --uri-prefix"
+            )
+        if (obo_prefix := resource.get_obofoundry_prefix()) is None:
+            raise click.ClickException(
                 f"{prefix} is not an OBO Foundry resource, so --uri-prefix and --location are required"
             )
-            raise sys.exit(1)
         uri_prefix = f"http://purl.obolibrary.org/obo/{obo_prefix}_"
         click.echo(f"Inferred URI prefix from given OBO CURIE prefix: {uri_prefix}")
-    if ontology_path is None:
-        if obo_prefix is None:
-            click.secho(
+
+    if location is None:
+        if prefix is None:
+            raise click.ClickException(
+                "either pass --location or pass --prefix to try to automatically look it up in the Semantic Farm/Bioregistry"
+            )
+        if (resource := manager.get_resource(prefix)) is None:
+            raise click.ClickException(
+                f"can't automatically look up ontology URL for unregistered resource: {prefix}. pass --location"
+            )
+        if (obo_prefix := resource.get_obofoundry_prefix()) is None:
+            raise click.ClickException(
                 f"{prefix} is not an OBO Foundry resource, so --uri-prefix and --location are required"
             )
-            raise sys.exit(1)
         # raise error if there's no mapping from prefix to OBO
-        ontology_path = f"https://purl.obolibrary.org/obo/{obo_prefix.lower()}.json"
-        click.echo(f"No ontology path given, guessing it's available at {ontology_path}")
-    if ontology_path.endswith(".json"):
-        click.echo(f"reading OBO Graph JSON from {ontology_path}")
-        graph_documents = obographs.read(ontology_path, squeeze=False, timeout=60)
+        location = f"https://purl.obolibrary.org/obo/{obo_prefix.lower()}.json"
+        click.echo(f"No ontology path given, guessing it's available at {location}")
+
+    if location.endswith(".json"):
+        click.echo(f"reading OBO Graph JSON from {location}")
+        graph_documents = obographs.read(location, squeeze=False, timeout=60)
     else:
         import tempfile
 
@@ -177,7 +211,7 @@ def _get_graph_document(
                 "given ontology path does not end with JSON. implicitly converting to OBO Graph JSON using ROBOT"
             )
             robot_obo_tool.convert(
-                input_path=ontology_path,
+                input_path=location,
                 output_path=tmppath,
                 check=False,
                 merge=False,
