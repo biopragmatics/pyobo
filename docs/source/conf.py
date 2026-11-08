@@ -237,11 +237,11 @@ texinfo_documents = [
 # Note: don't add trailing slashes, since sphinx adds "/objects.inv" to the end
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
-    "networkx": ("https://networkx.github.io/documentation/latest/", None),
+    "networkx": ("https://networkx.github.io/documentation/latest", None),
     "sqlalchemy": ("https://docs.sqlalchemy.org/en/latest", None),
-    "requests": ("https://requests.kennethreitz.org/en/master/", None),
-    "setuptools": ("https://setuptools.readthedocs.io/en/latest/", None),
-    "bioregistry": ("https://bioregistry.readthedocs.io/en/latest/", None),
+    "requests": ("https://requests.readthedocs.io/en/latest", None),
+    "setuptools": ("https://setuptools.readthedocs.io/en/latest", None),
+    "bioregistry": ("https://bioregistry.readthedocs.io/en/latest", None),
     "pandas": ("https://pandas.pydata.org/docs", None),
     "sklearn": ("https://scikit-learn.org/stable", None),
     "numpy": ("https://numpy.org/doc/stable", None),
