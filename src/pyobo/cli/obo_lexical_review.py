@@ -27,7 +27,33 @@ INDEX_URL = "https://github.com/biopragmatics/biolexica/raw/main/lexica/obo/obo.
 UPPER = {"ncit"}
 
 
-@click.command()
+@click.command(
+    help="""\
+
+For OBO Foundry ontologies, it's sufficient to pass just --prefix, which
+automatically looks up the download location and URI prefix from the
+Bioregistry
+
+$ pyobo obo-lexical-review --prefix go
+
+For non-OBO Foundry ontologies, there isn't necessarily a URI prefix
+or location in the Bioregistry, so pass them explicitly.
+
+\b
+$ pyobo obo-lexical-review \\
+    --prefix sio \\
+    --uri-prefix "http://semanticscience.org/resource/SIO_" \\
+    --location http://semanticscience.org/ontology/sio/v1.59/sio-release.owl
+
+When being explicit about the --uri-prefix and --location, the prefix is actually optional,
+and even resources not registered in the Bioregistry can be used:
+
+\b
+$ pyobo obo-lexical-review \\
+    --uri-prefix https://w3id.org/euph/ \\
+    --location https://gitlab.com/bee-life/controlled-vocabulary/-/raw/V1.4/PolOn_V.1.4_rdf-xml.owl
+"""
+)
 @click.option(
     "--prefix",
     help="The optional prefix, for looking up the --location and/or --uri-prefix in the Semantic Farm/Bioregistry",
@@ -40,7 +66,7 @@ UPPER = {"ncit"}
     "--uri-prefix",
     help="The URI prefix to use to identify terms that belong to the graph. If not given, "
     "assumes that the URI prefix should be constructed as an OBO PURL like "
-    "`http://purl.obolibrary.org/obo/<prefix>_`. If you",
+    "`http://purl.obolibrary.org/obo/<prefix>_`.",
 )
 @click.option(
     "--index-url",
@@ -66,15 +92,7 @@ def obo_lexical_review(
     skip_upper: bool,
     index_force: bool,
 ) -> None:
-    """Make a lexical review of an ontology.
-
-    Example usage for a non-OBO Foundry ontology requires giving the --uri-prefix and
-    --location
-
-    .. code-block:: console
-
-        $ pyobo obo-lexical-review --prefix sio --uri-prefix "http://semanticscience.org/resource/SIO_" --location http://semanticscience.org/ontology/sio/v1.59/sio-release.owl sio
-    """
+    """Make a lexical review of an ontology."""
     import sys
     import time
 
