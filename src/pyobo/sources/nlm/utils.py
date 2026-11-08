@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-
-from pubmed_downloader.catalog import CatalogRecord, process_catalog
+from typing import TYPE_CHECKING
 
 from pyobo import Annotation, Reference, Term, TypeDef, default_reference
 from pyobo.struct.struct import CHARLIE_TERM, PYOBO_INJECTED, abbreviation
@@ -18,6 +17,10 @@ from pyobo.struct.typedef import (
     has_subject,
 )
 from pyobo.utils.path import ensure_df
+
+if TYPE_CHECKING:
+    from pubmed_downloader.catalog import CatalogRecord
+
 
 PREFIX_CATALOG = "nlm"
 PREFIX_PUBLISHER = "nlm.publisher"
@@ -66,6 +69,8 @@ def get_publishers(*, force: bool = False) -> dict[str, Term]:
 
 def get_catalog_terms(*, force: bool = False, refresh_index: bool = True) -> Iterable[Term]:
     """Get NLM Catalog terms."""
+    from pubmed_downloader.catalog import process_catalog
+
     for catalog_record in process_catalog(force_process=force, refresh_index=refresh_index):
         if term := catalog_record_to_term(catalog_record):
             yield term
