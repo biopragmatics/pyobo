@@ -88,7 +88,7 @@ def obo_lexical_review(
     graph_document, uri_prefix = _get_graph_document(
         prefix=prefix,
         uri_prefix=uri_prefix,
-        ontology_path=location,
+        location=location,
     )
 
     click.echo(f"Loading lexical index from {index_url} using SSSLM")
@@ -136,7 +136,7 @@ def _parts(match: ssslm.Match) -> tuple[str, str, float]:
 
 
 def _get_graph_document(
-    prefix: str, uri_prefix: str | None = None, ontology_path: str | None = None
+    prefix: str | None, uri_prefix: str | None = None, location: str | None = None
 ) -> tuple[obographs.GraphDocument, str]:
     from pathlib import Path
 
@@ -160,7 +160,7 @@ def _get_graph_document(
         uri_prefix = f"http://purl.obolibrary.org/obo/{obo_prefix}_"
         click.echo(f"Inferred URI prefix from given OBO CURIE prefix: {uri_prefix}")
 
-    if ontology_path is None:
+    if location is None:
         if prefix is None:
             raise click.ClickException(
                 "either pass --location or pass --prefix to try to automatically look it up in the Semantic Farm/Bioregistry"
@@ -174,12 +174,12 @@ def _get_graph_document(
                 f"{prefix} is not an OBO Foundry resource, so --uri-prefix and --location are required"
             )
         # raise error if there's no mapping from prefix to OBO
-        ontology_path = f"https://purl.obolibrary.org/obo/{obo_prefix.lower()}.json"
-        click.echo(f"No ontology path given, guessing it's available at {ontology_path}")
+        location = f"https://purl.obolibrary.org/obo/{obo_prefix.lower()}.json"
+        click.echo(f"No ontology path given, guessing it's available at {location}")
 
-    if ontology_path.endswith(".json"):
-        click.echo(f"reading OBO Graph JSON from {ontology_path}")
-        graph_documents = obographs.read(ontology_path, squeeze=False, timeout=60)
+    if location.endswith(".json"):
+        click.echo(f"reading OBO Graph JSON from {location}")
+        graph_documents = obographs.read(location, squeeze=False, timeout=60)
     else:
         import tempfile
 
@@ -189,7 +189,7 @@ def _get_graph_document(
                 "given ontology path does not end with JSON. implicitly converting to OBO Graph JSON using ROBOT"
             )
             robot_obo_tool.convert(
-                input_path=ontology_path,
+                input_path=location,
                 output_path=tmppath,
                 check=False,
                 merge=False,
