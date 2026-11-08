@@ -40,13 +40,12 @@ For non-OBO Foundry ontologies, there isn't necessarily a URI prefix
 or location in the Bioregistry, so pass them explicitly.
 
 \b
-$ pyobo obo-lexical-review \\
-    --prefix sio \\
-    --uri-prefix "http://semanticscience.org/resource/SIO_" \\
+$ pyobo obo-lexical-review --prefix sio \\
+    --uri-prefix http://semanticscience.org/resource/SIO\\_ \\
     --location http://semanticscience.org/ontology/sio/v1.59/sio-release.owl
 
 When being explicit about the --uri-prefix and --location, the prefix is actually optional,
-and even resources not registered in the Bioregistry can be used:
+and even resources not registered in the Bioregistry can be used
 
 \b
 $ pyobo obo-lexical-review \\
