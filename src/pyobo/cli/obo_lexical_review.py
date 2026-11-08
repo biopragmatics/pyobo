@@ -138,7 +138,6 @@ def _parts(match: ssslm.Match) -> tuple[str, str, float]:
 def _get_graph_document(
     prefix: str, uri_prefix: str | None = None, ontology_path: str | None = None
 ) -> tuple[obographs.GraphDocument, str]:
-    import sys
     from pathlib import Path
 
     import obographs
