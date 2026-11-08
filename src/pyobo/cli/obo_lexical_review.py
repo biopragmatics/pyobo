@@ -144,33 +144,39 @@ def _get_graph_document(
     import robot_obo_tool
     from bioregistry import manager
 
-    resource = manager.get_resource(prefix)
-
     if uri_prefix is None:
-        if resource is None:
+        if prefix is None:
+            raise click.ClickException(
+                "either pass --uri-prefix or pass --prefix to try to automatically look it up in the Semantic Farm/Bioregistry"
+            )
+        if (resource := manager.get_resource(prefix)) is None:
             raise click.ClickException(
                 f"can't automatically look up URI prefix unregistered resource: {prefix}. pass --uri-prefix"
             )
-        if obo_prefix := resource.get_obofoundry_prefix():
-            uri_prefix = f"http://purl.obolibrary.org/obo/{obo_prefix}_"
-            click.echo(f"Inferred URI prefix from given OBO CURIE prefix: {uri_prefix}")
-        else:
+        if (obo_prefix := resource.get_obofoundry_prefix()) is None:
             raise click.ClickException(
                 f"{prefix} is not an OBO Foundry resource, so --uri-prefix and --location are required"
             )
+        uri_prefix = f"http://purl.obolibrary.org/obo/{obo_prefix}_"
+        click.echo(f"Inferred URI prefix from given OBO CURIE prefix: {uri_prefix}")
+
     if ontology_path is None:
-        if resource is None:
+        if prefix is None:
+            raise click.ClickException(
+                "either pass --location or pass --prefix to try to automatically look it up in the Semantic Farm/Bioregistry"
+            )
+        if (resource := manager.get_resource(prefix)) is None:
             raise click.ClickException(
                 f"can't automatically look up ontology URL for unregistered resource: {prefix}. pass --location"
             )
-        if obo_prefix := resource.get_obofoundry_prefix():
-            # raise error if there's no mapping from prefix to OBO
-            ontology_path = f"https://purl.obolibrary.org/obo/{obo_prefix.lower()}.json"
-            click.echo(f"No ontology path given, guessing it's available at {ontology_path}")
-        else:
+        if (obo_prefix := resource.get_obofoundry_prefix()) is None:
             raise click.ClickException(
                 f"{prefix} is not an OBO Foundry resource, so --uri-prefix and --location are required"
             )
+        # raise error if there's no mapping from prefix to OBO
+        ontology_path = f"https://purl.obolibrary.org/obo/{obo_prefix.lower()}.json"
+        click.echo(f"No ontology path given, guessing it's available at {ontology_path}")
+
     if ontology_path.endswith(".json"):
         click.echo(f"reading OBO Graph JSON from {ontology_path}")
         graph_documents = obographs.read(ontology_path, squeeze=False, timeout=60)
