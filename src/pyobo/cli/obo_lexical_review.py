@@ -169,10 +169,9 @@ def _get_graph_document(
             ontology_path = f"https://purl.obolibrary.org/obo/{obo_prefix.lower()}.json"
             click.echo(f"No ontology path given, guessing it's available at {ontology_path}")
         else:
-            click.secho(
+            raise click.ClickException(
                 f"{prefix} is not an OBO Foundry resource, so --uri-prefix and --location are required"
             )
-            raise sys.exit(1)
     if ontology_path.endswith(".json"):
         click.echo(f"reading OBO Graph JSON from {ontology_path}")
         graph_documents = obographs.read(ontology_path, squeeze=False, timeout=60)
