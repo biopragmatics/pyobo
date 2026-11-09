@@ -103,7 +103,7 @@ def obo_lexical_review(
     module = pystow.module("pyobo", "obo-lexical-review")
 
     args = " ".join(sys.argv[1:])
-    output = f'Analysis run on {time.asctime()} with the following command:\n\n```console\n$ uv tool run --with "pyobo[gilda]" pyobo obo-lexical-review {args}\n```\n\n'
+    output = f'Analysis run on {time.asctime()} with the following command:\n\n```console\n$ uv tool run --with "pyobo[gilda]" pyobo {args}\n```\n\n'
 
     graph_document, uri_prefix = _get_graph_document(
         prefix=prefix,
