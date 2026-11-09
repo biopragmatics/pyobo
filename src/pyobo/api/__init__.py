@@ -21,6 +21,7 @@ from .hierarchy import (
     get_descendants,
     get_hierarchy,
     get_subhierarchy,
+    get_subsets,
     has_ancestor,
     is_descendent,
 )
@@ -126,6 +127,7 @@ __all__ = [
     "get_species",
     "get_sssom_df",
     "get_subhierarchy",
+    "get_subsets",
     "get_synonyms",
     "get_text_embedding",
     "get_text_embedding_similarity",

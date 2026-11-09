@@ -282,6 +282,6 @@ class PyOBOSubsetEvaluator(Subsetter[Reference]):
         )
 
 
-def get_subsets(expression: Expression) -> set[Reference]:
+def get_subsets(expression: Expression, *, progress: bool = False) -> set[Reference]:
     """Evaluate a subset expression."""
-    return PyOBOSubsetEvaluator().query(expression)
+    return PyOBOSubsetEvaluator(progress=progress).query(expression)
