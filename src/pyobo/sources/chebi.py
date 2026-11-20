@@ -7,6 +7,7 @@ from typing_extensions import Unpack
 from ..api import get_filtered_properties_mapping, get_filtered_relations_df
 from ..constants import GetOntologyKwargs
 from ..struct.typedef import has_role
+from ..struct.vocabulary import has_smiles
 from ..utils.io import multisetdict
 
 __all__ = [
@@ -21,9 +22,7 @@ def get_chebi_id_smiles_mapping(**kwargs: Unpack[GetOntologyKwargs]) -> dict[str
 
     This is common enough that it gets its own function :)
     """
-    return get_filtered_properties_mapping(
-        "chebi", "http://purl.obolibrary.org/obo/chebi/smiles", **kwargs
-    )
+    return get_filtered_properties_mapping("chebi", has_smiles, **kwargs)
 
 
 def get_chebi_smiles_id_mapping() -> Mapping[str, str]:
